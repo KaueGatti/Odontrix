@@ -4,8 +4,10 @@ import App from './App.jsx'
 import './index.css'
 
 import {createBrowserRouter, RouterProvider} from "react-router";
-import FormPage from "@/pages/FormPage.jsx";
-import GridPage from "@/pages/GridPage.jsx";
+import MenuPage from "@/pages/MenuPage.jsx";
+import ClientGridPage from "@/pages/clients/ClientGridPage.jsx";
+import ClientFormPage from "@/pages/clients/ClientFormPage.jsx";
+import SchedulePage from "@/pages/SchedulePage.jsx";
 
 const router = createBrowserRouter([
         {
@@ -14,11 +16,21 @@ const router = createBrowserRouter([
             children: [
                 {
                     path: "/",
-                    element: <GridPage/>,
-                },
-                {
-                    path: "edit",
-                    element: <FormPage/>
+                    element: <MenuPage/>,
+                    children: [
+                        {
+                            path: "/clientes",
+                            element: <ClientGridPage/>,
+                        },
+                        {
+                            path: "/clientes/form",
+                            element: <ClientFormPage/>,
+                        },
+                        {
+                            path: "/agenda",
+                            element: <SchedulePage/>
+                        },
+                    ]
                 },
             ]
         },
