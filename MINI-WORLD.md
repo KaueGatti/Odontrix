@@ -224,3 +224,36 @@ Confirmada → Cancelada
 
 - Toda criação, edição e inativação deve gerar um registro de log contendo: usuário responsável, data/hora e dados alterados
 - Logs não podem ser editados ou excluídos por nenhum tipo de usuário
+
+---
+
+### Contratos
+
+- Criação de modelos de contratos (templates)
+- Versões dos templates *(imutável — nunca atualizar, sempre inserir nova versão)*
+- Geração de contratos vinculados a consultas
+- Snapshot dos dados do paciente no momento da geração *(dados podem mudar, mas o contrato mantém o estado original)*
+- Status do contrato *(Gerado, Aguardando Assinatura, Assinado, Cancelado)*
+- Assinatura digital do contrato
+- Impressão do contrato
+- Edição personalizada do conteúdo do contrato *(após geração, antes da assinatura)*
+
+#### Templates de Contratos
+
+- `*` Nome do template
+- Descrição
+- Status ativado/desativado
+- Versões *(número da versão + conteúdo)*
+
+#### Contrato
+
+- `*` Paciente
+- `*` Consulta vinculada
+- `*` Versão do template utilizada
+- `*` Dados do paciente no momento da geração *(snapshot)*
+- `*` Status
+- `*` Gerado por *(usuário)*
+- `*` Data de geração
+- Data de assinatura *(se aplicável)*
+- Data de cancelamento *(se aplicável)*
+- Motivo do cancelamento *(se aplicável)*
