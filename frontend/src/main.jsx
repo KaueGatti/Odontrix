@@ -5,9 +5,9 @@ import './index.css'
 
 import {createBrowserRouter, RouterProvider} from "react-router";
 import MenuPage from "@/pages/MenuPage.jsx";
-import ClientGridPage from "@/pages/clients/ClientGridPage.jsx";
-import ClientFormPage from "@/pages/clients/ClientFormPage.jsx";
 import SchedulePage from "@/pages/SchedulePage.jsx";
+import PatientFormPage from "@/pages/patients/PatientFormPage.jsx";
+import PatientGridPage from "@/pages/patients/PatientGridPage.jsx";
 
 const router = createBrowserRouter([
         {
@@ -19,15 +19,15 @@ const router = createBrowserRouter([
                     element: <MenuPage/>,
                     children: [
                         {
-                            path: "/clientes",
-                            element: <ClientGridPage/>,
+                            path: "/patients",
+                            element: <PatientGridPage/>,
                         },
                         {
-                            path: "/clientes/form",
-                            element: <ClientFormPage/>,
+                            path: "/patients/form",
+                            element: <PatientFormPage/>,
                         },
                         {
-                            path: "/agenda",
+                            path: "/schedule",
                             element: <SchedulePage/>
                         },
                     ]
@@ -41,5 +41,4 @@ createRoot(document.getElementById('root')).render(
     <StrictMode>
         <RouterProvider router={router}/>
     </StrictMode>
-    ,
 )

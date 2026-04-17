@@ -97,4 +97,4 @@ function PatientGridPage() {
     )
 }
 
-export default ClientGridPage;
+export default PatientGridPage;

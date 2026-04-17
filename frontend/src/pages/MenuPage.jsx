@@ -7,10 +7,10 @@ function MenuPage() {
     const navigate = useNavigate();
 
     const menuItems = [
-        {id: "clientes", label: "Clientes", icon: Users, path: "/clientes"},
+        {id: "patients", label: "Pacientes", icon: Users, path: "/patients"},
         {id: "dentistas", label: "Dentistas", icon: Stethoscope, path: "/dentistas"},
-        {id: "agenda", label: "Agenda", icon: Calendar, path: "/agenda"},
-        {id: "configuracoes", label: "Configurações", icon: Bolt, path: "/configuracoes"},
+        {id: "schedule", label: "Agenda", icon: Calendar, path: "/schedule"},
+        {id: "settings", label: "Configurações", icon: Bolt, path: "/settings"},
     ]
 
     const [activeItem, setActiveItem] = useState('')
