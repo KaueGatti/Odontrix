@@ -4,7 +4,7 @@
 
 Um template de sistemas para clínicas odontológicas.
 
-O sistema deve ajudar no gerenciamento de clientes, dentistas, consultas, planos, pagamentos, cobranças, gastos e demais atividades administrativas que clínicas odontológicas possam ter.
+O sistema deve ajudar no gerenciamento de Pacientes, dentistas, consultas, planos, pagamentos, cobranças, gastos e demais atividades administrativas que clínicas odontológicas possam ter.
 
 ---
 
@@ -13,14 +13,14 @@ O sistema deve ajudar no gerenciamento de clientes, dentistas, consultas, planos
 | Perfil | Acesso |
 |---|---|
 | **Gerente** | Acesso completo a todas as funcionalidades e áreas do sistema |
-| **Recepcionista** | Consultas, pagamentos, manutenção de clientes, médicos e cobranças |
+| **Recepcionista** | Consultas, pagamentos, manutenção de Pacientes, médicos e cobranças |
 | **Dentista** | Finalização e preenchimento de dados após a realização de consultas |
 
 ---
 
 ## Principais Funcionalidades
 
-### Clientes
+### Pacientes
 
 Campos obrigatórios marcados com `*`
 
@@ -151,19 +151,19 @@ Campos obrigatórios marcados com `*`
 
 ## Regras de Negócio
 
-### Clientes
+### Pacientes
 
 - Nome completo, CPF/RG, telefones, data de nascimento e endereço são obrigatórios
-- O documento (CPF/RG) deve ser único no sistema — não é permitido cadastrar dois clientes com o mesmo documento
+- O documento (CPF/RG) deve ser único no sistema — não é permitido cadastrar dois Pacientes com o mesmo documento
 - Menores de idade devem obrigatoriamente ter um responsável financeiro/legal vinculado
-- Um cliente só pode ter um plano odontológico ativo por vez
-- A exclusão de clientes não é permitida — apenas inativação
+- Um paciente só pode ter um plano odontológico ativo por vez
+- A exclusão de Pacientes não é permitida — apenas inativação
 
 ---
 
 ### Consultas
 
-- Não é permitido agendar consultas para clientes com débito ou inadimplência
+- Não é permitido agendar consultas para Pacientes com débito ou inadimplência
 - Não é permitido agendar consultas em datas retroativas
 - Não é permitido agendar consultas em dias em que a clínica não funciona
 - Não é permitido agendar dois horários conflitantes para o mesmo médico ou paciente
@@ -197,7 +197,7 @@ Confirmada → Cancelada
 
 ### Planos Odontológicos
 
-- Um plano com clientes vinculados não pode ser excluído — apenas inativado
+- Um plano com Pacientes vinculados não pode ser excluído — apenas inativado
 - A validade do plano deve ser controlada por data — o sistema deve alertar ou bloquear consultas de pacientes com plano vencido
 
 ---
@@ -207,7 +207,7 @@ Confirmada → Cancelada
 - Um pagamento registrado não pode ser excluído — apenas estornado, gerando um registro de estorno vinculado ao original
 - O parcelamento deve respeitar a forma de pagamento: apenas Cartão de Crédito e Boleto podem ser parcelados
 - A data de vencimento das parcelas deve ser gerada automaticamente a partir da data do primeiro pagamento
-- Parcelas em atraso devem atualizar automaticamente o status de inadimplência do cliente
+- Parcelas em atraso devem atualizar automaticamente o status de inadimplência do paciente
 - Apenas gerentes podem registrar pagamentos do tipo "Pago" (gastos da clínica)
 
 ---

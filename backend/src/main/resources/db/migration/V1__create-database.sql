@@ -23,13 +23,13 @@ CREATE TYPE contract_status AS ENUM ('generated', 'awaiting_signature', 'signed'
 CREATE TABLE address
 (
     id           SERIAL PRIMARY KEY,
-    cep          VARCHAR(10),
-    street       VARCHAR(200),
-    number       VARCHAR(20),
-    complement   VARCHAR(50),
-    neighborhood VARCHAR(100),
+    cep          VARCHAR(10)  NOT NULL,
+    street       VARCHAR(200) NOT NULL,
+    number       VARCHAR(20)  NOT NULL,
+    complement   VARCHAR(50)  NOT NULL,
+    neighborhood VARCHAR(100) NOT NULL,
     city         VARCHAR(100) NOT NULL,
-    state        VARCHAR(50),
+    state        VARCHAR(50)  NOT NULL,
     country      VARCHAR(50)  NOT NULL DEFAULT 'Brasil'
 );
 
@@ -94,12 +94,15 @@ CREATE TABLE plan
 CREATE TABLE responsible
 (
     id         SERIAL PRIMARY KEY,
-    full_name  VARCHAR(150)       NOT NULL,
-    cpf        VARCHAR(14) UNIQUE NOT NULL,
-    phone      VARCHAR(20)        NOT NULL,
+    full_name  VARCHAR(150) NOT NULL,
+    cpf        VARCHAR(14) UNIQUE,
+    rg         VARCHAR(14) UNIQUE,
+    phone      VARCHAR(20)  NOT NULL,
     email      VARCHAR(150),
-    address_id INT REFERENCES address (id),
-    active     BOOLEAN            NOT NULL DEFAULT TRUE
+    address_id INT          NOT NULL REFERENCES address (id),
+    active     BOOLEAN      NOT NULL DEFAULT TRUE
+
+        CONSTRAINT responsible_document_check CHECK (cpf IS NOT NULL OR rg IS NOT NULL)
 );
 
 -- ------------------------------------------------------------
@@ -115,7 +118,7 @@ CREATE TABLE patient
     emergency_phone VARCHAR(20)  NOT NULL,
     email           VARCHAR(150),
     birth_date      DATE         NOT NULL,
-    address_id      INT REFERENCES address (id),
+    address_id      INT          NOT NULL REFERENCES address (id),
     referral_source VARCHAR(100),
     active          BOOLEAN      NOT NULL DEFAULT TRUE,
     responsible_id  INT REFERENCES responsible (id),
@@ -134,6 +137,7 @@ CREATE TABLE dentist
     user_id            INT          NOT NULL UNIQUE REFERENCES users (id),
     full_name          VARCHAR(150) NOT NULL,
     cpf                VARCHAR(14),
+    rg                 VARCHAR(14),
     cnpj               VARCHAR(18),
     cro_number         VARCHAR(30),
     phone              VARCHAR(20)  NOT NULL,
@@ -145,7 +149,7 @@ CREATE TABLE dentist
     active             BOOLEAN      NOT NULL DEFAULT TRUE,
     created_at         TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
 
-    CONSTRAINT dentist_doc_check CHECK (cpf IS NOT NULL OR cnpj IS NOT NULL)
+    CONSTRAINT dentist_doc_check CHECK (cpf IS NOT NULL OR cnpj IS NOT NULL OR rg IS NOT NULL )
 );
 
 -- ------------------------------------------------------------
@@ -438,50 +442,48 @@ CREATE TABLE audit_log
 -- vw_appointment_summary
 -- Listagem da agenda e dashboard
 -- ------------------------------------------------------------
-CREATE OR REPLACE VIEW vw_appointment_summary AS
-SELECT
-    a.id                        AS appointment_id,
-    a.scheduled_date_time,
-    a.estimated_duration_min,
-    a.status,
-    a.price,
-    a.cancellation_reason,
-    a.actual_start_date_time,
-    a.actual_end_date_time,
-    p.id                        AS patient_id,
-    p.full_name                 AS patient_name,
-    p.phone                     AS patient_phone,
-    d.id                        AS dentist_id,
-    d.full_name                 AS dentist_name,
-    at2.name                    AS appointment_type,
-    u.name                      AS receptionist_name
+CREATE
+OR REPLACE VIEW vw_appointment_summary AS
+SELECT a.id        AS appointment_id,
+       a.scheduled_date_time,
+       a.estimated_duration_min,
+       a.status,
+       a.price,
+       a.cancellation_reason,
+       a.actual_start_date_time,
+       a.actual_end_date_time,
+       p.id        AS patient_id,
+       p.full_name AS patient_name,
+       p.phone     AS patient_phone,
+       d.id        AS dentist_id,
+       d.full_name AS dentist_name,
+       at2.name    AS appointment_type,
+       u.name      AS receptionist_name
 FROM appointment a
-         JOIN patient         p   ON p.id  = a.patient_id
-         JOIN dentist         d   ON d.id  = a.dentist_id
-         JOIN users           u   ON u.id  = a.receptionist_id
+         JOIN patient p ON p.id = a.patient_id
+         JOIN dentist d ON d.id = a.dentist_id
+         JOIN users u ON u.id = a.receptionist_id
          LEFT JOIN appointment_type at2 ON at2.id = a.appointment_type_id;
 
 -- ------------------------------------------------------------
 -- vw_billing_overview
 -- Situação financeira por cobrança
 -- ------------------------------------------------------------
-CREATE OR REPLACE VIEW vw_billing_overview AS
-SELECT
-    b.id                                            AS billing_id,
-    b.status                                        AS billing_status,
-    b.total_amount,
-    b.discount,
-    b.created_at                                    AS billing_created_at,
-    p.id                                            AS patient_id,
-    p.full_name                                     AS patient_name,
-    a.scheduled_date_time,
-    COUNT(i.id)                                     AS total_installments,
-    COUNT(i.id) FILTER (WHERE i.status = 'pending') AS pending_installments,
-    COUNT(i.id) FILTER (WHERE i.status = 'overdue') AS overdue_installments,
-    COALESCE(SUM(i.amount) FILTER (WHERE i.status = 'pending'), 0) AS pending_amount,
-    COALESCE(SUM(i.amount) FILTER (WHERE i.status = 'overdue'), 0) AS overdue_amount
+CREATE
+OR REPLACE VIEW vw_billing_overview AS
+SELECT b.id                                                          AS billing_id,
+       b.status                                                      AS billing_status,
+       b.total_amount,
+       b.discount,
+       b.created_at                                                  AS billing_created_at,
+       p.id                                                          AS patient_id,
+       p.full_name                                                   AS patient_name,
+       a.scheduled_date_time,
+       COUNT(i.id)                                                   AS total_installments,
+       COUNT(i.id)                                                      FILTER (WHERE i.status = 'pending') AS pending_installments, COUNT(i.id) FILTER (WHERE i.status = 'overdue') AS overdue_installments, COALESCE(SUM(i.amount) FILTER(WHERE i.status = 'pending'), 0) AS pending_amount,
+       COALESCE(SUM(i.amount) FILTER(WHERE i.status = 'overdue'), 0) AS overdue_amount
 FROM billing b
-         JOIN patient     p ON p.id = b.patient_id
+         JOIN patient p ON p.id = b.patient_id
          JOIN appointment a ON a.id = b.appointment_id
          LEFT JOIN installment i ON i.billing_id = b.id
 GROUP BY b.id, p.id, a.scheduled_date_time;
@@ -490,70 +492,69 @@ GROUP BY b.id, p.id, a.scheduled_date_time;
 -- vw_contract_detail
 -- Geração de PDF e exibição do contrato
 -- ------------------------------------------------------------
-CREATE OR REPLACE VIEW vw_contract_detail AS
-SELECT
-    c.id                    AS contract_id,
-    c.status,
-    c.snapshot_data,
-    c.generated_at,
-    c.signed_at,
-    c.cancelled_at,
-    c.cancellation_reason,
-    p.id                    AS patient_id,
-    p.full_name             AS patient_name,
-    p.cpf                   AS patient_cpf,
-    a.id                    AS appointment_id,
-    a.scheduled_date_time,
-    ct.id                   AS template_id,
-    ct.name                 AS template_name,
-    ctv.id                  AS template_version_id,
-    ctv.version_number,
-    ctv.content             AS template_content,
-    u.id                    AS generated_by_id,
-    u.name                  AS generated_by_name
+CREATE
+OR REPLACE VIEW vw_contract_detail AS
+SELECT c.id        AS contract_id,
+       c.status,
+       c.snapshot_data,
+       c.generated_at,
+       c.signed_at,
+       c.cancelled_at,
+       c.cancellation_reason,
+       p.id        AS patient_id,
+       p.full_name AS patient_name,
+       p.cpf       AS patient_cpf,
+       a.id        AS appointment_id,
+       a.scheduled_date_time,
+       ct.id       AS template_id,
+       ct.name     AS template_name,
+       ctv.id      AS template_version_id,
+       ctv.version_number,
+       ctv.content AS template_content,
+       u.id        AS generated_by_id,
+       u.name      AS generated_by_name
 FROM contract c
-         JOIN patient                  p   ON p.id   = c.patient_id
-         JOIN appointment              a   ON a.id   = c.appointment_id
+         JOIN patient p ON p.id = c.patient_id
+         JOIN appointment a ON a.id = c.appointment_id
          JOIN contract_template_version ctv ON ctv.id = c.template_version_id
-         JOIN contract_template        ct  ON ct.id  = ctv.contract_template_id
-         JOIN users                    u   ON u.id  = c.generated_by;
+         JOIN contract_template ct ON ct.id = ctv.contract_template_id
+         JOIN users u ON u.id = c.generated_by;
 
 -- ------------------------------------------------------------
 -- vw_dentist_schedule
 -- Agenda do dentista com indisponibilidades
 -- ------------------------------------------------------------
-CREATE OR REPLACE VIEW vw_dentist_schedule AS
-SELECT
-    d.id                    AS dentist_id,
-    d.full_name             AS dentist_name,
-    a.id                    AS appointment_id,
-    a.scheduled_date_time,
-    a.estimated_duration_min,
-    a.status                AS appointment_status,
-    p.full_name             AS patient_name,
-    CAST(NULL AS INTEGER)     AS unavailability_id,
-    CAST(NULL AS DATE)       AS unavailability_start,
-    CAST(NULL AS DATE)       AS unavailability_end,
-    'appointment'          AS entry_type
+CREATE
+OR REPLACE VIEW vw_dentist_schedule AS
+SELECT d.id                  AS dentist_id,
+       d.full_name           AS dentist_name,
+       a.id                  AS appointment_id,
+       a.scheduled_date_time,
+       a.estimated_duration_min,
+       a.status              AS appointment_status,
+       p.full_name           AS patient_name,
+       CAST(NULL AS INTEGER) AS unavailability_id,
+       CAST(NULL AS DATE)    AS unavailability_start,
+       CAST(NULL AS DATE)    AS unavailability_end,
+       'appointment'         AS entry_type
 FROM dentist d
          JOIN appointment a ON a.dentist_id = d.id
-         JOIN patient     p ON p.id = a.patient_id
+         JOIN patient p ON p.id = a.patient_id
 WHERE a.status NOT IN ('cancelled')
 
 UNION ALL
 
-SELECT
-    d.id,
-    d.full_name,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    u.id,
-    u.start_date,
-    u.end_date,
-    'unavailability'
+SELECT d.id,
+       d.full_name,
+       NULL,
+       NULL,
+       NULL,
+       NULL,
+       NULL,
+       u.id,
+       u.start_date,
+       u.end_date,
+       'unavailability'
 FROM dentist d
          JOIN unavailability u ON u.dentist_id = d.id;
 
