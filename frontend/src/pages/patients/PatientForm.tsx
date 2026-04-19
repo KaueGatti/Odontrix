@@ -1,35 +1,21 @@
-import {
-    ArrowBigLeft, LucideMail,
-    ReceiptTurkishLira,
-    RefreshCw, SaveIcon, SkipBack, StepBackIcon,
-    TrashIcon
-} from "lucide-react";
-import {Button} from "@/components/ui/button.jsx";
-import {useState} from "react";
-import {Input} from "@/components/ui/input.jsx";
-import {Field, FieldLabel} from "@/components/ui/field.jsx";
-import {RadioGroup, RadioGroupItem} from "@/components/ui/radio-group.jsx";
-import {Label} from "@/components/ui/label.jsx";
-import {useNavigate} from "react-router";
+import {SaveIcon} from "lucide-react";
+import {Button} from "@/components/ui/button.tsx";
+import {Input} from "@/components/ui/input.tsx";
+import {Field, FieldLabel} from "@/components/ui/field.tsx";
+import {RadioGroup, RadioGroupItem} from "@/components/ui/radio-group.tsx";
+import {Label} from "@/components/ui/label.tsx";
+import {Patient} from "@/types/Patient.ts";
 
-function PatientFormPage() {
+interface PatientFormProps {
+    patient: Patient | null;
+}
 
-    const navigate = useNavigate();
-
-    const [spinning, setSpinning] = useState(false)
-
-    const onBackClick = () => {
-        navigate("/patients");
-    }
-
-    function handleSpinCLick() {
-        setSpinning(true)
-        setTimeout(() => setSpinning(false), 1000)
-    }
+export default function PatientForm({patient}: PatientFormProps) {
 
     return (
         <div className="flex flex-col flex-1 justify-center items-center p-6 gap-2">
-            <h1 className="text-4xl w-full text-left pl-4">Atualização de Paciente</h1>
+            <h1 className="text-3xl w-full text-center pl-4">{patient != null ? "Atualização de Paciente" : "Novo" +
+                " Paciente"}</h1>
             <div className="flex flex-col gap-2 w-full h-full border-2 border-gray-200 rounded-lg p-4">
                 <div id="toolsBar"
                      className="flex justify-end gap-1 w-full h-fit relative border-b-gray-300 pb-2 border-b-2">
@@ -40,20 +26,8 @@ function PatientFormPage() {
                             <SaveIcon/>
                             Salvar
                         </Button>
-                        <Button className="cursor-pointer" variant="red">
-                            <TrashIcon/>
-                            Excluir
-                        </Button>
                     </div>
                     <div id="right-toolsBar" className="flex w-full gap-2 justify-end">
-                        <Button className="cursor-pointer" onClick={handleSpinCLick} variant="blue">
-                            <RefreshCw
-                                className={`transition-transform ${spinning ? "animate-spin" : ""}`}/>
-                        </Button>
-                        <Button onClick={onBackClick} className="cursor-pointer" variant="outline">
-                            <ArrowBigLeft/>
-                            Voltar
-                        </Button>
                     </div>
                 </div>
                 <div id="form" className="flex flex-col gap-2">
@@ -114,5 +88,3 @@ function PatientFormPage() {
         </div>
     )
 }
-
-export default PatientFormPage;
