@@ -13,6 +13,7 @@ CREATE TYPE person_type AS ENUM ('legal_entity', 'natural_person');
 CREATE TYPE quote_status AS ENUM ('draft', 'sent', 'approved', 'rejected', 'expired');
 CREATE TYPE contract_status AS ENUM ('generated', 'awaiting_signature', 'signed', 'cancelled');
 CREATE TYPE discount_type AS ENUM ('percent', 'number');
+CREATE TYPE boleto_status AS ENUM ('generated', 'paid', 'cancelled', 'overdue');
 
 -- ------------------------------------------------------------
 -- PAYMENT METHOD
@@ -305,7 +306,7 @@ CREATE TABLE billing
     id             SERIAL PRIMARY KEY,
     appointment_id INT UNIQUE REFERENCES appointment (id),
     patient_id     INT REFERENCES patient (id),
-    cust_center_id INT REFERENCES cost_center (id),
+    cost_center_id INT REFERENCES cost_center (id),
     total_amount   NUMERIC(10, 2) NOT NULL,
     discount       NUMERIC(10, 2) NOT NULL DEFAULT 0,
     created_at     TIMESTAMPTZ    NOT NULL DEFAULT NOW()
@@ -324,6 +325,23 @@ CREATE TABLE installment
     due_date                DATE           NOT NULL,
     payment_date            DATE,
     intended_payment_method INT            NOT NULL REFERENCES payment_method (id)
+);
+
+CREATE TABLE boleto
+(
+    id             SERIAL PRIMARY KEY,
+    installment_id INT           NOT NULL REFERENCES installment (id),
+    due_date       DATE          NOT NULL,
+    amount         NUMERIC(10,2) NOT NULL,
+    issued_at      TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
+    our_number     TEXT          UNIQUE,
+    bar_code       TEXT,
+    digitable_line TEXT,
+    registered_at  TIMESTAMPTZ,
+    status         boleto_status NOT NULL DEFAULT 'generated',
+    cancelled_at   TIMESTAMPTZ,
+    paid_at        TIMESTAMPTZ,
+    bank_payload   JSONB
 );
 
 -- ------------------------------------------------------------
@@ -346,7 +364,6 @@ CREATE TABLE payment
     id             SERIAL PRIMARY KEY,
     user_id        INT            NOT NULL REFERENCES users (id),
     type           payment_type   NOT NULL,
-    installment_id INT            NOT NULL REFERENCES installment (id),
     notes          TEXT,
     amount         NUMERIC(10, 2) NOT NULL,
     payment_method INT            NOT NULL REFERENCES payment_method (id),
@@ -470,121 +487,121 @@ CREATE TABLE audit_log
 -- vw_appointment_summary
 -- Listagem da agenda e dashboard
 -- ------------------------------------------------------------
-CREATE
-OR REPLACE VIEW vw_appointment_summary AS
-SELECT a.id        AS appointment_id,
-       a.scheduled_date_time,
-       a.estimated_duration_min,
-       a.status,
-       a.price,
-       a.cancellation_reason,
-       a.actual_start_date_time,
-       a.actual_end_date_time,
-       p.id        AS patient_id,
-       p.full_name AS patient_name,
-       p.phone     AS patient_phone,
-       d.id        AS dentist_id,
-       d.full_name AS dentist_name,
-       at2.name    AS appointment_type,
-       u.name      AS receptionist_name
-FROM appointment a
-         JOIN patient p ON p.id = a.patient_id
-         JOIN dentist d ON d.id = a.dentist_id
-         JOIN users u ON u.id = a.receptionist_id
-         LEFT JOIN appointment_type at2 ON at2.id = a.appointment_type_id;
+-- CREATE
+-- OR REPLACE VIEW vw_appointment_summary AS
+-- SELECT a.id        AS appointment_id,
+--        a.scheduled_date_time,
+--        a.estimated_duration_min,
+--        a.status,
+--        a.price,
+--        a.cancellation_reason,
+--        a.actual_start_date_time,
+--        a.actual_end_date_time,
+--        p.id        AS patient_id,
+--        p.full_name AS patient_name,
+--        p.cell_phone AS patient_phone,
+--        d.id        AS dentist_id,
+--        d.full_name AS dentist_name,
+--        at2.name    AS appointment_type,
+--        u.name      AS receptionist_name
+-- FROM appointment a
+--          JOIN patient p ON p.id = a.patient_id
+--          JOIN dentist d ON d.id = a.dentist_id
+--          JOIN users u ON u.id = a.receptionist_id
+--          LEFT JOIN appointment_type at2 ON at2.id = a.appointment_type_id;
 
 -- ------------------------------------------------------------
 -- vw_billing_overview
 -- Situação financeira por cobrança
 -- ------------------------------------------------------------
-CREATE
-OR REPLACE VIEW vw_billing_overview AS
-SELECT b.id                                                          AS billing_id,
-       b.status                                                      AS billing_status,
-       b.total_amount,
-       b.discount,
-       b.created_at                                                  AS billing_created_at,
-       p.id                                                          AS patient_id,
-       p.full_name                                                   AS patient_name,
-       a.scheduled_date_time,
-       COUNT(i.id)                                                   AS total_installments,
-       COUNT(i.id)                                                      FILTER (WHERE i.status = 'pending') AS pending_installments, COUNT(i.id) FILTER (WHERE i.status = 'overdue') AS overdue_installments, COALESCE(SUM(i.amount) FILTER(WHERE i.status = 'pending'), 0) AS pending_amount,
-       COALESCE(SUM(i.amount) FILTER(WHERE i.status = 'overdue'), 0) AS overdue_amount
-FROM billing b
-         JOIN patient p ON p.id = b.patient_id
-         JOIN appointment a ON a.id = b.appointment_id
-         LEFT JOIN installment i ON i.billing_id = b.id
-GROUP BY b.id, p.id, a.scheduled_date_time;
+-- CREATE
+-- OR REPLACE VIEW vw_billing_overview AS
+-- SELECT b.id                                                          AS billing_id,
+--        b.total_amount,
+--        b.discount,
+--        b.created_at                                                  AS billing_created_at,
+--        p.id                                                          AS patient_id,
+--        p.full_name                                                   AS patient_name,
+--        a.scheduled_date_time,
+--        COUNT(i.id)                                                   AS total_installments,
+--        COALESCE(SUM(i.amount), 0)                                    AS total_installment_amount,
+--        COUNT(i.id) FILTER (WHERE i.payment_date IS NULL)             AS pending_installments,
+--        COUNT(i.id) FILTER (WHERE i.payment_date IS NOT NULL)        AS paid_installments
+-- FROM billing b
+--          JOIN patient p ON p.id = b.patient_id
+--          JOIN appointment a ON a.id = b.appointment_id
+--          LEFT JOIN installment i ON i.billing_id = b.id
+-- GROUP BY b.id, p.id, a.scheduled_date_time;
 
 -- ------------------------------------------------------------
 -- vw_contract_detail
 -- Geração de PDF e exibição do contrato
 -- ------------------------------------------------------------
-CREATE
-OR REPLACE VIEW vw_contract_detail AS
-SELECT c.id        AS contract_id,
-       c.status,
-       c.snapshot_data,
-       c.generated_at,
-       c.signed_at,
-       c.cancelled_at,
-       c.cancellation_reason,
-       p.id        AS patient_id,
-       p.full_name AS patient_name,
-       p.cpf       AS patient_cpf,
-       a.id        AS appointment_id,
-       a.scheduled_date_time,
-       ct.id       AS template_id,
-       ct.name     AS template_name,
-       ctv.id      AS template_version_id,
-       ctv.version_number,
-       ctv.content AS template_content,
-       u.id        AS generated_by_id,
-       u.name      AS generated_by_name
-FROM contract c
-         JOIN patient p ON p.id = c.patient_id
-         JOIN appointment a ON a.id = c.appointment_id
-         JOIN contract_template_version ctv ON ctv.id = c.template_version_id
-         JOIN contract_template ct ON ct.id = ctv.contract_template_id
-         JOIN users u ON u.id = c.generated_by;
+-- CREATE
+-- OR REPLACE VIEW vw_contract_detail AS
+-- SELECT c.id        AS contract_id,
+--        c.status,
+--        c.snapshot_data,
+--        c.generated_at,
+--        c.signed_at,
+--        c.cancelled_at,
+--        c.cancellation_reason,
+--        p.id        AS patient_id,
+--        p.full_name AS patient_name,
+--        p.cpf       AS patient_cpf,
+--        a.id        AS appointment_id,
+--        a.scheduled_date_time,
+--        ct.id       AS template_id,
+--        ct.name     AS template_name,
+--        ctv.id      AS template_version_id,
+--        ctv.version_number,
+--        ctv.content AS template_content,
+--        u.id        AS generated_by_id,
+--        u.name      AS generated_by_name
+-- FROM contract c
+--          JOIN patient p ON p.id = c.patient_id
+--          JOIN appointment a ON a.id = c.appointment_id
+--          JOIN contract_template_version ctv ON ctv.id = c.template_version_id
+--          JOIN contract_template ct ON ct.id = ctv.contract_template_id
+--          JOIN users u ON u.id = c.generated_by;
 
 -- ------------------------------------------------------------
 -- vw_dentist_schedule
 -- Agenda do dentista com indisponibilidades
 -- ------------------------------------------------------------
-CREATE
-OR REPLACE VIEW vw_dentist_schedule AS
-SELECT d.id                  AS dentist_id,
-       d.full_name           AS dentist_name,
-       a.id                  AS appointment_id,
-       a.scheduled_date_time,
-       a.estimated_duration_min,
-       a.status              AS appointment_status,
-       p.full_name           AS patient_name,
-       CAST(NULL AS INTEGER) AS unavailability_id,
-       CAST(NULL AS DATE)    AS unavailability_start,
-       CAST(NULL AS DATE)    AS unavailability_end,
-       'appointment'         AS entry_type
-FROM dentist d
-         JOIN appointment a ON a.dentist_id = d.id
-         JOIN patient p ON p.id = a.patient_id
-WHERE a.status NOT IN ('cancelled')
+-- CREATE
+-- OR REPLACE VIEW vw_dentist_schedule AS
+-- SELECT d.id                  AS dentist_id,
+--        d.full_name           AS dentist_name,
+--        a.id                  AS appointment_id,
+--        a.scheduled_date_time,
+--        a.estimated_duration_min,
+--        a.status              AS appointment_status,
+--        p.full_name           AS patient_name,
+--        CAST(NULL AS INTEGER) AS unavailability_id,
+--        CAST(NULL AS DATE)    AS unavailability_start,
+--        CAST(NULL AS DATE)    AS unavailability_end,
+--        'appointment'         AS entry_type
+-- FROM dentist d
+--          JOIN appointment a ON a.dentist_id = d.id
+--          JOIN patient p ON p.id = a.patient_id
+-- WHERE a.status NOT IN ('cancelled')
 
-UNION ALL
+-- UNION ALL
 
-SELECT d.id,
-       d.full_name,
-       NULL,
-       NULL,
-       NULL,
-       NULL,
-       NULL,
-       u.id,
-       u.start_date,
-       u.end_date,
-       'unavailability'
-FROM dentist d
-         JOIN unavailability u ON u.dentist_id = d.id;
+-- SELECT d.id,
+--        d.full_name,
+--        NULL,
+--        NULL,
+--        NULL,
+--        NULL,
+--        NULL,
+--        u.id,
+--        u.start_date,
+--        u.end_date,
+--        'unavailability'
+-- FROM dentist d
+--          JOIN unavailability u ON u.dentist_id = d.id;
 
 -- ============================================================
 -- INDEXES
@@ -594,9 +611,8 @@ CREATE INDEX idx_appointment_dentist ON appointment (dentist_id);
 CREATE INDEX idx_appointment_date ON appointment (scheduled_date_time);
 CREATE INDEX idx_appointment_status ON appointment (status);
 CREATE INDEX idx_billing_patient ON billing (patient_id);
-CREATE INDEX idx_billing_status ON billing (status);
+-- CREATE INDEX idx_billing_status ON billing (status);
 CREATE INDEX idx_installment_due_date ON installment (due_date);
-CREATE INDEX idx_installment_status ON installment (status);
 CREATE INDEX idx_anamnesis_patient ON anamnesis (patient_id);
 CREATE INDEX idx_attachment_patient ON attachment (patient_id);
 CREATE INDEX idx_audit_log_table_record ON audit_log (table_name, record_id);
@@ -605,8 +621,8 @@ CREATE INDEX idx_unavailability_dentist ON unavailability (dentist_id, start_dat
 CREATE INDEX idx_unavailability_end_date ON unavailability (end_date);
 CREATE INDEX idx_address_city ON address (city);
 CREATE INDEX idx_patient_address ON patient (address_id);
-CREATE INDEX idx_clinic_address ON clinic (address_id);
-CREATE INDEX idx_responsible_address ON responsible (address_id);
+-- CREATE INDEX idx_clinic_address ON clinic (address_id);
+-- CREATE INDEX idx_responsible_address ON responsible (address_id);
 CREATE INDEX idx_dentist_user ON dentist (user_id);
 CREATE INDEX idx_quote_patient ON quote (patient_id);
 CREATE INDEX idx_quote_dentist ON quote (dentist_id);
@@ -614,8 +630,7 @@ CREATE INDEX idx_quote_created_by ON quote (created_by);
 CREATE INDEX idx_quote_status ON quote (status);
 CREATE INDEX idx_quote_procedure_quote ON quote_procedure (quote_id);
 CREATE INDEX idx_appointment_procedure ON appointment_procedure (appointment_id);
-CREATE INDEX idx_payment_billing ON payment (billing_id);
-CREATE INDEX idx_payment_cost_center ON payment (cost_center_id);
+-- CREATE INDEX idx_payment_cost_center ON payment (cost_center_id);
 CREATE INDEX idx_payment_type ON payment (type);
 CREATE INDEX idx_payment_date ON payment (date_time);
 CREATE INDEX idx_cost_center_active ON cost_center (active);
