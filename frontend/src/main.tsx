@@ -1,11 +1,15 @@
 import {createRoot} from 'react-dom/client'
 import './index.css'
+import '@mantine/core/styles.css'
+import '@mantine/dates/styles.css';
 
 import {createBrowserRouter, RouterProvider} from "react-router"
 import MenuPage from "@/pages/MenuPage.tsx"
 import SchedulePage from "@/pages/SchedulePage.tsx"
-import PatientGridPage from "@/pages/patients/PatientGridPage.tsx"
+import PatientPage from "@/pages/patients/PatientPage.tsx"
 import {StrictMode} from "react";
+import PatientFormPage from "@/pages/patients/PatientFormPage.tsx";
+import {MantineProvider} from "@mantine/core";
 
 const router = createBrowserRouter([
     {
@@ -14,7 +18,11 @@ const router = createBrowserRouter([
         children: [
             {
                 path: "patients",
-                element: <PatientGridPage/>,
+                element: <PatientPage/>,
+            },
+            {
+                path: "patients/register",
+                element: <PatientFormPage patient={null}/>
             },
             {
                 path: "dentists",
@@ -36,6 +44,8 @@ if (!rootElement) {
 
 createRoot(rootElement).render(
     <StrictMode>
-        <RouterProvider router={router}/>
+        <MantineProvider>
+            <RouterProvider router={router}/>
+        </MantineProvider>
     </StrictMode>
 )

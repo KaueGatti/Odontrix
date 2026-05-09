@@ -7,15 +7,39 @@
 CREATE TYPE user_profile AS ENUM ('manager', 'receptionist', 'dentist');
 CREATE TYPE appointment_status AS ENUM ('scheduled', 'confirmed', 'completed', 'cancelled');
 CREATE TYPE day_of_week AS ENUM ('monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday');
-CREATE TYPE attachment_type AS ENUM ('xray', 'intraoral_photo', 'document', 'other');
-CREATE TYPE billing_status AS ENUM ('pending', 'paid', 'overdue', 'cancelled');
-CREATE TYPE installment_status AS ENUM ('pending', 'paid', 'overdue');
-CREATE TYPE payment_method AS ENUM ('cash', 'debit_card', 'credit_card', 'boleto', 'pix');
 CREATE TYPE payment_type AS ENUM ('income', 'expense');
 CREATE TYPE audit_action AS ENUM ('create', 'update', 'deactivate');
 CREATE TYPE person_type AS ENUM ('legal_entity', 'natural_person');
 CREATE TYPE quote_status AS ENUM ('draft', 'sent', 'approved', 'rejected', 'expired');
 CREATE TYPE contract_status AS ENUM ('generated', 'awaiting_signature', 'signed', 'cancelled');
+CREATE TYPE discount_type AS ENUM ('percent', 'number');
+
+-- ------------------------------------------------------------
+-- PAYMENT METHOD
+-- ------------------------------------------------------------
+CREATE TABLE payment_method
+(
+    id          SERIAL PRIMARY KEY,
+    description VARCHAR(50) NOT NULL
+);
+
+-- ------------------------------------------------------------
+-- REFERRAL SOURCE
+-- ------------------------------------------------------------
+CREATE TABLE referral_source
+(
+    id          SERIAL PRIMARY KEY,
+    description VARCHAR(50) NOT NULL
+);
+
+-- ------------------------------------------------------------
+-- ATTACHMENT TYPE
+-- ------------------------------------------------------------
+CREATE TABLE attachment_type
+(
+    id          SERIAL PRIMARY KEY,
+    description VARCHAR(50) NOT NULL,
+);
 
 -- ------------------------------------------------------------
 -- ADDRESS
@@ -77,7 +101,7 @@ CREATE TABLE specialty
 -- ------------------------------------------------------------
 -- DENTAL PLANS
 -- ------------------------------------------------------------
-CREATE TABLE plan
+CREATE TABLE dental_plan
 (
     id            SERIAL PRIMARY KEY,
     name          VARCHAR(100)   NOT NULL,
@@ -93,14 +117,11 @@ CREATE TABLE plan
 -- ------------------------------------------------------------
 CREATE TABLE responsible
 (
-    id         SERIAL PRIMARY KEY,
-    full_name  VARCHAR(150) NOT NULL,
-    cpf        VARCHAR(14) UNIQUE,
-    rg         VARCHAR(14) UNIQUE,
-    phone      VARCHAR(20)  NOT NULL,
-    email      VARCHAR(150),
-    address_id INT          NOT NULL REFERENCES address (id),
-    active     BOOLEAN      NOT NULL DEFAULT TRUE
+    id        SERIAL PRIMARY KEY,
+    full_name VARCHAR(150) NOT NULL,
+    cpf       VARCHAR(14) UNIQUE,
+    rg        VARCHAR(14) UNIQUE,
+    active    BOOLEAN      NOT NULL DEFAULT TRUE
 
         CONSTRAINT responsible_document_check CHECK (cpf IS NOT NULL OR rg IS NOT NULL)
 );
@@ -110,20 +131,21 @@ CREATE TABLE responsible
 -- ------------------------------------------------------------
 CREATE TABLE patient
 (
-    id              SERIAL PRIMARY KEY,
-    full_name       VARCHAR(150) NOT NULL,
-    cpf             VARCHAR(14) UNIQUE,
-    rg              VARCHAR(14) UNIQUE,
-    phone           VARCHAR(20)  NOT NULL,
-    emergency_phone VARCHAR(20)  NOT NULL,
-    email           VARCHAR(150),
-    birth_date      DATE         NOT NULL,
-    address_id      INT          NOT NULL REFERENCES address (id),
-    referral_source VARCHAR(100),
-    active          BOOLEAN      NOT NULL DEFAULT TRUE,
-    responsible_id  INT REFERENCES responsible (id),
-    plan_id         INT REFERENCES plan (id),
-    created_at      TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+    id                 SERIAL PRIMARY KEY,
+    full_name          VARCHAR(150) NOT NULL,
+    cpf                VARCHAR(14) UNIQUE,
+    rg                 VARCHAR(14) UNIQUE,
+    landline_phone     VARCHAR(20)  NOT NULL,
+    cell_phone         VARCHAR(20)  NOT NULL,
+    emergency_phone    VARCHAR(20)  NOT NULL,
+    email              VARCHAR(150),
+    birth_date         DATE         NOT NULL,
+    address_id         INT          NOT NULL REFERENCES address (id),
+    referral_source_id INT          NOT NULL REFERENCES referral_source (id),
+    active             BOOLEAN      NOT NULL DEFAULT TRUE,
+    responsible_id     INT REFERENCES responsible (id),
+    plan_id            INT REFERENCES dental_plan (id),
+    created_at         TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
 
     CONSTRAINT patient_document_check CHECK (cpf IS NOT NULL OR rg IS NOT NULL)
 );
@@ -189,7 +211,7 @@ CREATE TABLE appointment_type
 -- ------------------------------------------------------------
 -- PROCEDURES
 -- ------------------------------------------------------------
-CREATE TABLE procedure
+CREATE TABLE dental_procedure
 (
     id              SERIAL PRIMARY KEY,
     name            VARCHAR(150)   NOT NULL,
@@ -237,7 +259,7 @@ CREATE TABLE appointment
 CREATE TABLE appointment_procedure
 (
     appointment_id INT            NOT NULL REFERENCES appointment (id),
-    procedure_id   INT            NOT NULL REFERENCES procedure (id),
+    procedure_id   INT            NOT NULL REFERENCES dental_procedure (id),
     tooth_fdi      SMALLINT,
     unit_price     NUMERIC(10, 2) NOT NULL,
     discount       NUMERIC(10, 2) NOT NULL DEFAULT 0,
@@ -267,12 +289,12 @@ CREATE TABLE anamnesis
 CREATE TABLE attachment
 (
     id             SERIAL PRIMARY KEY,
-    patient_id     INT             NOT NULL REFERENCES patient (id),
+    patient_id     INT         NOT NULL REFERENCES patient (id),
     appointment_id INT REFERENCES appointment (id),
     description    VARCHAR(200),
-    file_url       TEXT            NOT NULL,
-    type           attachment_type NOT NULL DEFAULT 'other',
-    sent_at        TIMESTAMPTZ     NOT NULL DEFAULT NOW()
+    file_url       TEXT        NOT NULL,
+    type           INT         NOT NULL REFERENCES attachment_type (id),
+    sent_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- ------------------------------------------------------------
@@ -281,11 +303,11 @@ CREATE TABLE attachment
 CREATE TABLE billing
 (
     id             SERIAL PRIMARY KEY,
-    appointment_id INT            NOT NULL UNIQUE REFERENCES appointment (id),
-    patient_id     INT            NOT NULL REFERENCES patient (id),
+    appointment_id INT UNIQUE REFERENCES appointment (id),
+    patient_id     INT REFERENCES patient (id),
+    cust_center_id INT REFERENCES cost_center (id),
     total_amount   NUMERIC(10, 2) NOT NULL,
     discount       NUMERIC(10, 2) NOT NULL DEFAULT 0,
-    status         billing_status NOT NULL DEFAULT 'pending',
     created_at     TIMESTAMPTZ    NOT NULL DEFAULT NOW()
 );
 
@@ -294,17 +316,14 @@ CREATE TABLE billing
 -- ------------------------------------------------------------
 CREATE TABLE installment
 (
-    id             SERIAL PRIMARY KEY,
-    billing_id     INT                NOT NULL REFERENCES billing (id),
-    number         SMALLINT           NOT NULL,
-    amount         NUMERIC(10, 2)     NOT NULL,
-    due_date       DATE               NOT NULL,
-    payment_date   DATE,
-    payment_method payment_method,
-    status         installment_status NOT NULL DEFAULT 'pending',
-
-    CONSTRAINT installment_method_check
-        CHECK (payment_method IN ('credit_card', 'boleto') OR number = 1)
+    id                      SERIAL PRIMARY KEY,
+    billing_id              INT            NOT NULL REFERENCES billing (id),
+    our_number              TEXT           NOT NULL,
+    amount                  NUMERIC(10, 2) NOT NULL,
+    paid_amount             NUMERIC(10, 2) NOT NULL DEFAULT 0,
+    due_date                DATE           NOT NULL,
+    payment_date            DATE,
+    intended_payment_method INT            NOT NULL REFERENCES payment_method (id)
 );
 
 -- ------------------------------------------------------------
@@ -315,6 +334,7 @@ CREATE TABLE cost_center
     id          SERIAL PRIMARY KEY,
     name        VARCHAR(100) NOT NULL UNIQUE,
     description TEXT,
+    type        payment_type NOT NULL,
     active      BOOLEAN      NOT NULL DEFAULT TRUE
 );
 
@@ -326,18 +346,23 @@ CREATE TABLE payment
     id             SERIAL PRIMARY KEY,
     user_id        INT            NOT NULL REFERENCES users (id),
     type           payment_type   NOT NULL,
-    billing_id     INT REFERENCES billing (id),
-    cost_center_id INT REFERENCES cost_center (id),
+    installment_id INT            NOT NULL REFERENCES installment (id),
     notes          TEXT,
     amount         NUMERIC(10, 2) NOT NULL,
-    payment_method payment_method NOT NULL,
+    payment_method INT            NOT NULL REFERENCES payment_method (id),
     date_time      TIMESTAMPTZ    NOT NULL DEFAULT NOW(),
-    refund_ref_id  INT REFERENCES payment (id),
+    refund_ref_id  INT REFERENCES payment (id)
+);
 
-    CONSTRAINT payment_source_check CHECK (
-        (type = 'income' AND billing_id IS NOT NULL AND cost_center_id IS NULL) OR
-        (type = 'expense' AND cost_center_id IS NOT NULL AND billing_id IS NULL)
-        )
+-- ------------------------------------------------------------
+-- PAYMENTS INSTALLMENTS
+-- ------------------------------------------------------------
+CREATE TABLE payment_installment
+(
+    payment_id     INT            NOT NULL REFERENCES payment (id),
+    installment_id INT            NOT NULL REFERENCES installment (id),
+    amount_apllied NUMERIC(10, 2) NOT NULL,
+    PRIMARY KEY (payment_id, installment_id)
 );
 
 -- ------------------------------------------------------------
@@ -345,16 +370,18 @@ CREATE TABLE payment
 -- ------------------------------------------------------------
 CREATE TABLE quote
 (
-    id           SERIAL PRIMARY KEY,
-    patient_id   INT            NOT NULL REFERENCES patient (id),
-    dentist_id   INT            NOT NULL REFERENCES dentist (id),
-    created_by   INT            NOT NULL REFERENCES users (id),
-    status       quote_status   NOT NULL DEFAULT 'draft',
-    discount     NUMERIC(10, 2) NOT NULL DEFAULT 0,
-    total_amount NUMERIC(10, 2) NOT NULL,
-    valid_until  DATE,
-    notes        TEXT,
-    created_at   TIMESTAMPTZ    NOT NULL DEFAULT NOW()
+    id            SERIAL PRIMARY KEY,
+    patient_id    INT            NOT NULL REFERENCES patient (id),
+    created_by    INT            NOT NULL REFERENCES users (id),
+    description   VARCHAR(150)   NOT NULL,
+    status        quote_status   NOT NULL DEFAULT 'draft',
+    discount      NUMERIC(10, 2) NOT NULL DEFAULT 0,
+    discount_type discount_type  NOT NULL DEFAULT 'percent',
+    total_amount  NUMERIC(10, 2) NOT NULL,
+    valid_until   DATE,
+    notes         TEXT,
+    payment_notes TEXT,
+    created_at    TIMESTAMPTZ    NOT NULL DEFAULT NOW()
 );
 
 -- ------------------------------------------------------------
@@ -362,14 +389,15 @@ CREATE TABLE quote
 -- ------------------------------------------------------------
 CREATE TABLE quote_procedure
 (
-    id           SERIAL PRIMARY KEY,
-    quote_id     INT            NOT NULL REFERENCES quote (id),
-    procedure_id INT            NOT NULL REFERENCES procedure (id),
-    unit_price   NUMERIC(10, 2) NOT NULL,
-    discount     NUMERIC(10, 2) NOT NULL DEFAULT 0,
-    quantity     SMALLINT       NOT NULL DEFAULT 1,
-    final_price  NUMERIC(10, 2) NOT NULL,
-    notes        TEXT
+    id            SERIAL PRIMARY KEY,
+    quote_id      INT            NOT NULL REFERENCES quote (id),
+    procedure_id  INT            NOT NULL REFERENCES dental_procedure (id),
+    unit_price    NUMERIC(10, 2) NOT NULL,
+    discount      NUMERIC(10, 2) NOT NULL DEFAULT 0,
+    discount_type discount_type  NOT NULL DEFAULT 'percent',
+    quantity      SMALLINT       NOT NULL DEFAULT 1,
+    final_price   NUMERIC(10, 2) NOT NULL,
+    notes         TEXT
 );
 
 -- ------------------------------------------------------------
