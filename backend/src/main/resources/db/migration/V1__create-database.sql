@@ -3,6 +3,10 @@
 -- Database: PostgreSQL
 -- ============================================================
 
+-- Extensão necessária para o EXCLUDE constraint com tipos escalares no GIST
+CREATE
+EXTENSION IF NOT EXISTS btree_gist;
+
 -- Enums
 CREATE TYPE user_profile AS ENUM ('manager', 'receptionist', 'dentist');
 CREATE TYPE appointment_status AS ENUM ('scheduled', 'confirmed', 'completed', 'cancelled');
@@ -13,7 +17,7 @@ CREATE TYPE person_type AS ENUM ('legal_entity', 'natural_person');
 CREATE TYPE quote_status AS ENUM ('draft', 'sent', 'approved', 'rejected', 'expired');
 CREATE TYPE contract_status AS ENUM ('generated', 'awaiting_signature', 'signed', 'cancelled');
 CREATE TYPE discount_type AS ENUM ('percent', 'number');
-CREATE TYPE boleto_status AS ENUM ('generated', 'paid', 'cancelled', 'overdue');
+CREATE TYPE boleto_status AS ENUM ('issued', 'registred', 'paid', 'cancelled', 'overdue');
 
 -- ------------------------------------------------------------
 -- PAYMENT METHOD
@@ -39,7 +43,7 @@ CREATE TABLE referral_source
 CREATE TABLE attachment_type
 (
     id          SERIAL PRIMARY KEY,
-    description VARCHAR(50) NOT NULL,
+    description VARCHAR(50) NOT NULL
 );
 
 -- ------------------------------------------------------------
@@ -81,7 +85,7 @@ CREATE TABLE clinic
 CREATE TABLE users
 (
     id            SERIAL PRIMARY KEY,
-    name          VARCHAR(150)        NOT NULL,
+    name          VARCHAR(150) UNIQUE NOT NULL,
     email         VARCHAR(150) UNIQUE NOT NULL,
     password_hash TEXT                NOT NULL,
     profile       user_profile        NOT NULL,
@@ -122,9 +126,9 @@ CREATE TABLE responsible
     full_name VARCHAR(150) NOT NULL,
     cpf       VARCHAR(14) UNIQUE,
     rg        VARCHAR(14) UNIQUE,
-    active    BOOLEAN      NOT NULL DEFAULT TRUE
+    active    BOOLEAN      NOT NULL DEFAULT TRUE,
 
-        CONSTRAINT responsible_document_check CHECK (cpf IS NOT NULL OR rg IS NOT NULL)
+    CONSTRAINT responsible_document_check CHECK (cpf IS NOT NULL OR rg IS NOT NULL)
 );
 
 -- ------------------------------------------------------------
@@ -153,6 +157,7 @@ CREATE TABLE patient
 
 -- ------------------------------------------------------------
 -- DENTISTS
+-- start_break e end_break removidos — agora residem em dentist_work_schedule
 -- ------------------------------------------------------------
 CREATE TABLE dentist
 (
@@ -163,6 +168,7 @@ CREATE TABLE dentist
     rg                 VARCHAR(14),
     cnpj               VARCHAR(18),
     cro_number         VARCHAR(30),
+    cro_state          VARCHAR(2)   NOT NULL,
     phone              VARCHAR(20)  NOT NULL,
     email              VARCHAR(150),
     birth_date         DATE,
@@ -172,7 +178,65 @@ CREATE TABLE dentist
     active             BOOLEAN      NOT NULL DEFAULT TRUE,
     created_at         TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
 
-    CONSTRAINT dentist_doc_check CHECK (cpf IS NOT NULL OR cnpj IS NOT NULL OR rg IS NOT NULL )
+    CONSTRAINT dentist_doc_check CHECK (cpf IS NOT NULL OR cnpj IS NOT NULL OR rg IS NOT NULL)
+);
+
+-- ------------------------------------------------------------
+-- DENTIST WORK SCHEDULE (horário padrão semanal com versionamento)
+-- Nunca atualizar registros vigentes — fechar valid_to e inserir novo
+-- ------------------------------------------------------------
+CREATE TABLE dentist_work_schedule
+(
+    id          SERIAL PRIMARY KEY,
+    dentist_id  INT         NOT NULL REFERENCES dentist (id),
+    day_of_week day_of_week NOT NULL,
+    start_time  TIME        NOT NULL,
+    end_time    TIME        NOT NULL,
+    start_break TIME,
+    end_break   TIME,
+    active      BOOLEAN     NOT NULL DEFAULT TRUE, -- FALSE = não trabalha nesse dia
+    valid_from  DATE        NOT NULL DEFAULT CURRENT_DATE,
+    valid_to    DATE,                              -- NULL = vigente
+
+    CONSTRAINT chk_schedule_valid_range CHECK (valid_to IS NULL OR valid_to > valid_from),
+    CONSTRAINT chk_schedule_work_hours CHECK (end_time > start_time),
+    CONSTRAINT chk_schedule_break CHECK (
+        (start_break IS NULL AND end_break IS NULL) OR
+        (start_break IS NOT NULL AND end_break IS NOT NULL AND end_break > start_break)
+        ),
+    -- Impede sobreposição de períodos para o mesmo dentista + dia da semana
+    CONSTRAINT  no_overlapping_schedule EXCLUDE USING GIST (
+        dentist_id  WITH =,
+        day_of_week WITH =,
+        daterange(valid_from, valid_to, '[)') WITH &&
+    )
+);
+
+-- ------------------------------------------------------------
+-- DENTIST SCHEDULE EXCEPTION (substituições para datas específicas)
+-- Sobrescreve o horário padrão de dentist_work_schedule para uma data pontual
+-- ------------------------------------------------------------
+CREATE TABLE dentist_schedule_exception
+(
+    id             SERIAL PRIMARY KEY,
+    dentist_id     INT     NOT NULL REFERENCES dentist (id),
+    exception_date DATE    NOT NULL,
+    is_day_off     BOOLEAN NOT NULL DEFAULT FALSE, -- TRUE = não trabalha nesse dia
+    start_time     TIME,
+    end_time       TIME,
+    start_break    TIME,
+    end_break      TIME,
+    reason         VARCHAR(255),
+
+    CONSTRAINT uq_dentist_exception UNIQUE (dentist_id, exception_date),
+    CONSTRAINT chk_exception_hours CHECK (
+        is_day_off = TRUE OR
+        (start_time IS NOT NULL AND end_time IS NOT NULL AND end_time > start_time)
+        ),
+    CONSTRAINT chk_exception_break CHECK (
+        (start_break IS NULL AND end_break IS NULL) OR
+        (start_break IS NOT NULL AND end_break IS NOT NULL AND end_break > start_break)
+        )
 );
 
 -- ------------------------------------------------------------
@@ -190,10 +254,11 @@ CREATE TABLE dentist_specialty
 -- ------------------------------------------------------------
 CREATE TABLE unavailability
 (
-    id         SERIAL PRIMARY KEY,
-    dentist_id INT  NOT NULL REFERENCES dentist (id),
-    start_date DATE NOT NULL,
-    end_date   DATE NOT NULL,
+    id          SERIAL PRIMARY KEY,
+    dentist_id  INT  NOT NULL REFERENCES dentist (id),
+    start_date  DATE NOT NULL,
+    end_date    DATE NOT NULL,
+    description TEXT NOT NULL,
 
     CONSTRAINT unavailability_date_check CHECK (start_date < end_date)
 );
@@ -238,7 +303,7 @@ CREATE TABLE appointment
     price                        NUMERIC(10, 2),
     cancellation_reason          TEXT,
 
-    -- Filled by the dentist after the appointment
+    -- Preenchido pelo dentista após a consulta
     actual_start_date_time       TIMESTAMPTZ,
     actual_end_date_time         TIMESTAMPTZ,
     main_complaint               TEXT,
@@ -299,6 +364,18 @@ CREATE TABLE attachment
 );
 
 -- ------------------------------------------------------------
+-- COST CENTERS
+-- ------------------------------------------------------------
+CREATE TABLE cost_center
+(
+    id          SERIAL PRIMARY KEY,
+    name        VARCHAR(100) NOT NULL UNIQUE,
+    description TEXT,
+    type        payment_type NOT NULL,
+    active      BOOLEAN      NOT NULL DEFAULT TRUE
+);
+
+-- ------------------------------------------------------------
 -- BILLINGS (generated automatically when appointment is completed)
 -- ------------------------------------------------------------
 CREATE TABLE billing
@@ -327,33 +404,24 @@ CREATE TABLE installment
     intended_payment_method INT            NOT NULL REFERENCES payment_method (id)
 );
 
+-- ------------------------------------------------------------
+-- BOLETOS
+-- ------------------------------------------------------------
 CREATE TABLE boleto
 (
     id             SERIAL PRIMARY KEY,
-    installment_id INT           NOT NULL REFERENCES installment (id),
-    due_date       DATE          NOT NULL,
-    amount         NUMERIC(10,2) NOT NULL,
-    issued_at      TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
-    our_number     TEXT          UNIQUE,
+    installment_id INT            NOT NULL REFERENCES installment (id),
+    due_date       DATE           NOT NULL,
+    amount         NUMERIC(10, 2) NOT NULL,
+    issued_at      TIMESTAMPTZ    NOT NULL DEFAULT NOW(),
+    our_number     TEXT UNIQUE,
     bar_code       TEXT,
     digitable_line TEXT,
     registered_at  TIMESTAMPTZ,
-    status         boleto_status NOT NULL DEFAULT 'generated',
+    status         boleto_status  NOT NULL DEFAULT 'generated',
     cancelled_at   TIMESTAMPTZ,
     paid_at        TIMESTAMPTZ,
     bank_payload   JSONB
-);
-
--- ------------------------------------------------------------
--- COST CENTERS
--- ------------------------------------------------------------
-CREATE TABLE cost_center
-(
-    id          SERIAL PRIMARY KEY,
-    name        VARCHAR(100) NOT NULL UNIQUE,
-    description TEXT,
-    type        payment_type NOT NULL,
-    active      BOOLEAN      NOT NULL DEFAULT TRUE
 );
 
 -- ------------------------------------------------------------
@@ -485,10 +553,8 @@ CREATE TABLE audit_log
 
 -- ------------------------------------------------------------
 -- vw_appointment_summary
--- Listagem da agenda e dashboard
 -- ------------------------------------------------------------
--- CREATE
--- OR REPLACE VIEW vw_appointment_summary AS
+-- CREATE OR REPLACE VIEW vw_appointment_summary AS
 -- SELECT a.id        AS appointment_id,
 --        a.scheduled_date_time,
 --        a.estimated_duration_min,
@@ -512,10 +578,8 @@ CREATE TABLE audit_log
 
 -- ------------------------------------------------------------
 -- vw_billing_overview
--- Situação financeira por cobrança
 -- ------------------------------------------------------------
--- CREATE
--- OR REPLACE VIEW vw_billing_overview AS
+-- CREATE OR REPLACE VIEW vw_billing_overview AS
 -- SELECT b.id                                                          AS billing_id,
 --        b.total_amount,
 --        b.discount,
@@ -535,10 +599,8 @@ CREATE TABLE audit_log
 
 -- ------------------------------------------------------------
 -- vw_contract_detail
--- Geração de PDF e exibição do contrato
 -- ------------------------------------------------------------
--- CREATE
--- OR REPLACE VIEW vw_contract_detail AS
+-- CREATE OR REPLACE VIEW vw_contract_detail AS
 -- SELECT c.id        AS contract_id,
 --        c.status,
 --        c.snapshot_data,
@@ -567,10 +629,8 @@ CREATE TABLE audit_log
 
 -- ------------------------------------------------------------
 -- vw_dentist_schedule
--- Agenda do dentista com indisponibilidades
 -- ------------------------------------------------------------
--- CREATE
--- OR REPLACE VIEW vw_dentist_schedule AS
+-- CREATE OR REPLACE VIEW vw_dentist_schedule AS
 -- SELECT d.id                  AS dentist_id,
 --        d.full_name           AS dentist_name,
 --        a.id                  AS appointment_id,
@@ -586,16 +646,10 @@ CREATE TABLE audit_log
 --          JOIN appointment a ON a.dentist_id = d.id
 --          JOIN patient p ON p.id = a.patient_id
 -- WHERE a.status NOT IN ('cancelled')
-
 -- UNION ALL
-
 -- SELECT d.id,
 --        d.full_name,
---        NULL,
---        NULL,
---        NULL,
---        NULL,
---        NULL,
+--        NULL, NULL, NULL, NULL, NULL,
 --        u.id,
 --        u.start_date,
 --        u.end_date,
@@ -611,32 +665,32 @@ CREATE INDEX idx_appointment_dentist ON appointment (dentist_id);
 CREATE INDEX idx_appointment_date ON appointment (scheduled_date_time);
 CREATE INDEX idx_appointment_status ON appointment (status);
 CREATE INDEX idx_billing_patient ON billing (patient_id);
--- CREATE INDEX idx_billing_status ON billing (status);
 CREATE INDEX idx_installment_due_date ON installment (due_date);
 CREATE INDEX idx_anamnesis_patient ON anamnesis (patient_id);
 CREATE INDEX idx_attachment_patient ON attachment (patient_id);
 CREATE INDEX idx_audit_log_table_record ON audit_log (table_name, record_id);
 CREATE INDEX idx_audit_log_occurred ON audit_log (occurred_at);
 CREATE INDEX idx_unavailability_dentist ON unavailability (dentist_id, start_date);
-CREATE INDEX idx_unavailability_end_date ON unavailability (end_date);
+CREATE INDEX idx_unavailability_end ON unavailability (end_date);
 CREATE INDEX idx_address_city ON address (city);
 CREATE INDEX idx_patient_address ON patient (address_id);
--- CREATE INDEX idx_clinic_address ON clinic (address_id);
--- CREATE INDEX idx_responsible_address ON responsible (address_id);
 CREATE INDEX idx_dentist_user ON dentist (user_id);
 CREATE INDEX idx_quote_patient ON quote (patient_id);
-CREATE INDEX idx_quote_dentist ON quote (dentist_id);
 CREATE INDEX idx_quote_created_by ON quote (created_by);
 CREATE INDEX idx_quote_status ON quote (status);
 CREATE INDEX idx_quote_procedure_quote ON quote_procedure (quote_id);
 CREATE INDEX idx_appointment_procedure ON appointment_procedure (appointment_id);
--- CREATE INDEX idx_payment_cost_center ON payment (cost_center_id);
 CREATE INDEX idx_payment_type ON payment (type);
 CREATE INDEX idx_payment_date ON payment (date_time);
 CREATE INDEX idx_cost_center_active ON cost_center (active);
-CREATE INDEX idx_contract_template_version_template ON contract_template_version (contract_template_id);
+CREATE INDEX idx_contract_tmpl_version ON contract_template_version (contract_template_id);
 CREATE INDEX idx_contract_patient ON contract (patient_id);
 CREATE INDEX idx_contract_appointment ON contract (appointment_id);
 CREATE INDEX idx_contract_status ON contract (status);
 CREATE INDEX idx_contract_generated_by ON contract (generated_by);
 CREATE INDEX idx_contract_snapshot ON contract USING GIN (snapshot_data);
+CREATE INDEX idx_dentist_work_schedule_dentist ON dentist_work_schedule (dentist_id);
+CREATE INDEX idx_dentist_work_schedule_day ON dentist_work_schedule (day_of_week);
+CREATE INDEX idx_dentist_work_schedule_valid ON dentist_work_schedule (valid_from, valid_to);
+CREATE INDEX idx_dentist_schedule_exception_dentist ON dentist_schedule_exception (dentist_id);
+CREATE INDEX idx_dentist_schedule_exception_date ON dentist_schedule_exception (exception_date);
