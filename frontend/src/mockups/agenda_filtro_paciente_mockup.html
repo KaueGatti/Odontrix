@@ -1,0 +1,555 @@
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+.fm-app{font-family:var(--font-sans, -apple-system, Segoe UI, Roboto, sans-serif);font-size:13px;background:#dcdcdc;border-radius:var(--border-radius-lg, 10px);overflow:hidden;border:0.5px solid #c7c7c7;color:#2b2b2b}
+.fm-wrap{display:flex;min-height:700px}
+
+/* ---------- NAV RAIL ---------- */
+.fm-navrail{width:148px;flex-shrink:0;background:#ececec;border-right:0.5px solid #cfcfcf;padding:16px 0;display:flex;flex-direction:column}
+.fm-logo{width:20px;height:20px;background:#9aa6b2;border-radius:4px;margin:0 14px 18px}
+.fm-nav{padding:7px 14px;color:#7a7a7a;display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer}
+.fm-nav .dot{width:6px;height:6px;border-radius:50%;border:1.2px solid #9a9a9a;flex-shrink:0}
+.fm-nav.on{color:#1f1f1f;font-weight:600;background:#dadada;border-radius:6px;margin:0 6px;padding:7px 8px}
+.fm-nav.on .dot{background:#1f1f1f;border-color:#1f1f1f}
+.fm-nav.sub{padding-left:30px;font-size:11px;color:#8a8a8a}
+.fm-navsec{padding:12px 14px 4px;font-size:10px;color:#9a9a9a;letter-spacing:.06em}
+
+/* ---------- FILTER PANEL ---------- */
+.fm-filters{width:228px;flex-shrink:0;background:#ececec;border-right:0.5px solid #cfcfcf;padding:18px 16px;overflow-y:auto}
+.fm-flabel{font-size:11px;font-weight:600;color:#5b5b5b;letter-spacing:.06em;margin-bottom:9px;display:flex;align-items:center;justify-content:space-between}
+.fm-pillrow{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+.fm-pill{padding:5px 12px;border-radius:20px;font-size:12px;color:#555;border:1px solid #bdbdbd;background:transparent;cursor:pointer}
+.fm-pill.on{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
+
+.fm-new{font-size:9px;font-weight:700;letter-spacing:.04em;color:#92400e;background:#fde9c8;border:1px solid #f6d49a;border-radius:8px;padding:1px 6px}
+
+.fm-search-box{position:relative;margin-bottom:6px}
+.fm-search-input{width:100%;height:32px;border:1px solid #bdbdbd;border-radius:8px;background:#fff;padding:0 30px 0 28px;font-size:12px;color:#2b2b2b}
+.fm-search-input::placeholder{color:#9a9a9a}
+.fm-search-ic{position:absolute;left:9px;top:8px;font-size:13px;color:#9a9a9a}
+.fm-search-clear{position:absolute;right:7px;top:6px;width:18px;height:18px;border-radius:50%;border:none;background:transparent;color:#9a9a9a;font-size:14px;cursor:pointer;display:none}
+.fm-suggest{position:absolute;top:36px;left:0;right:0;background:#fff;border:1px solid #c7c7c7;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.12);z-index:20;overflow:hidden;display:none}
+.fm-suggest.show{display:block}
+.fm-suggest-item{padding:8px 10px;font-size:12px;color:#333;cursor:pointer;border-bottom:1px solid #eee}
+.fm-suggest-item:last-child{border-bottom:none}
+.fm-suggest-item:hover{background:#f3f3f3}
+.fm-suggest-empty{padding:10px;font-size:11px;color:#9a9a9a;font-style:italic}
+
+.fm-chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 16px}
+.fm-chip{display:inline-flex;align-items:center;gap:6px;background:#dde7fb;color:#1f3a66;border:1px solid #b9cdf2;border-radius:20px;padding:4px 6px 4px 10px;font-size:11.5px}
+.fm-chip button{border:none;background:transparent;color:#5577ad;cursor:pointer;font-size:13px;line-height:1;padding:0 2px}
+
+.fm-dentist-row{display:flex;align-items:center;gap:8px;padding:6px 0}
+.fm-dentist-row .dname{font-size:12px;color:#2b2b2b}
+.fm-dentist-row .dspec{font-size:10.5px;color:#8a8a8a}
+.fm-dotcolor{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.fm-toggle{width:30px;height:17px;border-radius:9px;background:#c7c7c7;position:relative;cursor:pointer;flex-shrink:0;border:none;margin-left:auto}
+.fm-toggle.on{background:#1a1a1a}
+.fm-toggle span{position:absolute;top:2px;left:2px;width:13px;height:13px;border-radius:50%;background:#fff;transition:left .15s}
+.fm-toggle.on span{left:15px}
+
+.fm-infobox{background:#e2e2e2;border-radius:8px;padding:9px 11px;font-size:11px;color:#666;margin:12px 0 14px}
+.fm-infobox a{color:#3a5fb0;text-decoration:none;font-weight:600}
+.fm-inactive-label{font-size:11px;color:#9a9a9a;margin-bottom:4px}
+.fm-inactive-name{font-size:12px;color:#aaaaaa;padding:4px 0}
+
+/* ---------- MAIN ---------- */
+.fm-main{flex:1;display:flex;flex-direction:column;background:#dcdcdc;min-width:0}
+.fm-header{background:#f5f5f5;border-bottom:0.5px solid #cfcfcf;padding:14px 22px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.fm-datenav{font-size:15px;font-weight:600;color:#222;display:flex;align-items:center;gap:10px;flex:1;min-width:200px}
+.fm-datenav span.chev{color:#9a9a9a;cursor:pointer;font-weight:400}
+.fm-hbtn{height:30px;padding:0 13px;border-radius:8px;font-size:12px;border:1px solid #c7c7c7;background:#fff;color:#3a3a3a;cursor:pointer;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.fm-hbtn.on{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
+.fm-hbtn.dark{background:#1a1a1a;color:#fff;border-color:#1a1a1a;font-weight:600}
+.fm-hbtn.filter{position:relative}
+.fm-badge-count{position:absolute;top:-7px;right:-7px;background:#d9534f;color:#fff;font-size:9.5px;font-weight:700;min-width:16px;height:16px;border-radius:9px;display:flex;align-items:center;justify-content:center;padding:0 3px}
+
+.fm-cols{display:grid;grid-template-columns:56px 1fr 1fr 1fr;background:#f5f5f5;border-bottom:0.5px solid #cfcfcf;padding:12px 22px 12px 0}
+.fm-colhead{padding:0 14px}
+.fm-colhead .dn{font-size:13.5px;font-weight:600;color:#222}
+.fm-colhead .tag{display:inline-block;margin-top:4px;font-size:10.5px;padding:2px 9px;border-radius:20px;border:1px solid;margin-right:6px}
+.fm-colhead .hrs{font-size:11px;color:#8a8a8a}
+
+.fm-gridscroll{flex:1;overflow:auto;padding:0 22px 18px 0}
+.fm-grid{display:grid;grid-template-columns:56px 1fr 1fr 1fr;position:relative}
+.fm-timecell{font-size:11px;color:#9a9a9a;padding-top:2px}
+.fm-hourline{grid-column:1/-1;height:1px;background:#cfcfcf;margin:60px 0 0}
+.fm-slotcol{border-left:0.5px solid #d6d6d6;position:relative;min-height:64px}
+
+.fm-appt{position:absolute;left:6px;right:6px;top:6px;border-radius:7px;background:#cdd9ef;border:1px solid #a8bfe0;border-left:3px solid #4F7EF7;padding:7px 9px;font-size:11.5px;transition:opacity .15s, filter .15s}
+.fm-appt.status-done{background:#d4e8da;border-color:#b6d6c0;border-left-color:#3f9d5d}
+.fm-appt .pname{font-weight:600;color:#1f1f1f;margin-bottom:2px}
+.fm-appt .ptime{color:#4a4a4a;font-size:10.5px;margin-bottom:4px}
+.fm-appt .pbadge{display:inline-block;font-size:9.5px;padding:1px 7px;border-radius:20px}
+.fm-appt.dimmed{opacity:.28;filter:saturate(.4)}
+.fm-appt.highlighted{box-shadow:0 0 0 2px #4F7EF7}
+.fm-col-hidden{display:none}
+
+.badge-blue{background:#dbeafe;color:#1e40af}
+.badge-gray{background:#e5e5e5;color:#555}
+.badge-green{background:#dcfce7;color:#166534}
+.badge-red{background:#fee2e2;color:#991b1b}
+
+/* ---------- MODAL ---------- */
+.fm-overlay{display:none;position:fixed;inset:0;background:rgba(20,20,20,0.45);z-index:200;align-items:center;justify-content:center}
+.fm-overlay.show{display:flex}
+.fm-modal{width:560px;max-width:94%;max-height:88vh;display:flex;flex-direction:column;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 16px 48px rgba(0,0,0,.25)}
+.fm-mhead{padding:18px 22px 14px;border-bottom:1px solid #e6e6e6;display:flex;align-items:flex-start;justify-content:space-between}
+.fm-mtitle{font-size:15px;font-weight:700;color:#1f1f1f}
+.fm-msub{font-size:11.5px;color:#888;margin-top:3px}
+.fm-mclose{border:none;background:transparent;font-size:17px;color:#999;cursor:pointer;line-height:1}
+.fm-mbody{padding:16px 22px;overflow-y:auto;flex:1}
+.fm-msection{margin-bottom:20px}
+.fm-msection:last-child{margin-bottom:0}
+.fm-mlabel{font-size:11px;font-weight:700;letter-spacing:.05em;color:#666;text-transform:uppercase;margin-bottom:10px}
+.fm-chiprow{display:flex;flex-wrap:wrap;gap:7px}
+.fm-fchip{padding:6px 13px;border-radius:20px;font-size:12px;border:1px solid #d2d2d2;color:#555;background:#fafafa;cursor:pointer}
+.fm-fchip.on{color:#fff;border-color:transparent}
+.fm-fchip.on.st-gray{background:#7a7a7a}
+.fm-fchip.on.st-blue{background:#3b67c4}
+.fm-fchip.on.st-green{background:#2f8f57}
+.fm-fchip.on.st-red{background:#c4453f}
+.fm-fchip.on.st-default{background:#1a1a1a}
+.fm-periodrow{display:flex;gap:7px;margin-bottom:10px;flex-wrap:wrap}
+.fm-daterow{display:none;gap:10px;margin-top:10px}
+.fm-daterow.show{display:flex}
+.fm-datefield{flex:1}
+.fm-datefield label{display:block;font-size:10.5px;color:#888;margin-bottom:4px}
+.fm-datefield .box{height:30px;border:1px solid #d2d2d2;border-radius:7px;display:flex;align-items:center;padding:0 10px;font-size:12px;color:#aaa;background:#fafafa}
+.fm-mfoot{padding:14px 22px;border-top:1px solid #e6e6e6;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.fm-clearlink{font-size:12px;color:#888;background:transparent;border:none;cursor:pointer;text-decoration:underline}
+.fm-footbtns{display:flex;gap:8px}
+.fm-btn{height:34px;padding:0 16px;border-radius:8px;font-size:12.5px;font-weight:600;cursor:pointer;border:1px solid #d2d2d2;background:#fff;color:#333}
+.fm-btn.primary{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
+</style>
+
+<div class="fm-app">
+  <div class="fm-wrap">
+
+    <!-- NAV RAIL -->
+    <div class="fm-navrail">
+      <div class="fm-logo"></div>
+      <div class="fm-nav"><span class="dot"></span>Pacientes</div>
+      <div class="fm-nav"><span class="dot"></span>Dentistas</div>
+      <div class="fm-nav"><span class="dot"></span>Recepcionistas</div>
+      <div class="fm-nav on"><span class="dot"></span>Agenda</div>
+      <div class="fm-navsec">FINANCEIRO</div>
+      <div class="fm-nav sub">Contas</div>
+      <div class="fm-nav sub">A receber</div>
+      <div class="fm-nav sub">A pagar</div>
+      <div class="fm-nav">Contratos</div>
+      <div class="fm-nav">Planos</div>
+      <div style="flex:1"></div>
+      <div class="fm-nav">Configurações</div>
+    </div>
+
+    <!-- FILTER PANEL -->
+    <div class="fm-filters">
+
+      <div class="fm-flabel">ESPECIALIDADE</div>
+      <div class="fm-pillrow" id="specRow">
+        <div class="fm-pill on" data-spec="Todas">Todas</div>
+        <div class="fm-pill" data-spec="Ortodontia">Ortodontia</div>
+        <div class="fm-pill" data-spec="Implante">Implante</div>
+        <div class="fm-pill" data-spec="Dentística">Dentística</div>
+      </div>
+
+      <div class="fm-flabel">PACIENTE <span class="fm-new">NOVO</span></div>
+      <div class="fm-search-box">
+        <span class="fm-search-ic">⌕</span>
+        <input class="fm-search-input" id="sideSearch" placeholder="Buscar paciente..." autocomplete="off">
+        <button class="fm-search-clear" id="sideClear">×</button>
+        <div class="fm-suggest" id="sideSuggest"></div>
+      </div>
+      <div class="fm-chips" id="sideChips"></div>
+
+      <div class="fm-flabel">DENTISTAS</div>
+      <div id="dentistList"></div>
+
+      <div class="fm-infobox">Mostrando quem atende hoje. <a href="#" onclick="return false">Ver todos</a></div>
+
+      <div class="fm-inactive-label">Não atendem hoje</div>
+      <div class="fm-inactive-name">Dr. Pedro L.</div>
+      <div class="fm-inactive-name">Dr. João L.</div>
+      <div class="fm-inactive-name">Dra. Ana L.</div>
+    </div>
+
+    <!-- MAIN -->
+    <div class="fm-main">
+      <div class="fm-header">
+        <div class="fm-datenav"><span class="chev">‹</span> Quarta-feira, 28 de maio de 2025 <span class="chev">›</span></div>
+        <button class="fm-hbtn">Hoje</button>
+        <button class="fm-hbtn on">Dia</button>
+        <button class="fm-hbtn">Semana</button>
+        <button class="fm-hbtn">Mês</button>
+        <button class="fm-hbtn filter" id="openFilterModal">▾ Filtros <span class="fm-new" style="margin-left:4px">NOVO</span><span class="fm-badge-count" id="filterBadge" style="display:none">0</span></button>
+        <button class="fm-hbtn dark">+ Novo Agendamento</button>
+      </div>
+
+      <div class="fm-cols">
+        <div></div>
+        <div class="fm-colhead" data-dentist="marcos">
+          <div class="dn">Dr. Marcos Silva</div>
+          <span class="tag" style="background:#dbeafe;color:#1e40af;border-color:#bfdbfe">Ortodontia</span><span class="hrs">08:00 – 18:00</span>
+        </div>
+        <div class="fm-colhead" data-dentist="ana">
+          <div class="dn">Dra. Ana Costa</div>
+          <span class="tag" style="background:#dcfce7;color:#166534;border-color:#bbf7d0">Implantodontia</span><span class="hrs">08:30 – 17:30</span>
+        </div>
+        <div class="fm-colhead" data-dentist="julia">
+          <div class="dn">Dra. Julia Reis</div>
+          <span class="tag" style="background:#ede9fe;color:#5b21b6;border-color:#ddd6fe">Ortodontia</span><span class="hrs">08:00 – 18:00</span>
+        </div>
+      </div>
+
+      <div class="fm-gridscroll">
+        <div class="fm-grid">
+          <div class="fm-timecell">8:00</div>
+          <div class="fm-slotcol" data-dentist="marcos" style="height:130px">
+            <div class="fm-appt" data-patient="Kauê V. Gatti" data-status="Confirmado" data-type="Consulta" style="height:118px">
+              <div class="pname">Kauê V. Gatti</div>
+              <div class="ptime">08:00 – 09:30 · Consulta</div>
+              <span class="pbadge badge-blue">Confirmado</span>
+            </div>
+          </div>
+          <div class="fm-slotcol" data-dentist="ana" style="height:130px">
+            <div class="fm-appt" data-patient="Fernanda R. Souza" data-status="Confirmado" data-type="Implante" style="top:40px;height:78px">
+              <div class="pname">Fernanda R. Souza</div>
+              <div class="ptime">08:30 – 10:00 · Implante</div>
+              <span class="pbadge badge-blue">Confirmado</span>
+            </div>
+          </div>
+          <div class="fm-slotcol" data-dentist="julia" style="height:130px">
+            <div class="fm-appt status-done" data-patient="Maria S. Pereira" data-status="Realizado" data-type="Manutenção" style="top:54px;height:62px">
+              <div class="pname">Maria S. Pereira</div>
+              <div class="ptime">09:00 – 10:00 · Manutenção</div>
+              <span class="pbadge badge-green">Realizado</span>
+            </div>
+          </div>
+
+          <div class="fm-hourline"></div>
+          <div class="fm-timecell" style="margin-top:6px">9:00</div>
+          <div class="fm-slotcol" data-dentist="marcos" style="height:60px"></div>
+          <div class="fm-slotcol" data-dentist="ana" style="height:60px"></div>
+          <div class="fm-slotcol" data-dentist="julia" style="height:60px"></div>
+
+          <div class="fm-hourline"></div>
+          <div class="fm-timecell" style="margin-top:6px">10:00</div>
+          <div class="fm-slotcol" data-dentist="marcos" style="height:80px"></div>
+          <div class="fm-slotcol" data-dentist="ana" style="height:80px"></div>
+          <div class="fm-slotcol" data-dentist="julia" style="height:80px"></div>
+
+          <div class="fm-hourline"></div>
+          <div class="fm-timecell" style="margin-top:6px">11:00</div>
+          <div class="fm-slotcol" data-dentist="marcos" style="height:60px"></div>
+          <div class="fm-slotcol" data-dentist="ana" style="height:60px"></div>
+          <div class="fm-slotcol" data-dentist="julia" style="height:60px"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ADVANCED FILTER MODAL -->
+<div class="fm-overlay" id="filterOverlay">
+  <div class="fm-modal">
+    <div class="fm-mhead">
+      <div>
+        <div class="fm-mtitle">Filtros avançados</div>
+        <div class="fm-msub">Combine critérios para refinar os agendamentos exibidos na agenda</div>
+      </div>
+      <button class="fm-mclose" id="closeModalX">×</button>
+    </div>
+
+    <div class="fm-mbody">
+
+      <div class="fm-msection">
+        <div class="fm-mlabel">Paciente</div>
+        <div class="fm-search-box">
+          <span class="fm-search-ic">⌕</span>
+          <input class="fm-search-input" id="modalSearch" placeholder="Buscar paciente por nome..." autocomplete="off">
+          <button class="fm-search-clear" id="modalClear">×</button>
+          <div class="fm-suggest" id="modalSuggest"></div>
+        </div>
+        <div class="fm-chips" id="modalChips"></div>
+      </div>
+
+      <div class="fm-msection">
+        <div class="fm-mlabel">Status do agendamento</div>
+        <div class="fm-chiprow" id="statusRow">
+          <div class="fm-fchip" data-cat="status" data-val="Agendado" data-tone="gray">Agendado</div>
+          <div class="fm-fchip" data-cat="status" data-val="Confirmado" data-tone="blue">Confirmado</div>
+          <div class="fm-fchip" data-cat="status" data-val="Realizado" data-tone="green">Realizado</div>
+          <div class="fm-fchip" data-cat="status" data-val="Cancelado" data-tone="red">Cancelado</div>
+        </div>
+      </div>
+
+      <div class="fm-msection">
+        <div class="fm-mlabel">Tipo de consulta</div>
+        <div class="fm-chiprow" id="typeRow">
+          <div class="fm-fchip" data-cat="type" data-val="Consulta">Consulta</div>
+          <div class="fm-fchip" data-cat="type" data-val="Retorno">Retorno</div>
+          <div class="fm-fchip" data-cat="type" data-val="Procedimento">Procedimento</div>
+          <div class="fm-fchip" data-cat="type" data-val="Implante">Implante</div>
+          <div class="fm-fchip" data-cat="type" data-val="Manutenção">Manutenção</div>
+          <div class="fm-fchip" data-cat="type" data-val="Avaliação">Avaliação</div>
+        </div>
+      </div>
+
+      <div class="fm-msection">
+        <div class="fm-mlabel">Dentista</div>
+        <div id="modalDentistList"></div>
+      </div>
+
+      <div class="fm-msection">
+        <div class="fm-mlabel">Período</div>
+        <div class="fm-periodrow" id="periodRow">
+          <div class="fm-fchip" data-period="hoje">Hoje</div>
+          <div class="fm-fchip" data-period="semana">Esta semana</div>
+          <div class="fm-fchip" data-period="mes">Este mês</div>
+          <div class="fm-fchip" data-period="custom">Personalizado</div>
+        </div>
+        <div class="fm-daterow" id="customDateRow">
+          <div class="fm-datefield"><label>De</label><div class="box">DD/MM/AAAA</div></div>
+          <div class="fm-datefield"><label>Até</label><div class="box">DD/MM/AAAA</div></div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="fm-mfoot">
+      <button class="fm-clearlink" id="clearAll">Limpar tudo</button>
+      <div class="fm-footbtns">
+        <button class="fm-btn" id="cancelModal">Cancelar</button>
+        <button class="fm-btn primary" id="applyModal">Aplicar filtros</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var ALL_PATIENTS = ["Kauê V. Gatti","Fernanda R. Souza","Maria S. Pereira","Ana Lucia M.","Roberto C. Lima","Carla Mendes","Bruno Tavares"];
+  var DENTISTS = [
+    {id:"marcos", name:"Dr. Marcos S.", spec:"Ortodontia", color:"#4F7EF7", active:true},
+    {id:"ana", name:"Dra. Ana Costa", spec:"Implantodontia", color:"#3f9d5d", active:true},
+    {id:"julia", name:"Dra. Julia R.", spec:"Ortodontia", color:"#8b6fd6", active:true}
+  ];
+
+  var applied = { patients: ["Kauê V. Gatti"], status: [], type: [], dentists: DENTISTS.map(function(d){return d.id}), specialty: "Todas", period: null };
+  var draft = null;
+
+  function clone(o){ return JSON.parse(JSON.stringify(o)); }
+
+  // ---------- render dentist toggle lists (sidebar + modal) ----------
+  function renderDentistList(container, state, onToggle){
+    container.innerHTML = "";
+    DENTISTS.forEach(function(d){
+      var row = document.createElement("div");
+      row.className = "fm-dentist-row";
+      var on = state.dentists.indexOf(d.id) > -1;
+      row.innerHTML =
+        '<span class="fm-dotcolor" style="background:'+d.color+'"></span>'+
+        '<div><div class="dname">'+d.name+'</div><div class="dspec">'+d.spec+'</div></div>'+
+        '<button class="fm-toggle'+(on?' on':'')+'"><span></span></button>';
+      row.querySelector(".fm-toggle").addEventListener("click", function(){
+        var idx = state.dentists.indexOf(d.id);
+        if(idx>-1){ state.dentists.splice(idx,1); } else { state.dentists.push(d.id); }
+        onToggle();
+      });
+      container.appendChild(row);
+    });
+  }
+
+  // ---------- patient search + chips (shared logic for sidebar + modal) ----------
+  function setupPatientSearch(inputEl, clearEl, suggestEl, chipsEl, getState, onChange){
+    function renderChips(){
+      var state = getState();
+      chipsEl.innerHTML = "";
+      state.patients.forEach(function(name){
+        var chip = document.createElement("span");
+        chip.className = "fm-chip";
+        chip.innerHTML = name + ' <button>×</button>';
+        chip.querySelector("button").addEventListener("click", function(){
+          state.patients = state.patients.filter(function(n){return n!==name});
+          renderChips(); onChange();
+        });
+        chipsEl.appendChild(chip);
+      });
+      clearEl.style.display = inputEl.value ? "block" : "none";
+    }
+    function renderSuggest(){
+      var q = inputEl.value.trim().toLowerCase();
+      if(!q){ suggestEl.classList.remove("show"); return; }
+      var state = getState();
+      var matches = ALL_PATIENTS.filter(function(n){
+        return n.toLowerCase().indexOf(q) > -1 && state.patients.indexOf(n) === -1;
+      });
+      suggestEl.innerHTML = "";
+      if(matches.length === 0){
+        suggestEl.innerHTML = '<div class="fm-suggest-empty">Nenhum paciente encontrado</div>';
+      } else {
+        matches.slice(0,5).forEach(function(name){
+          var item = document.createElement("div");
+          item.className = "fm-suggest-item";
+          item.textContent = name;
+          item.addEventListener("click", function(){
+            state.patients.push(name);
+            inputEl.value = "";
+            suggestEl.classList.remove("show");
+            renderChips(); onChange();
+          });
+          suggestEl.appendChild(item);
+        });
+      }
+      suggestEl.classList.add("show");
+    }
+    inputEl.addEventListener("input", renderSuggest);
+    inputEl.addEventListener("focus", renderSuggest);
+    document.addEventListener("click", function(e){
+      if(!suggestEl.contains(e.target) && e.target !== inputEl){ suggestEl.classList.remove("show"); }
+    });
+    clearEl.addEventListener("click", function(){ inputEl.value=""; clearEl.style.display="none"; suggestEl.classList.remove("show"); });
+    renderChips();
+    return { renderChips: renderChips };
+  }
+
+  // ---------- grid + badge updates from applied state ----------
+  function updateGrid(){
+    document.querySelectorAll(".fm-colhead, .fm-slotcol").forEach(function(el){
+      var d = el.getAttribute("data-dentist");
+      el.classList.toggle("fm-col-hidden", applied.dentists.indexOf(d) === -1);
+    });
+    document.querySelectorAll(".fm-appt").forEach(function(el){
+      var patient = el.getAttribute("data-patient");
+      var status = el.getAttribute("data-status");
+      var type = el.getAttribute("data-type");
+      var patientMatch = applied.patients.length === 0 || applied.patients.indexOf(patient) > -1;
+      var statusMatch = applied.status.length === 0 || applied.status.indexOf(status) > -1;
+      var typeMatch = applied.type.length === 0 || applied.type.indexOf(type) > -1;
+      var match = patientMatch && statusMatch && typeMatch;
+      el.classList.toggle("dimmed", !match);
+      el.classList.toggle("highlighted", match && applied.patients.length > 0 && applied.patients.indexOf(patient) > -1);
+    });
+  }
+
+  function countActiveFilters(state){
+    var n = state.patients.length + state.status.length + state.type.length;
+    if(state.specialty !== "Todas") n += 1;
+    if(state.dentists.length < DENTISTS.length) n += 1;
+    if(state.period) n += 1;
+    return n;
+  }
+
+  function updateBadge(){
+    var n = countActiveFilters(applied);
+    var badge = document.getElementById("filterBadge");
+    badge.style.display = n>0 ? "flex" : "none";
+    badge.textContent = n;
+  }
+
+  // ---------- sidebar specialty pills ----------
+  document.querySelectorAll("#specRow .fm-pill").forEach(function(p){
+    p.addEventListener("click", function(){
+      document.querySelectorAll("#specRow .fm-pill").forEach(function(x){x.classList.remove("on")});
+      p.classList.add("on");
+      applied.specialty = p.getAttribute("data-spec");
+    });
+  });
+
+  // ---------- sidebar dentist list ----------
+  renderDentistList(document.getElementById("dentistList"), applied, function(){ updateGrid(); updateBadge(); });
+
+  // ---------- sidebar patient quick search (applies live) ----------
+  var sideCtl = setupPatientSearch(
+    document.getElementById("sideSearch"),
+    document.getElementById("sideClear"),
+    document.getElementById("sideSuggest"),
+    document.getElementById("sideChips"),
+    function(){ return applied; },
+    function(){ updateGrid(); updateBadge(); syncModalFromApplied(); }
+  );
+
+  // ---------- modal open/close ----------
+  var overlay = document.getElementById("filterOverlay");
+  var modalCtl = null;
+
+  function syncModalFromApplied(){
+    if(!draft) return;
+    document.getElementById("modalSearch").value = "";
+    modalCtl.renderChips();
+  }
+
+  function renderModalFromDraft(){
+    document.querySelectorAll("#statusRow .fm-fchip").forEach(function(c){
+      c.classList.toggle("on", draft.status.indexOf(c.getAttribute("data-val")) > -1);
+      c.classList.add("st-"+c.getAttribute("data-tone"));
+    });
+    document.querySelectorAll("#typeRow .fm-fchip").forEach(function(c){
+      c.classList.toggle("on", draft.type.indexOf(c.getAttribute("data-val")) > -1);
+      c.classList.add("st-default");
+    });
+    document.querySelectorAll("#periodRow .fm-fchip").forEach(function(c){
+      c.classList.toggle("on", draft.period === c.getAttribute("data-period"));
+      c.classList.add("st-default");
+    });
+    document.getElementById("customDateRow").classList.toggle("show", draft.period === "custom");
+    renderDentistList(document.getElementById("modalDentistList"), draft, function(){ renderModalFromDraft(); });
+    modalCtl.renderChips();
+  }
+
+  document.getElementById("openFilterModal").addEventListener("click", function(){
+    draft = clone(applied);
+    overlay.classList.add("show");
+    if(!modalCtl){
+      modalCtl = setupPatientSearch(
+        document.getElementById("modalSearch"),
+        document.getElementById("modalClear"),
+        document.getElementById("modalSuggest"),
+        document.getElementById("modalChips"),
+        function(){ return draft; },
+        function(){}
+      );
+    }
+    renderModalFromDraft();
+  });
+
+  function closeModal(){ overlay.classList.remove("show"); }
+  document.getElementById("closeModalX").addEventListener("click", closeModal);
+  document.getElementById("cancelModal").addEventListener("click", closeModal);
+  overlay.addEventListener("click", function(e){ if(e.target === overlay) closeModal(); });
+
+  document.querySelectorAll("#statusRow .fm-fchip, #typeRow .fm-fchip").forEach(function(c){
+    c.addEventListener("click", function(){
+      var cat = c.getAttribute("data-cat"), val = c.getAttribute("data-val");
+      var arr = draft[cat];
+      var idx = arr.indexOf(val);
+      if(idx>-1) arr.splice(idx,1); else arr.push(val);
+      renderModalFromDraft();
+    });
+  });
+
+  document.querySelectorAll("#periodRow .fm-fchip").forEach(function(c){
+    c.addEventListener("click", function(){
+      var p = c.getAttribute("data-period");
+      draft.period = (draft.period === p) ? null : p;
+      renderModalFromDraft();
+    });
+  });
+
+  document.getElementById("clearAll").addEventListener("click", function(){
+    draft = { patients:[], status:[], type:[], dentists: DENTISTS.map(function(d){return d.id}), specialty: draft.specialty, period:null };
+    renderModalFromDraft();
+  });
+
+  document.getElementById("applyModal").addEventListener("click", function(){
+    applied = clone(draft);
+    updateGrid(); updateBadge();
+    sideCtl.renderChips();
+    closeModal();
+  });
+
+  // ---------- init ----------
+  updateGrid();
+  updateBadge();
+})();
+</script>

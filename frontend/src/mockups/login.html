@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Entrar — Sistema de Gestão</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --blue:       #4F7EF7;
+      --blue-dark:  #0f2050;
+      --blue-mid:   #1a3580;
+      --blue-light: #2a4eaa;
+      --white:      #ffffff;
+      --gray-50:    #f8fafc;
+      --gray-100:   #f1f5f9;
+      --gray-200:   #e2e8f0;
+      --gray-300:   #cbd5e1;
+      --gray-400:   #94a3b8;
+      --gray-500:   #64748b;
+      --gray-700:   #334155;
+      --gray-900:   #0f172a;
+      --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+      --r-sm: 8px;
+      --r-md: 10px;
+      --r-lg: 14px;
+    }
+
+    html, body {
+      height: 100%;
+    }
+
+    body {
+      font-family: var(--font);
+      display: flex;
+      overflow: hidden;
+      background: var(--gray-100);
+    }
+
+    /* ─────────────────────────────────────────
+       LEFT PANEL — FORM
+    ───────────────────────────────────────── */
+    .left {
+      width: 40%;
+      flex-shrink: 0;
+      background: var(--white);
+      display: flex;
+      flex-direction: column;
+      padding: 44px 48px;
+      position: relative;
+      z-index: 2;
+      box-shadow: 4px 0 32px rgba(15, 32, 80, 0.1);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 52px;
+    }
+
+    .logo-sq {
+      width: 30px;
+      height: 30px;
+      background: var(--blue);
+      border-radius: 7px;
+      flex-shrink: 0;
+    }
+
+    .logo-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--gray-900);
+      letter-spacing: -0.2px;
+    }
+
+    .logo-name span {
+      color: var(--gray-400);
+      font-weight: 400;
+    }
+
+    .form-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .eyebrow {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+      color: var(--blue);
+      margin-bottom: 10px;
+    }
+
+    .form-heading {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--gray-900);
+      letter-spacing: -0.5px;
+      line-height: 1.15;
+      margin-bottom: 6px;
+    }
+
+    .form-sub {
+      font-size: 13px;
+      color: var(--gray-500);
+      line-height: 1.55;
+      margin-bottom: 36px;
+    }
+
+    .fields {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .field-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 5px;
+    }
+
+    .field-header label {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--gray-700);
+    }
+
+    .forgot {
+      font-size: 11px;
+      color: var(--blue);
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .forgot:hover { text-decoration: underline; }
+
+    .input-wrap {
+      position: relative;
+    }
+
+    .input-wrap i {
+      position: absolute;
+      left: 11px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 15px;
+      color: var(--gray-400);
+      pointer-events: none;
+      transition: color 0.15s;
+    }
+
+    .input-wrap:focus-within i {
+      color: var(--blue);
+    }
+
+    .input-wrap input {
+      width: 100%;
+      height: 42px;
+      border: 1.5px solid var(--gray-200);
+      border-radius: var(--r-md);
+      padding: 0 12px 0 36px;
+      font-size: 13px;
+      font-family: var(--font);
+      color: var(--gray-900);
+      background: var(--gray-50);
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+    }
+
+    .input-wrap input::placeholder { color: var(--gray-400); }
+
+    .input-wrap input:focus {
+      border-color: var(--blue);
+      background: var(--white);
+      box-shadow: 0 0 0 3px rgba(79, 126, 247, 0.13);
+    }
+
+    .btn-submit {
+      width: 100%;
+      height: 44px;
+      background: var(--blue);
+      color: var(--white);
+      border: none;
+      border-radius: var(--r-md);
+      font-size: 14px;
+      font-weight: 600;
+      font-family: var(--font);
+      cursor: pointer;
+      letter-spacing: 0.01em;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 24px;
+      transition: background 0.15s, box-shadow 0.15s, transform 0.1s;
+    }
+
+    .btn-submit:hover {
+      background: #3a6af3;
+      box-shadow: 0 6px 20px rgba(79, 126, 247, 0.35);
+    }
+
+    .btn-submit:active { transform: scale(0.985); }
+
+    .notice {
+      background: var(--gray-50);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--r-md);
+      padding: 12px 14px;
+      font-size: 11.5px;
+      color: var(--gray-500);
+      line-height: 1.6;
+    }
+
+    .notice strong { color: var(--gray-700); }
+
+    .left-footer {
+      font-size: 11px;
+      color: var(--gray-300);
+      padding-top: 20px;
+    }
+
+    /* ─────────────────────────────────────────
+       RIGHT PANEL — ILLUSTRATION
+    ───────────────────────────────────────── */
+    .right {
+      flex: 1;
+      background: linear-gradient(145deg, var(--blue-dark) 0%, var(--blue-mid) 55%, var(--blue-light) 100%);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      padding: 44px 48px;
+    }
+
+    /* Background ambient blobs */
+    .blob {
+      position: absolute;
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    .blob-1 {
+      width: 640px; height: 640px;
+      top: -220px; right: -180px;
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .blob-2 {
+      width: 400px; height: 400px;
+      bottom: -140px; left: -100px;
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .blob-3 {
+      width: 180px; height: 180px;
+      top: 42%; left: 18%;
+      background: rgba(79, 126, 247, 0.14);
+    }
+
+    /* Operational badge */
+    .r-badge {
+      position: relative;
+      z-index: 2;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      align-self: flex-start;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 20px;
+      padding: 6px 14px 6px 10px;
+    }
+
+    .badge-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #4ade80;
+      animation: pulse 2.4s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.55); }
+      50%       { box-shadow: 0 0 0 5px rgba(74, 222, 128, 0); }
+    }
+
+    .badge-text {
+      font-size: 11.5px;
+      color: rgba(255, 255, 255, 0.8);
+      font-weight: 500;
+    }
+
+    /* Cards area */
+    .cards-area {
+      flex: 1;
+      position: relative;
+      z-index: 2;
+    }
+
+    /* Each floating glass card */
+    .mc {
+      position: absolute;
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: var(--r-lg);
+      padding: 16px 18px;
+      color: white;
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.22), 0 2px 8px rgba(0, 0, 0, 0.12);
+    }
+
+    .mc-icon {
+      width: 30px; height: 30px;
+      border-radius: 7px;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 10px;
+      font-size: 15px;
+    }
+
+    .mc-val {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.6px;
+      line-height: 1;
+      margin-bottom: 2px;
+    }
+
+    .mc-lbl {
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.55);
+    }
+
+    .mc-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 10px;
+      color: rgba(255, 255, 255, 0.65);
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      padding: 2px 8px;
+      margin-top: 9px;
+    }
+
+    /* Card positions — staggered, each slightly rotated */
+    .mc-agenda {
+      width: 188px;
+      top: 50%; left: 50%;
+      transform: translate(-200px, -175px) rotate(-4deg);
+    }
+
+    .mc-patients {
+      width: 172px;
+      top: 50%; left: 50%;
+      transform: translate(28px, -80px) rotate(3deg);
+    }
+
+    .mc-finance {
+      width: 222px;
+      top: 50%; left: 50%;
+      transform: translate(-88px, 48px) rotate(-1.5deg);
+    }
+
+    /* Mini bar chart inside finance card */
+    .mini-bars {
+      display: flex;
+      align-items: flex-end;
+      gap: 3px;
+      height: 26px;
+      margin: 7px 0 5px;
+    }
+
+    .mb {
+      width: 9px;
+      border-radius: 2px 2px 0 0;
+      background: rgba(255, 255, 255, 0.22);
+    }
+
+    .mb.hi { background: rgba(255, 255, 255, 0.8); }
+
+    /* Footer tagline */
+    .r-footer {
+      position: relative;
+      z-index: 2;
+    }
+
+    .r-tagline {
+      font-size: 21px;
+      font-weight: 600;
+      color: white;
+      letter-spacing: -0.4px;
+      line-height: 1.35;
+      margin-bottom: 14px;
+    }
+
+    .r-tagline em {
+      color: rgba(255, 255, 255, 0.4);
+      font-style: normal;
+    }
+
+    .r-feats {
+      display: flex;
+      gap: 20px;
+    }
+
+    .r-feat {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 11.5px;
+      color: rgba(255, 255, 255, 0.5);
+    }
+
+    .r-feat-dot {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: var(--blue);
+      flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ===== LEFT: FORM PANEL ===== -->
+  <div class="left">
+
+    <div class="logo">
+      <div class="logo-sq"></div>
+      <div class="logo-name">OdontoSys <span>· Gestão de Clínicas</span></div>
+    </div>
+
+    <div class="form-body">
+      <div class="eyebrow">Acesso ao sistema</div>
+      <div class="form-heading">Bem-vindo de volta</div>
+      <div class="form-sub">Informe suas credenciais para acessar o painel da clínica.</div>
+
+      <div class="fields">
+        <div>
+          <div class="field-header"><label>Login</label></div>
+          <div class="input-wrap">
+            <i class="ti ti-user"></i>
+            <input type="text" placeholder="seu.login" autocomplete="username">
+          </div>
+        </div>
+        <div>
+          <div class="field-header"><label>Senha</label></div>
+          <div class="input-wrap">
+            <i class="ti ti-lock"></i>
+            <input type="password" placeholder="••••••••" autocomplete="current-password">
+          </div>
+          <div style="margin-top:8px;text-align:right">
+            <a href="#" class="forgot">Esqueci minha senha</a>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn-submit">
+        <i class="ti ti-login" style="font-size:16px"></i>
+        Entrar
+      </button>
+
+      <div class="notice">
+        <strong>Acesso restrito a colaboradores.</strong> Esta área é de uso exclusivo da equipe interna da clínica. Em caso de problemas com seu acesso, fale com o gerente responsável.
+      </div>
+    </div>
+
+    <div class="left-footer">© 2025 OdontoSys · Todos os direitos reservados</div>
+
+  </div>
+
+  <!-- ===== RIGHT: ILLUSTRATION PANEL ===== -->
+  <div class="right">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+
+    <div class="cards-area">
+
+      <!-- Card: Agenda -->
+      <div class="mc mc-agenda">
+        <div class="mc-icon" style="background:rgba(79,126,247,0.3)">
+          <i class="ti ti-calendar-event" style="color:#a5b4fc"></i>
+        </div>
+        <div class="mc-val">24</div>
+        <div class="mc-lbl">consultas hoje</div>
+        <div class="mc-tag">
+          <i class="ti ti-clock" style="font-size:10px"></i>
+          3 aguardando confirmação
+        </div>
+      </div>
+
+      <!-- Card: Pacientes -->
+      <div class="mc mc-patients">
+        <div class="mc-icon" style="background:rgba(74,222,128,0.18)">
+          <i class="ti ti-users" style="color:#86efac"></i>
+        </div>
+        <div class="mc-val">1.248</div>
+        <div class="mc-lbl">pacientes ativos</div>
+        <div class="mc-tag">
+          <i class="ti ti-trending-up" style="font-size:10px"></i>
+          +12 este mês
+        </div>
+      </div>
+
+      <!-- Card: Financeiro -->
+      <div class="mc mc-finance">
+        <div style="font-size:10px;color:rgba(255,255,255,0.4);margin-bottom:8px;letter-spacing:0.05em;text-transform:uppercase">
+          A receber — junho
+        </div>
+        <div class="mini-bars">
+          <div class="mb" style="height:40%"></div>
+          <div class="mb" style="height:62%"></div>
+          <div class="mb" style="height:48%"></div>
+          <div class="mb hi" style="height:85%"></div>
+          <div class="mb" style="height:70%"></div>
+          <div class="mb hi" style="height:92%"></div>
+          <div class="mb" style="height:58%"></div>
+          <div class="mb" style="height:44%"></div>
+        </div>
+        <div class="mc-val" style="font-size:18px">R$ 38.450</div>
+        <div class="mc-lbl">em pagamentos pendentes</div>
+      </div>
+
+    </div>
+
+    <div class="r-footer">
+      <div class="r-tagline">
+        Gestão completa <em>para</em><br>clínicas odontológicas.
+      </div>
+      <div class="r-feats">
+        <div class="r-feat"><div class="r-feat-dot"></div>Agenda inteligente</div>
+        <div class="r-feat"><div class="r-feat-dot"></div>Controle financeiro</div>
+        <div class="r-feat"><div class="r-feat-dot"></div>Prontuário digital</div>
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>

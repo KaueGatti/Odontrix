@@ -156,6 +156,26 @@ CREATE TABLE patient
 );
 
 -- ------------------------------------------------------------
+-- RECEPTIONISTS
+-- ------------------------------------------------------------
+CREATE TABLE receptionist
+(
+    id          SERIAL PRIMARY KEY,
+    user_id     INT          NOT NULL UNIQUE REFERENCES users (id),
+    full_name   VARCHAR(150) NOT NULL,
+    cpf         VARCHAR(14) UNIQUE,
+    rg          VARCHAR(14) UNIQUE,
+    phone       VARCHAR(20)  NOT NULL,
+    email       VARCHAR(150),
+    birth_date  DATE,
+    hire_date   DATE         NOT NULL DEFAULT CURRENT_DATE,
+    active      BOOLEAN      NOT NULL DEFAULT TRUE,
+    created_at  TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+
+    CONSTRAINT receptionist_document_check CHECK (cpf IS NOT NULL OR rg IS NOT NULL)
+);
+
+-- ------------------------------------------------------------
 -- DENTISTS
 -- start_break e end_break removidos — agora residem em dentist_work_schedule
 -- ------------------------------------------------------------

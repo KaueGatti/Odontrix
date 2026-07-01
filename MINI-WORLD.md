@@ -178,7 +178,7 @@ Agendada → Cancelada
 Confirmada → Cancelada
 ```
 
-- Consultas com status "Realizada" não podem ser editadas pela recepcionista — apenas visualizadas
+- Consultas com status "Reaãolizada" n podem ser editadas pela recepcionista — apenas visualizadas
 - A finalização da consulta só é permitida ao dentista responsável por ela
 - O campo "Próxima consulta recomendada" preenchido pelo dentista deve gerar automaticamente uma sugestão de agendamento para a recepcionista
 - Apenas recepcionistas e gerentes podem gerenciar consultas
