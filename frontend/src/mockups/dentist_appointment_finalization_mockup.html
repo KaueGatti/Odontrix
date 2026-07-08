@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Finalização de consulta — Odontograma gráfico</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css">
+<style>
+:root{
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --color-background-primary:#ffffff;
+  --color-background-secondary:#f7f8fa;
+  --color-background-tertiary:#eef0f3;
+  --color-text-primary:#20232a;
+  --color-text-secondary:#5b6270;
+  --color-text-tertiary:#9aa0ab;
+  --color-border-tertiary:#dde1e7;
+  --border-radius-lg:12px;
+  --border-radius-md:8px;
+}
+html,body{background:var(--color-background-tertiary);margin:0;padding:24px}
+</style>
+</head>
+<body>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-sans);font-size:13px;background:var(--color-background-tertiary)}
+.wrap{display:flex;min-height:700px;border-radius:var(--border-radius-lg);overflow:hidden;border:0.5px solid var(--color-border-tertiary)}
+.sidebar{width:148px;background:#1a1a1a;padding:16px 0;flex-shrink:0;display:flex;flex-direction:column}
+.logo-sq{width:20px;height:20px;background:#4F7EF7;border-radius:4px;margin:0 14px 20px}
+.nav{padding:7px 14px;color:#888;display:flex;align-items:center;gap:7px;font-size:12px;border-left:2px solid transparent;cursor:pointer}
+.nav.on{color:#fff;border-left-color:#4F7EF7;background:rgba(255,255,255,0.06)}
+.main{flex:1;display:flex;flex-direction:column;background:var(--color-background-tertiary);overflow:hidden}
+
+.header{background:var(--color-background-primary);border-bottom:0.5px solid var(--color-border-tertiary);padding:14px 24px}
+.hrow{display:flex;align-items:center;gap:14px}
+.av{width:44px;height:44px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-weight:500;font-size:14px;color:#1d4ed8;flex-shrink:0}
+.hname{font-size:15px;font-weight:500;color:var(--color-text-primary)}
+.hmeta{font-size:11px;color:var(--color-text-secondary);margin-top:2px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.dot{width:3px;height:3px;border-radius:50%;background:var(--color-text-tertiary)}
+.badge{font-size:11px;padding:2px 10px;border-radius:20px}
+.badge-amber{background:#fef3c7;color:#92400e;border:0.5px solid #fde68a}
+.badge-green{background:#dcfce7;color:#166534;border:0.5px solid #bbf7d0}
+.back-link{font-size:11px;color:var(--color-text-secondary);display:flex;align-items:center;gap:4px;cursor:pointer;margin-bottom:8px}
+
+.real-times{display:flex;align-items:center;gap:16px;margin-left:auto;flex-shrink:0}
+.rt-field{display:flex;flex-direction:column;gap:2px}
+.rt-field label{font-size:10px;color:var(--color-text-tertiary)}
+.rt-inp{height:26px;width:78px;border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:0 8px;font-size:12px;color:var(--color-text-primary);background:var(--color-background-secondary);display:flex;align-items:center}
+.rt-dur{font-size:11px;color:var(--color-text-secondary);align-self:flex-end;padding-bottom:5px}
+
+.content{flex:1;padding:20px 24px;overflow:auto}
+.card{background:var(--color-background-primary);border-radius:var(--border-radius-lg);border:0.5px solid var(--color-border-tertiary);padding:18px 20px;margin-bottom:14px}
+.sec-label{font-size:11px;font-weight:500;color:var(--color-text-secondary);letter-spacing:.06em;text-transform:uppercase;margin-bottom:12px;padding-bottom:8px;border-bottom:0.5px solid var(--color-border-tertiary);display:flex;align-items:center;justify-content:space-between}
+.sec-label span.req{color:#e24b4a;font-weight:400;text-transform:none;letter-spacing:0;margin-left:4px}
+.btn{height:28px;padding:0 12px;border-radius:var(--border-radius-md);font-size:11px;cursor:pointer;font-weight:500;display:inline-flex;align-items:center;gap:5px;border:0.5px solid var(--color-border-tertiary);background:var(--color-background-primary);color:var(--color-text-primary)}
+.btn-dark{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
+.btn-ghost{border:none;background:transparent;color:var(--color-text-secondary);cursor:pointer;font-size:11px;display:inline-flex;align-items:center;gap:4px;padding:0}
+
+.field label{display:block;font-size:11px;color:var(--color-text-secondary);margin-bottom:4px}
+.field label span.req{color:#e24b4a}
+.inp,.select,.txt{width:100%;border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:0 10px;font-size:12px;color:var(--color-text-primary);background:var(--color-background-secondary);font-family:var(--font-sans)}
+.inp{height:30px;display:flex;align-items:center;color:var(--color-text-tertiary)}
+.select{height:30px;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23888'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center}
+.txt{padding:8px 10px;resize:none;line-height:1.5}
+.form-grid{display:grid;gap:12px}
+.g2{grid-template-columns:1fr 1fr}
+.g3{grid-template-columns:1fr 1fr 1fr}
+.g4{grid-template-columns:1fr 1fr 1fr 1fr}
+
+table.tbl{width:100%;border-collapse:collapse;font-size:12px}
+table.tbl th{font-size:10px;font-weight:500;color:var(--color-text-secondary);letter-spacing:.05em;text-transform:uppercase;padding:0 8px 8px;text-align:left;border-bottom:0.5px solid var(--color-border-tertiary)}
+table.tbl td{padding:9px 8px;border-bottom:0.5px solid var(--color-border-tertiary);color:var(--color-text-primary);vertical-align:middle}
+table.tbl tr:last-child td{border-bottom:none}
+.tooth-pill{display:inline-block;font-size:10px;padding:1px 6px;border-radius:10px;background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);color:var(--color-text-secondary);margin-right:2px}
+.empty-row{padding:18px 8px;text-align:center;color:var(--color-text-tertiary);font-size:12px;font-style:italic}
+
+.add-panel{background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:14px;margin-bottom:14px;display:none}
+.add-panel.show{display:block}
+
+.odontogram{display:inline-block;padding:14px 14px 10px;background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md)}
+.tooth-row{display:flex;align-items:flex-end;gap:1px}
+.tooth-row.lower{align-items:flex-start;margin-top:2px}
+.tooth-mid-gap{width:10px;flex-shrink:0}
+.quad-labels{display:flex;font-size:9px;color:var(--color-text-tertiary);margin-bottom:4px}
+.quad-labels span{flex:1;text-align:center}
+
+.tooth-cell{display:flex;flex-direction:column;align-items:center;width:25px;flex-shrink:0;cursor:pointer;user-select:none}
+.tooth-cell.lower{flex-direction:column-reverse}
+.tooth-num{font-size:9px;color:var(--color-text-tertiary);margin:3px 0 1px;line-height:1}
+.tooth-svg{width:20px;height:28px;display:block;overflow:visible}
+.tooth-svg .t-root{fill:#eceef2;stroke:#c9cdd6;stroke-width:1}
+.tooth-svg .t-crown{fill:#f5f6f9;stroke:#aab0bd;stroke-width:1.1;transition:fill .1s,stroke .1s}
+.tooth-svg .t-detail{fill:#aab0bd;opacity:.55}
+.tooth-cell.lower .tooth-svg{transform:scaleY(-1)}
+.tooth-cell:hover .t-crown{stroke:#4F7EF7}
+.tooth-cell.sel .t-crown{fill:#4F7EF7;stroke:#3d64c9}
+.tooth-cell.sel .t-root{fill:#c8d7fb;stroke:#3d64c9}
+.tooth-cell.sel .t-detail{fill:#fff;opacity:.85}
+.tooth-cell.sel .tooth-num{color:#4F7EF7;font-weight:600}
+.odo-legend{display:flex;align-items:center;gap:10px;margin-top:10px;padding-top:8px;border-top:0.5px dashed var(--color-border-tertiary);font-size:10px;color:var(--color-text-tertiary)}
+.odo-legend-sw{width:13px;height:13px;border-radius:3px;border:1.1px solid #aab0bd;background:#f5f6f9;display:inline-block;vertical-align:-2px;margin-right:4px}
+.odo-legend-sw.sel{background:#4F7EF7;border-color:#3d64c9}
+.odo-selected-txt{margin-left:auto;font-size:11px;color:var(--color-text-primary)}
+.odo-selected-txt b{color:#4F7EF7}
+
+.info-banner{background:rgba(79,126,247,0.07);border:0.5px solid rgba(79,126,247,0.2);border-radius:var(--border-radius-md);padding:8px 12px;font-size:11px;color:#4F7EF7;display:flex;align-items:center;gap:6px;margin-bottom:14px}
+
+.vigente-tag{font-size:10px;padding:2px 7px;border-radius:20px;background:#dcfce7;color:#166534;border:0.5px solid #bbf7d0}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.field-item{display:flex;flex-direction:column;gap:2px}
+.fi-label{font-size:11px;color:var(--color-text-tertiary)}
+.fi-val{font-size:12px;color:var(--color-text-primary);line-height:1.5}
+
+.hist-item{border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);margin-top:10px;overflow:hidden}
+.hist-header{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;cursor:pointer;background:var(--color-background-secondary)}
+.hist-header:hover{background:var(--color-background-tertiary)}
+.hist-body{padding:12px;border-top:0.5px solid var(--color-border-tertiary);display:none;font-size:11px;color:var(--color-text-secondary)}
+.hist-body.open{display:block}
+
+.dropzone{border:1.5px dashed var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:20px;text-align:center;color:var(--color-text-tertiary);font-size:12px;margin-bottom:12px;cursor:pointer}
+.dropzone:hover{background:var(--color-background-secondary)}
+.att-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);margin-bottom:6px}
+.att-icon{width:30px;height:30px;border-radius:6px;background:var(--color-background-secondary);display:flex;align-items:center;justify-content:center;color:var(--color-text-secondary);flex-shrink:0}
+.att-name{font-size:12px;color:var(--color-text-primary);flex:1}
+.badge-gray{background:var(--color-background-secondary);color:var(--color-text-secondary);border:0.5px solid var(--color-border-tertiary)}
+
+.footer-bar{position:sticky;bottom:0;background:var(--color-background-primary);border-top:0.5px solid var(--color-border-tertiary);padding:12px 24px;display:flex;justify-content:space-between;align-items:center}
+
+.modal-wrap{display:none;position:absolute;inset:0;background:rgba(0,0,0,0.4);z-index:100;align-items:center;justify-content:center;border-radius:var(--border-radius-lg)}
+.modal-box{background:var(--color-background-primary);border-radius:var(--border-radius-lg);border:0.5px solid var(--color-border-tertiary);width:480px;max-width:95%;padding:20px;max-height:90%;overflow:auto}
+</style>
+
+<div class="wrap" style="position:relative">
+  <div class="sidebar">
+    <div class="logo-sq"></div>
+    <div class="nav on"><i class="ti ti-calendar" aria-hidden="true"></i>Minha Agenda</div>
+    <div class="nav"><i class="ti ti-users" aria-hidden="true"></i>Meus Pacientes</div>
+    <div class="nav"><i class="ti ti-cash" aria-hidden="true"></i>Financeiro</div>
+    <div style="flex:1"></div>
+    <div class="nav"><i class="ti ti-settings" aria-hidden="true"></i>Configurações</div>
+  </div>
+
+  <div class="main">
+    <div class="header">
+      <div class="back-link"><i class="ti ti-arrow-left" aria-hidden="true"></i>Voltar à agenda</div>
+      <div class="hrow">
+        <div class="av">KG</div>
+        <div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="hname">Kauê V. Gatti</div>
+            <span class="badge badge-amber"><i class="ti ti-player-play" style="font-size:10px"></i> Em atendimento</span>
+          </div>
+          <div class="hmeta">
+            <span>Consulta de rotina</span>
+            <div class="dot"></div>
+            <span>Agendado: 21/05/2025 14:00</span>
+            <div class="dot"></div>
+            <span>Duração estimada: 50 min</span>
+          </div>
+        </div>
+        <div class="real-times">
+          <div class="rt-field"><label>Início real</label><div class="rt-inp" style="color:var(--color-text-primary)">14:05</div></div>
+          <div class="rt-field"><label>Término real</label><div class="rt-inp" style="color:var(--color-text-primary)">14:52</div></div>
+          <div class="rt-dur">47 min</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <div class="info-banner"><i class="ti ti-info-circle" style="font-size:14px"></i>Campos com <span class="req" style="color:#4F7EF7">*</span> são obrigatórios para finalizar a consulta</div>
+
+      <!-- PROCEDIMENTOS -->
+      <div class="card">
+        <div class="sec-label">
+          <span>Procedimentos realizados<span class="req">*</span></span>
+          <button class="btn" id="btnToggleAdd" onclick="toggleAddPanel()"><i class="ti ti-plus" aria-hidden="true" style="font-size:12px"></i>Adicionar procedimento</button>
+        </div>
+
+        <div class="add-panel" id="addPanel">
+          <div class="form-grid g2" style="margin-bottom:12px">
+            <div class="field">
+              <label>Procedimento <span class="req">*</span></label>
+              <select class="select" id="procSelect" onchange="fillPrice()">
+                <option value="">Selecione...</option>
+                <option value="Limpeza (Profilaxia)" data-price="120">Limpeza (Profilaxia)</option>
+                <option value="Restauração em resina" data-price="180">Restauração em resina</option>
+                <option value="Extração simples" data-price="220">Extração simples</option>
+                <option value="Aplicação de flúor" data-price="60">Aplicação de flúor</option>
+                <option value="Canal (Endodontia)" data-price="650">Canal (Endodontia)</option>
+                <option value="Avaliação / Consulta" data-price="150">Avaliação / Consulta</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Observação do procedimento</label>
+              <input class="inp" id="procObs" style="color:var(--color-text-primary)" placeholder="Opcional">
+            </div>
+          </div>
+
+          <div class="field" style="margin-bottom:12px">
+            <label>Dente(s) envolvido(s) <span style="color:var(--color-text-tertiary);font-weight:400">— notação FDI, opcional</span></label>
+            <div class="odontogram">
+              <div class="quad-labels"><span>Superior direito</span><span style="width:10px"></span><span>Superior esquerdo</span></div>
+              <div class="tooth-row" id="rowUpper"></div>
+              <div class="tooth-row lower" id="rowLower"></div>
+              <div class="quad-labels" style="margin-top:2px"><span>Inferior direito</span><span style="width:10px"></span><span>Inferior esquerdo</span></div>
+              <div class="odo-legend">
+                <span><span class="odo-legend-sw"></span>Não selecionado</span>
+                <span><span class="odo-legend-sw sel"></span>Selecionado</span>
+                <span class="odo-selected-txt" id="odoSelectedTxt">Nenhum dente selecionado</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-grid g3" style="margin-bottom:12px">
+            <div class="field"><label>Valor</label><input class="inp" id="procValor" style="color:var(--color-text-primary)" value="R$ 0,00"></div>
+            <div class="field"><label>Desconto</label><input class="inp" id="procDesc" style="color:var(--color-text-primary)" value="R$ 0,00"></div>
+            <div class="field"><label>Valor final</label><div class="inp" id="procFinal">R$ 0,00</div></div>
+          </div>
+
+          <div style="display:flex;justify-content:flex-end;gap:8px">
+            <button class="btn" onclick="toggleAddPanel()">Cancelar</button>
+            <button class="btn btn-dark" onclick="addProcedure()">Adicionar à lista</button>
+          </div>
+        </div>
+
+        <table class="tbl">
+          <thead><tr><th>Procedimento</th><th>Dente(s)</th><th>Valor</th><th>Desconto</th><th>Valor final</th><th>Obs.</th><th></th></tr></thead>
+          <tbody id="procTableBody">
+            <tr>
+              <td style="font-weight:500">Restauração em resina</td>
+              <td><span class="tooth-pill">36</span></td>
+              <td>R$ 180,00</td>
+              <td>R$ 0,00</td>
+              <td style="font-weight:500">R$ 180,00</td>
+              <td style="color:var(--color-text-secondary)">—</td>
+              <td><button class="btn-ghost"><i class="ti ti-trash" aria-hidden="true" style="font-size:13px"></i></button></td>
+            </tr>
+            <tr>
+              <td style="font-weight:500">Aplicação de flúor</td>
+              <td style="color:var(--color-text-tertiary)">—</td>
+              <td>R$ 60,00</td>
+              <td>R$ 0,00</td>
+              <td style="font-weight:500">R$ 60,00</td>
+              <td style="color:var(--color-text-secondary)">—</td>
+              <td><button class="btn-ghost"><i class="ti ti-trash" aria-hidden="true" style="font-size:13px"></i></button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- AVALIAÇÃO CLÍNICA -->
+      <div class="card">
+        <div class="sec-label">Avaliação clínica</div>
+        <div class="form-grid" style="margin-bottom:14px">
+          <div class="field"><label>Queixa principal do paciente <span class="req">*</span></label><textarea class="txt" rows="2">Sensibilidade ao mastigar do lado esquerdo, principalmente com alimentos frios.</textarea></div>
+        </div>
+        <div class="form-grid" style="margin-bottom:14px">
+          <div class="field"><label>Diagnóstico <span class="req">*</span></label><textarea class="txt" rows="2">Cárie oclusal em dente 36, sem comprometimento pulpar aparente.</textarea></div>
+        </div>
+        <div class="form-grid" style="margin-bottom:14px">
+          <div class="field"><label>Plano de tratamento <span style="color:var(--color-text-tertiary);font-weight:400">— o que ainda precisa ser feito</span></label><textarea class="txt" rows="2">Acompanhar restauração em 30 dias. Avaliar necessidade de tratamento no dente 37 na próxima consulta.</textarea></div>
+        </div>
+        <div class="form-grid" style="margin-bottom:0">
+          <div class="field"><label>Observações clínicas</label><textarea class="txt" rows="2">Paciente relatou ansiedade leve; procedimento realizado sem intercorrências.</textarea></div>
+        </div>
+      </div>
+
+      <!-- ANAMNESE -->
+      <div class="card">
+        <div class="sec-label">
+          <span>Anamnese <span class="vigente-tag">atualizada em 10/03/2025</span></span>
+          <button class="btn" onclick="showAnamneseModal()"><i class="ti ti-edit" aria-hidden="true" style="font-size:12px"></i>Atualizar anamnese</button>
+        </div>
+        <div class="row2">
+          <div class="field-item"><div class="fi-label">Alergias</div><div class="fi-val">Penicilina</div></div>
+          <div class="field-item"><div class="fi-label">Medicamentos em uso</div><div class="fi-val">Nenhum informado</div></div>
+        </div>
+        <div class="row2" style="margin-top:12px">
+          <div class="field-item" style="grid-column:1/-1"><div class="fi-label">Doenças preexistentes</div><div class="fi-val">Hipertensão controlada</div></div>
+        </div>
+
+        <div class="hist-item">
+          <div class="hist-header" onclick="toggleHist(this)">
+            <div style="display:flex;align-items:center;gap:8px">
+              <i class="ti ti-history" aria-hidden="true" style="font-size:13px;color:var(--color-text-secondary)"></i>
+              <span style="font-size:11px;color:var(--color-text-primary)">Registro anterior — 05/11/2023</span>
+            </div>
+            <i class="ti ti-chevron-down" aria-hidden="true" style="font-size:12px;color:var(--color-text-tertiary)"></i>
+          </div>
+          <div class="hist-body">
+            <div style="margin-bottom:6px"><b>Alergias:</b> Penicilina</div>
+            <div style="margin-bottom:6px"><b>Medicamentos em uso:</b> Losartana 50mg</div>
+            <div><b>Doenças preexistentes:</b> Hipertensão</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RETORNO -->
+      <div class="card">
+        <div class="sec-label">Retorno</div>
+        <div class="form-grid g2" style="margin-bottom:0">
+          <div class="field"><label>Próxima consulta recomendada</label><div class="inp" style="color:var(--color-text-tertiary)">DD/MM/AAAA</div></div>
+        </div>
+        <div style="font-size:11px;color:var(--color-text-tertiary);margin-top:10px"><i class="ti ti-info-circle" style="font-size:13px;vertical-align:-2px"></i> Ao preencher, a recepção receberá uma sugestão automática de agendamento</div>
+      </div>
+
+      <!-- ANEXOS -->
+      <div class="card">
+        <div class="sec-label">Anexos</div>
+        <div class="dropzone"><i class="ti ti-cloud-upload" aria-hidden="true" style="font-size:20px;display:block;margin-bottom:6px"></i>Arraste arquivos aqui ou clique para selecionar<br><span style="font-size:10px">Radiografias e fotos vinculadas a esta consulta</span></div>
+        <div class="att-item">
+          <div class="att-icon"><i class="ti ti-x-ray" aria-hidden="true" style="font-size:15px"></i></div>
+          <div class="att-name">radiografia_panoramica.jpg</div>
+          <span class="badge badge-gray">Radiografia</span>
+          <button class="btn-ghost"><i class="ti ti-trash" aria-hidden="true" style="font-size:13px"></i></button>
+        </div>
+        <div class="att-item" style="margin-bottom:0">
+          <div class="att-icon"><i class="ti ti-photo" aria-hidden="true" style="font-size:15px"></i></div>
+          <div class="att-name">foto_intraoral_dente36.jpg</div>
+          <span class="badge badge-gray">Foto intraoral</span>
+          <button class="btn-ghost"><i class="ti ti-trash" aria-hidden="true" style="font-size:13px"></i></button>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="footer-bar">
+      <button class="btn btn-ghost">Cancelar</button>
+      <div style="display:flex;gap:8px">
+        <button class="btn">Salvar rascunho</button>
+        <button class="btn btn-dark"><i class="ti ti-check" aria-hidden="true" style="font-size:13px"></i>Finalizar consulta</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL ANAMNESE -->
+  <div id="anamneseModal" class="modal-wrap">
+    <div class="modal-box">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <div>
+          <div style="font-size:14px;font-weight:500;color:var(--color-text-primary)">Atualizar anamnese</div>
+          <div style="font-size:11px;color:var(--color-text-secondary);margin-top:2px">O registro anterior será preservado no histórico</div>
+        </div>
+        <button class="btn-ghost" onclick="hideAnamneseModal()"><i class="ti ti-x" aria-hidden="true" style="font-size:15px"></i></button>
+      </div>
+      <div class="form-grid" style="margin-bottom:12px">
+        <div class="field"><label>Alergias</label><textarea class="txt" rows="2">Penicilina</textarea></div>
+      </div>
+      <div class="form-grid" style="margin-bottom:12px">
+        <div class="field"><label>Medicamentos em uso</label><textarea class="txt" rows="2">Nenhum informado</textarea></div>
+      </div>
+      <div class="form-grid" style="margin-bottom:16px">
+        <div class="field"><label>Doenças preexistentes</label><textarea class="txt" rows="2">Hipertensão controlada</textarea></div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;padding-top:14px;border-top:0.5px solid var(--color-border-tertiary)">
+        <button class="btn" onclick="hideAnamneseModal()">Cancelar</button>
+        <button class="btn btn-dark" onclick="hideAnamneseModal()">Salvar anamnese</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+var upperFDI=[18,17,16,15,14,13,12,11,21,22,23,24,25,26,27,28];
+var lowerFDI=[48,47,46,45,44,43,42,41,31,32,33,34,35,36,37,38];
+var selectedTeeth=[];
+
+// Retorna o SVG interno (root + crown + detalhes) conforme o tipo anatômico do dente,
+// deduzido do último dígito da notação FDI (1-8).
+function toothInnerSVG(fdi){
+  var t=fdi%10;
+  if(t===1) return '<rect class="t-root" x="9" y="0" width="6" height="7" rx="2"/><rect class="t-crown" x="5" y="6" width="14" height="22" rx="5"/>';
+  if(t===2) return '<rect class="t-root" x="9.5" y="0" width="5" height="7" rx="2"/><rect class="t-crown" x="6" y="6" width="12" height="20" rx="5"/>';
+  if(t===3) return '<rect class="t-root" x="9" y="0" width="6" height="8" rx="2"/><path class="t-crown" d="M5,7 L19,7 L19,20 L12,28 L5,20 Z"/>';
+  if(t===4||t===5) return '<rect class="t-root" x="8" y="0" width="8" height="7" rx="2"/><rect class="t-crown" x="4" y="6" width="16" height="21" rx="6"/><circle class="t-detail" cx="9" cy="12" r="1.5"/><circle class="t-detail" cx="15" cy="12" r="1.5"/>';
+  return '<rect class="t-root" x="3.5" y="0" width="5" height="7" rx="2"/><rect class="t-root" x="15.5" y="0" width="5" height="7" rx="2"/><rect class="t-crown" x="2" y="6" width="20" height="20" rx="6"/><circle class="t-detail" cx="7.5" cy="12.5" r="1.5"/><circle class="t-detail" cx="12" cy="12.5" r="1.5"/><circle class="t-detail" cx="16.5" cy="12.5" r="1.5"/>';
+}
+function renderTeeth(){
+  renderRow('rowUpper',upperFDI,'upper');
+  renderRow('rowLower',lowerFDI,'lower');
+  var txt=document.getElementById('odoSelectedTxt');
+  if(txt){
+    txt.innerHTML=selectedTeeth.length?('<b>'+selectedTeeth.slice().sort(function(a,b){return a-b}).join(', ')+'</b>'):'Nenhum dente selecionado';
+  }
+}
+function renderRow(id,arr,arch){
+  var c=document.getElementById(id);c.innerHTML='';
+  arr.forEach(function(n,i){
+    if(i===8){var gap=document.createElement('div');gap.className='tooth-mid-gap';c.appendChild(gap);}
+    var sel=selectedTeeth.indexOf(n)>-1;
+    var cell=document.createElement('div');
+    cell.className='tooth-cell'+(arch==='lower'?' lower':'')+(sel?' sel':'');
+    cell.title='Dente '+n;
+    cell.innerHTML='<div class="tooth-num">'+n+'</div><svg class="tooth-svg" viewBox="0 0 24 30">'+toothInnerSVG(n)+'</svg>';
+    cell.onclick=function(){toggleTooth(n)};
+    c.appendChild(cell);
+  });
+}
+function toggleTooth(n){
+  var idx=selectedTeeth.indexOf(n);
+  if(idx>-1)selectedTeeth.splice(idx,1);else selectedTeeth.push(n);
+  renderTeeth();
+}
+function toggleAddPanel(){
+  document.getElementById('addPanel').classList.toggle('show');
+}
+function fillPrice(){
+  var sel=document.getElementById('procSelect');
+  var opt=sel.options[sel.selectedIndex];
+  var price=opt.getAttribute('data-price')||0;
+  document.getElementById('procValor').value='R$ '+Number(price).toFixed(2).replace('.',',');
+  updateFinal();
+}
+function updateFinal(){
+  document.getElementById('procFinal').textContent=document.getElementById('procValor').value;
+}
+document.addEventListener('input',function(e){
+  if(e.target && (e.target.id==='procValor'||e.target.id==='procDesc'))updateFinal();
+});
+function addProcedure(){
+  var sel=document.getElementById('procSelect');
+  var name=sel.value;
+  if(!name)return;
+  var teeth=selectedTeeth.length?selectedTeeth.map(function(t){return '<span class="tooth-pill">'+t+'</span>'}).join(''):'<span style="color:var(--color-text-tertiary)">—</span>';
+  var obs=document.getElementById('procObs').value||'—';
+  var valor=document.getElementById('procValor').value;
+  var desc=document.getElementById('procDesc').value;
+  var final=document.getElementById('procFinal').textContent;
+  var tr=document.createElement('tr');
+  tr.innerHTML='<td style="font-weight:500">'+name+'</td><td>'+teeth+'</td><td>'+valor+'</td><td>'+desc+'</td><td style="font-weight:500">'+final+'</td><td style="color:var(--color-text-secondary)">'+obs+'</td><td><button class="btn-ghost" onclick="this.closest(\'tr\').remove()"><i class="ti ti-trash" aria-hidden="true" style="font-size:13px"></i></button></td>';
+  document.getElementById('procTableBody').appendChild(tr);
+  selectedTeeth=[];sel.value='';document.getElementById('procObs').value='';
+  document.getElementById('procValor').value='R$ 0,00';document.getElementById('procDesc').value='R$ 0,00';
+  updateFinal();renderTeeth();
+  toggleAddPanel();
+}
+function toggleHist(el){
+  var b=el.nextElementSibling;
+  b.classList.toggle('open');
+  var ic=el.querySelector('.ti-chevron-down');
+  ic.style.transform=b.classList.contains('open')?'rotate(180deg)':'';
+}
+function showAnamneseModal(){document.getElementById('anamneseModal').style.display='flex'}
+function hideAnamneseModal(){document.getElementById('anamneseModal').style.display='none'}
+renderTeeth();
+</script>
+</body></html>

@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>OdontoSys · Definir nova senha</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --indigo:#6366F1;
+    --indigo-dark:#4F46E5;
+    --indigo-soft:rgba(99,102,241,.12);
+    --ink:#0F1222;
+    --gray-700:#374151;
+    --gray-500:#6B7280;
+    --gray-400:#9CA3AF;
+    --gray-200:#E5E7EB;
+    --gray-50:#F9FAFB;
+    --green:#16A34A;
+    --amber:#D97706;
+    --red:#DC2626;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;overflow:hidden}
+  body{font-family:'Inter',system-ui,sans-serif;color:var(--ink);background:#fff}
+
+  .wrap{display:flex;height:100vh}
+
+  /* ---------- LEFT ---------- */
+  .left{flex:0 0 44%;max-width:640px;display:flex;flex-direction:column;padding:28px 90px 24px;min-width:420px;overflow:hidden}
+  .logo-row{display:flex;align-items:center;gap:10px;flex-shrink:0}
+  .logo-sq{width:32px;height:32px;background:var(--indigo);border-radius:9px;flex-shrink:0}
+  .logo-text{font-size:16.5px;font-weight:700;color:var(--ink)}
+  .logo-sub{font-size:12px;color:var(--gray-400);font-weight:500}
+
+  .main-content{flex:1;display:flex;flex-direction:column;justify-content:center;max-width:460px}
+
+  .eyebrow{font-size:10.5px;font-weight:700;letter-spacing:.07em;color:var(--indigo);text-transform:uppercase;margin-bottom:8px}
+  h1{font-size:25px;font-weight:800;letter-spacing:-.02em;color:var(--ink);margin-bottom:7px}
+  .subtitle{font-size:12.5px;color:var(--gray-500);line-height:1.5;margin-bottom:20px}
+
+  .field{margin-bottom:6px}
+  .field label{display:block;font-size:12px;font-weight:600;color:var(--gray-700);margin-bottom:5px}
+  .input-shell{position:relative;display:flex;align-items:center}
+  .input-shell i.left-icon{position:absolute;left:14px;font-size:15px;color:var(--gray-400);pointer-events:none}
+  .input-shell input{
+    width:100%;height:42px;border:1px solid var(--gray-200);border-radius:9px;
+    background:var(--gray-50);padding:0 42px 0 40px;font-size:13px;color:var(--ink);
+    font-family:inherit;outline:none;transition:border-color .15s, background .15s;
+  }
+  .input-shell input::placeholder{color:var(--gray-400)}
+  .input-shell input:focus{border-color:var(--indigo);background:#fff;box-shadow:0 0 0 3px var(--indigo-soft)}
+  .toggle-eye{position:absolute;right:14px;background:none;border:none;cursor:pointer;color:var(--gray-400);font-size:16px;display:flex}
+  .toggle-eye:hover{color:var(--gray-700)}
+
+  /* strength meter */
+  .strength-row{display:flex;align-items:center;gap:10px;margin:8px 0 12px}
+  .strength-bars{display:flex;gap:4px;flex:1}
+  .strength-bars span{height:4px;flex:1;border-radius:3px;background:var(--gray-200);transition:background .2s}
+  .strength-label{font-size:10.5px;font-weight:600;color:var(--gray-400);white-space:nowrap}
+
+  .match-note{font-size:11px;margin-top:6px;display:none;align-items:center;gap:5px}
+  .match-note i{font-size:12px}
+
+  /* requirements box */
+  .req-box{background:var(--gray-50);border:1px solid var(--gray-200);border-radius:9px;padding:10px 14px;margin:12px 0 16px}
+  .req-title{font-size:11px;font-weight:600;color:var(--gray-700);margin-bottom:7px}
+  .req-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px}
+  .req-item{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--gray-400);transition:color .15s}
+  .req-item i{font-size:13px;color:var(--gray-400);transition:color .15s}
+  .req-item.met{color:var(--green)}
+  .req-item.met i{color:var(--green)}
+
+  .btn-primary{
+    width:100%;height:42px;border:none;border-radius:9px;background:var(--indigo);color:#fff;
+    font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;
+    justify-content:center;gap:8px;transition:background .15s;
+  }
+  .btn-primary:hover{background:var(--indigo-dark)}
+  .btn-primary i{font-size:15px}
+
+  .back-link{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--gray-500);
+    text-decoration:none;margin-top:14px;font-weight:500}
+  .back-link:hover{color:var(--ink)}
+  .back-link i{font-size:14px}
+
+  .info-box{
+    margin-top:18px;background:var(--gray-50);border:1px solid var(--gray-200);border-radius:9px;
+    padding:11px 14px;font-size:11px;color:var(--gray-500);line-height:1.5;flex-shrink:0
+  }
+  .info-box b{color:var(--gray-700)}
+
+  .footer{margin-top:14px;font-size:11px;color:var(--gray-400);flex-shrink:0}
+
+  /* ---------- RIGHT ---------- */
+  .right{
+    flex:1;position:relative;overflow:hidden;
+    background:linear-gradient(150deg,#0B1130 0%,#141B45 45%,#1C2B63 100%);
+    display:flex;flex-direction:column;justify-content:flex-end;padding:64px;
+  }
+  .blob{position:absolute;border-radius:50%;border:1px solid rgba(255,255,255,.07)}
+  .blob.b1{width:520px;height:520px;top:-140px;right:-120px}
+  .blob.b2{width:360px;height:360px;bottom:-100px;left:-80px;background:radial-gradient(circle at 30% 30%,rgba(99,102,241,.12),transparent 70%)}
+  .dot{position:absolute;width:5px;height:5px;border-radius:50%;background:var(--indigo)}
+  .dot.d1{top:16%;right:38%}
+  .dot.d2{top:46%;left:20%}
+  .dot.d3{bottom:22%;right:18%}
+
+  .card{
+    position:absolute;background:rgba(255,255,255,.06);backdrop-filter:blur(18px);
+    border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:14px 16px;
+    display:flex;align-items:center;gap:12px;box-shadow:0 24px 48px rgba(0,0,0,.28);
+  }
+  .card .icon-sq{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .icon-sq.green{background:rgba(74,222,128,.16);color:#4ADE80}
+  .icon-sq.indigo{background:rgba(129,140,248,.18);color:#A5B4FC}
+  .card .ct{font-size:13px;font-weight:600;color:#fff}
+  .card .cs{font-size:11.5px;color:#94A3B8;margin-top:1px}
+
+  .card-top{top:calc(50% - 230px);left:calc(50% - 230px)}
+  .card-bottom{top:calc(50% + 90px);left:calc(50% + 40px)}
+
+  .center-card{
+    position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:180px;height:180px;border-radius:26px;
+    background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.15);
+    display:flex;align-items:center;justify-content:center;box-shadow:0 30px 60px rgba(0,0,0,.3);
+  }
+  .center-card i{font-size:52px;color:#A5B4FC}
+
+  .right-copy{position:relative;z-index:2}
+  .right-copy h2{font-size:34px;font-weight:800;color:#fff;letter-spacing:-.02em;line-height:1.25}
+  .right-copy h2 span{color:#8B93AE;font-weight:700}
+  .feature-row{display:flex;align-items:center;gap:10px;margin-top:22px;flex-wrap:wrap}
+  .feature-row span{font-size:12.5px;color:#B9C0D4;font-weight:500}
+  .feature-row .fd{width:4px;height:4px;border-radius:50%;background:var(--indigo)}
+
+  @media (max-width:900px){
+    .wrap{flex-direction:column}
+    .left{max-width:100%;padding:32px}
+    .right{min-height:280px;padding:32px}
+    .center-card,.card-top,.card-bottom{display:none}
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <!-- LEFT -->
+  <div class="left">
+    <div class="logo-row">
+      <div class="logo-sq"></div>
+      <span class="logo-text">OdontoSys</span>
+      <span class="logo-sub">· Gestão de Clínicas</span>
+    </div>
+
+    <div class="main-content">
+      <div class="eyebrow">Redefinição de senha</div>
+      <h1>Crie uma nova senha</h1>
+      <p class="subtitle">Escolha uma senha forte e diferente das anteriores para manter sua conta protegida.</p>
+
+      <form id="pwForm" autocomplete="off">
+        <div class="field">
+          <label>Nova senha</label>
+          <div class="input-shell">
+            <i class="ti ti-lock left-icon"></i>
+            <input id="pw1" type="password" placeholder="Digite sua nova senha">
+            <button type="button" class="toggle-eye" data-target="pw1"><i class="ti ti-eye"></i></button>
+          </div>
+          <div class="strength-row">
+            <div class="strength-bars">
+              <span data-seg="0"></span><span data-seg="1"></span><span data-seg="2"></span><span data-seg="3"></span>
+            </div>
+            <span class="strength-label" id="strengthLabel">Digite uma senha</span>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Confirmar nova senha</label>
+          <div class="input-shell">
+            <i class="ti ti-lock left-icon"></i>
+            <input id="pw2" type="password" placeholder="Repita a nova senha">
+            <button type="button" class="toggle-eye" data-target="pw2"><i class="ti ti-eye"></i></button>
+          </div>
+          <div class="match-note" id="matchNote"></div>
+        </div>
+
+        <div class="req-box">
+          <div class="req-title">Sua senha deve conter:</div>
+          <div class="req-grid">
+            <div class="req-item" data-req="len"><i class="ti ti-circle-check"></i>Mínimo de 8 caracteres</div>
+            <div class="req-item" data-req="upper"><i class="ti ti-circle-check"></i>Uma letra maiúscula</div>
+            <div class="req-item" data-req="num"><i class="ti ti-circle-check"></i>Um número</div>
+            <div class="req-item" data-req="special"><i class="ti ti-circle-check"></i>Um caractere especial</div>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-primary"><i class="ti ti-shield-check"></i>Salvar nova senha</button>
+      </form>
+
+      <a class="back-link" href="#"><i class="ti ti-arrow-left"></i>Voltar para o login</a>
+
+      <div class="info-box">
+        <b>Por segurança</b>, ao salvar a nova senha você será desconectado automaticamente de todos os outros dispositivos onde sua conta estiver logada.
+      </div>
+    </div>
+
+    <div class="footer">© 2025 OdontoSys · Todos os direitos reservados</div>
+  </div>
+
+  <!-- RIGHT -->
+  <div class="right">
+    <div class="blob b1"></div>
+    <div class="blob b2"></div>
+    <div class="dot d1"></div>
+    <div class="dot d2"></div>
+    <div class="dot d3"></div>
+
+    <div class="center-card"><i class="ti ti-key"></i></div>
+
+    <div class="card card-top">
+      <div class="icon-sq green"><i class="ti ti-shield-check" style="font-size:18px"></i></div>
+      <div>
+        <div class="ct">Conexão segura</div>
+        <div class="cs">Criptografia TLS 256-bit</div>
+      </div>
+    </div>
+
+    <div class="card card-bottom">
+      <div class="icon-sq indigo"><i class="ti ti-devices" style="font-size:18px"></i></div>
+      <div>
+        <div class="ct">Sessões encerradas</div>
+        <div class="cs">Em todos os dispositivos</div>
+      </div>
+    </div>
+
+    <div class="right-copy">
+      <h2>Escolha uma senha forte<br><span>e mantenha sua conta protegida.</span></h2>
+      <div class="feature-row">
+        <span>Criptografia de ponta a ponta</span>
+        <div class="fd"></div>
+        <span>Sessão atual encerrada</span>
+        <div class="fd"></div>
+        <span>Recomendações de segurança</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // Toggle de visibilidade da senha
+  document.querySelectorAll('.toggle-eye').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var input = document.getElementById(btn.dataset.target);
+      var icon = btn.querySelector('i');
+      if(input.type === 'password'){
+        input.type = 'text';
+        icon.className = 'ti ti-eye-off';
+      } else {
+        input.type = 'password';
+        icon.className = 'ti ti-eye';
+      }
+    });
+  });
+
+  var pw1 = document.getElementById('pw1');
+  var pw2 = document.getElementById('pw2');
+  var matchNote = document.getElementById('matchNote');
+  var strengthLabel = document.getElementById('strengthLabel');
+  var segs = document.querySelectorAll('.strength-bars span');
+  var segColors = ['#DC2626','#D97706','#EAB308','#16A34A'];
+
+  function checkRequirements(val){
+    var checks = {
+      len: val.length >= 8,
+      upper: /[A-Z]/.test(val),
+      num: /[0-9]/.test(val),
+      special: /[^A-Za-z0-9]/.test(val)
+    };
+    var metCount = 0;
+    Object.keys(checks).forEach(function(key){
+      var el = document.querySelector('.req-item[data-req="'+key+'"]');
+      if(checks[key]){ el.classList.add('met'); metCount++; }
+      else{ el.classList.remove('met'); }
+    });
+    return metCount;
+  }
+
+  function updateStrength(){
+    var val = pw1.value;
+    var metCount = checkRequirements(val);
+    var score = val.length === 0 ? 0 : metCount;
+
+    segs.forEach(function(seg, i){
+      seg.style.background = i < score ? segColors[Math.min(score,4)-1] : '#E5E7EB';
+    });
+
+    var labels = ['Digite uma senha','Fraca','Razoável','Boa','Forte'];
+    strengthLabel.textContent = labels[score];
+    strengthLabel.style.color = score === 0 ? '#9CA3AF' : segColors[Math.min(score,4)-1];
+
+    updateMatch();
+  }
+
+  function updateMatch(){
+    if(pw2.value.length === 0){
+      matchNote.style.display = 'none';
+      return;
+    }
+    matchNote.style.display = 'flex';
+    if(pw2.value === pw1.value){
+      matchNote.innerHTML = '<i class="ti ti-circle-check" style="color:#16A34A"></i><span style="color:#16A34A">As senhas coincidem</span>';
+    } else {
+      matchNote.innerHTML = '<i class="ti ti-alert-circle" style="color:#DC2626"></i><span style="color:#DC2626">As senhas não coincidem</span>';
+    }
+  }
+
+  pw1.addEventListener('input', updateStrength);
+  pw2.addEventListener('input', updateMatch);
+
+  document.getElementById('pwForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    var btn = e.target.querySelector('.btn-primary');
+    btn.innerHTML = '<i class="ti ti-check"></i>Senha salva com sucesso';
+    btn.style.background = '#16A34A';
+  });
+</script>
+
+</body>
+</html>

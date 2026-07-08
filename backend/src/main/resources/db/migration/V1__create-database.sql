@@ -160,17 +160,17 @@ CREATE TABLE patient
 -- ------------------------------------------------------------
 CREATE TABLE receptionist
 (
-    id          SERIAL PRIMARY KEY,
-    user_id     INT          NOT NULL UNIQUE REFERENCES users (id),
-    full_name   VARCHAR(150) NOT NULL,
-    cpf         VARCHAR(14) UNIQUE,
-    rg          VARCHAR(14) UNIQUE,
-    phone       VARCHAR(20)  NOT NULL,
-    email       VARCHAR(150),
-    birth_date  DATE,
-    hire_date   DATE         NOT NULL DEFAULT CURRENT_DATE,
-    active      BOOLEAN      NOT NULL DEFAULT TRUE,
-    created_at  TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+    id         SERIAL PRIMARY KEY,
+    user_id    INT          NOT NULL UNIQUE REFERENCES users (id),
+    full_name  VARCHAR(150) NOT NULL,
+    cpf        VARCHAR(14) UNIQUE,
+    rg         VARCHAR(14) UNIQUE,
+    phone      VARCHAR(20)  NOT NULL,
+    email      VARCHAR(150),
+    birth_date DATE,
+    hire_date  DATE         NOT NULL DEFAULT CURRENT_DATE,
+    active     BOOLEAN      NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
 
     CONSTRAINT receptionist_document_check CHECK (cpf IS NOT NULL OR rg IS NOT NULL)
 );
@@ -344,14 +344,23 @@ CREATE TABLE appointment
 -- ------------------------------------------------------------
 CREATE TABLE appointment_procedure
 (
+    id             SERIAL PRIMARY KEY,
     appointment_id INT            NOT NULL REFERENCES appointment (id),
     procedure_id   INT            NOT NULL REFERENCES dental_procedure (id),
-    tooth_fdi      SMALLINT,
     unit_price     NUMERIC(10, 2) NOT NULL,
     discount       NUMERIC(10, 2) NOT NULL DEFAULT 0,
     final_price    NUMERIC(10, 2) NOT NULL,
-    observation    TEXT,
-    PRIMARY KEY (appointment_id, procedure_id, tooth_fdi)
+    observation    TEXT
+);
+
+-- ------------------------------------------------------------
+-- APPOINTMENT × TOOTH (N:N)
+-- ------------------------------------------------------------
+CREATE TABLE appointment_procedure_tooth
+(
+    appointment_procedure_id INT      NOT NULL REFERENCES appointment_procedure (id) ON DELETE CASCADE,
+    tooth_fdi                SMALLINT NOT NULL,
+    PRIMARY KEY (appointment_procedure_id, tooth_fdi)
 );
 
 -- ------------------------------------------------------------
