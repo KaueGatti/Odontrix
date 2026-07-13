@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Boletos — OdontoSys</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<style>
+:root{
+  --blue:       #4F7EF7;
+  --blue-dark:  #0f2050;
+  --blue-mid:   #1a3580;
+  --white:      #ffffff;
+  --gray-50:    #f8fafc;
+  --gray-100:   #f1f5f9;
+  --gray-200:   #e2e8f0;
+  --gray-300:   #cbd5e1;
+  --gray-400:   #94a3b8;
+  --gray-500:   #64748b;
+  --gray-700:   #334155;
+  --gray-900:   #0f172a;
+  --green:      #4ade80;
+  --amber:      #f59e0b;
+  --red:        #f87171;
+  --teal:       #2dd4bf;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: "SF Mono", "Roboto Mono", Consolas, monospace;
+
+  --color-background-primary: var(--white);
+  --color-background-secondary: var(--gray-50);
+  --color-background-tertiary: var(--gray-100);
+  --color-text-primary: var(--gray-900);
+  --color-text-secondary: var(--gray-500);
+  --color-text-tertiary: var(--gray-400);
+  --color-border-tertiary: var(--gray-200);
+  --border-radius-lg: 14px;
+  --border-radius-md: 10px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:var(--font-sans);font-size:13px;background:var(--color-background-tertiary);color:var(--color-text-primary);display:flex;overflow:hidden}
+
+/* ---- SIDEBAR ---- */
+.sidebar{width:216px;background:linear-gradient(180deg,var(--blue-dark) 0%,var(--blue-mid) 100%);padding:26px 16px;flex-shrink:0;display:flex;flex-direction:column}
+.logo{display:flex;align-items:center;gap:10px;margin-bottom:40px;padding:0 6px}
+.logo-sq{width:28px;height:28px;background:var(--blue);border-radius:7px;flex-shrink:0}
+.logo-name{font-size:13px;font-weight:600;color:var(--white);letter-spacing:-0.2px}
+.logo-name span{display:block;font-size:10px;color:rgba(255,255,255,0.4);font-weight:400;margin-top:1px}
+.nav{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;color:rgba(255,255,255,0.55);font-size:12.5px;font-weight:500;cursor:pointer;margin-bottom:2px;transition:background .15s,color .15s}
+.nav i{font-size:16px;width:16px;text-align:center}
+.nav:hover{background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.85)}
+.nav.on{background:rgba(255,255,255,0.1);color:#fff;box-shadow:inset 0 0 0 1px rgba(255,255,255,0.1)}
+.nav-sec{padding:16px 10px 6px;font-size:9.5px;font-weight:600;letter-spacing:0.08em;color:rgba(255,255,255,0.3)}
+.nav.sub{padding-left:32px;font-size:11.5px}
+.sidebar-spacer{flex:1}
+.sidebar-footer{font-size:10.5px;color:rgba(255,255,255,0.25);padding:10px 6px 0}
+
+/* ---- MAIN ---- */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{background:var(--color-background-primary);border-bottom:1px solid var(--color-border-tertiary);padding:18px 36px;box-shadow:0 4px 24px rgba(15,32,80,0.04);display:flex;align-items:center;justify-content:space-between}
+.eyebrow{font-size:11px;font-weight:600;letter-spacing:0.09em;text-transform:uppercase;color:var(--blue);margin-bottom:6px}
+.page-heading{font-size:22px;font-weight:700;color:var(--gray-900);letter-spacing:-0.5px}
+.content{flex:1;overflow:auto;padding:28px 36px}
+
+/* ---- KPI CARDS ---- */
+.kpi-row{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:20px}
+.kpi-card{background:var(--white);border-radius:var(--border-radius-lg);border:1px solid var(--gray-200);padding:16px 18px;box-shadow:0 4px 24px rgba(15,32,80,0.05)}
+.kpi-icon{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;margin-bottom:11px;font-size:14px}
+.kpi-label{font-size:10.5px;color:var(--gray-500);margin-bottom:4px}
+.kpi-val{font-size:18px;font-weight:700;color:var(--gray-900);letter-spacing:-0.3px}
+
+/* ---- TAB PILLS (status) ---- */
+.tab-row{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap}
+.tab-pill{padding:7px 15px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;color:var(--gray-500);background:var(--white);border:1.5px solid var(--gray-200);transition:all .15s;display:flex;align-items:center;gap:6px}
+.tab-pill:hover{border-color:var(--gray-300);color:var(--gray-700)}
+.tab-pill.on{background:var(--blue);color:var(--white);border-color:var(--blue);box-shadow:0 6px 16px rgba(79,126,247,0.32)}
+.tab-pill .cnt{font-size:10px;font-weight:700;background:rgba(255,255,255,0.25);padding:1px 6px;border-radius:10px}
+.tab-pill:not(.on) .cnt{background:var(--gray-100);color:var(--gray-500)}
+
+/* ---- CARD / TABLE ---- */
+.card{background:var(--color-background-primary);border-radius:var(--border-radius-lg);border:1px solid var(--color-border-tertiary);padding:22px 24px;margin-bottom:16px;box-shadow:0 4px 24px rgba(15,32,80,0.05)}
+.card-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px;gap:16px;flex-wrap:wrap}
+.card-title{font-size:15px;font-weight:700;color:var(--gray-900);letter-spacing:-0.2px}
+.card-sub{font-size:11.5px;color:var(--color-text-tertiary);margin-top:3px}
+
+.filter-row{display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;align-items:flex-end}
+.filter-field{display:flex;flex-direction:column;gap:5px}
+.filter-field label{font-size:10.5px;font-weight:500;color:var(--gray-500)}
+.select,.inp{height:32px;border:1.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:0 10px;font-size:12px;color:var(--gray-900);background:var(--gray-50);font-family:var(--font-sans);outline:none;transition:border-color .15s,box-shadow .15s,background .15s}
+.select{appearance:none;min-width:150px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2394a3b8'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center}
+.inp{min-width:190px}
+input.inp:focus,select.select:focus{border-color:var(--blue);background:var(--white);box-shadow:0 0 0 3px rgba(79,126,247,0.13)}
+.search-wrap{position:relative}
+.search-wrap i{position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:13px;color:var(--gray-400)}
+.search-wrap .inp{padding-left:30px;width:100%}
+
+.btn{height:34px;padding:0 16px;border-radius:var(--border-radius-md);font-size:12.5px;font-weight:600;font-family:var(--font-sans);cursor:pointer;display:inline-flex;align-items:center;gap:7px;border:1.5px solid var(--color-border-tertiary);background:var(--color-background-primary);color:var(--gray-700);transition:all .15s}
+.btn:hover{border-color:var(--gray-300)}
+.btn-dark{background:var(--blue);color:#fff;border-color:var(--blue);box-shadow:0 6px 16px rgba(79,126,247,0.3)}
+.btn-dark:hover{background:#3a6af3}
+.btn-sm{height:28px;padding:0 11px;font-size:11.5px}
+.btn-danger-ghost{color:#dc2626;border-color:rgba(248,113,113,0.35)}
+.btn-danger-ghost:hover{background:rgba(248,113,113,0.08);border-color:#dc2626}
+
+table.tbl{width:100%;border-collapse:collapse;font-size:12.5px}
+table.tbl th{font-size:10px;font-weight:600;color:var(--color-text-secondary);letter-spacing:.05em;text-transform:uppercase;padding:0 8px 10px;text-align:left;border-bottom:1.5px solid var(--gray-100)}
+table.tbl td{padding:12px 8px;border-bottom:1px solid var(--gray-100);color:var(--color-text-primary);vertical-align:middle}
+table.tbl tr:last-child td{border-bottom:none}
+table.tbl tr.row-muted td{color:var(--gray-400)}
+.mono{font-family:var(--font-mono);font-size:11.5px;letter-spacing:0.2px}
+
+.badge{font-size:10.5px;font-weight:600;padding:3px 10px;border-radius:20px;display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.badge-blue{background:rgba(79,126,247,0.12);color:var(--blue)}
+.badge-teal{background:rgba(45,212,191,0.15);color:#0d9488}
+.badge-green{background:rgba(74,222,128,0.14);color:#16a34a}
+.badge-red{background:rgba(248,113,113,0.14);color:#dc2626}
+.badge-gray{background:var(--gray-100);color:var(--gray-400)}
+.dot{width:5px;height:5px;border-radius:50%;background:currentColor}
+
+.actions-cell{display:flex;gap:4px;justify-content:flex-end}
+.icon-btn{border:none;background:transparent;cursor:pointer;color:var(--gray-400);padding:6px 7px;border-radius:7px;transition:all .15s;font-size:14px;display:flex;align-items:center}
+.icon-btn:hover{color:var(--gray-700);background:var(--gray-100)}
+.icon-btn.danger:hover{color:#dc2626;background:rgba(248,113,113,0.1)}
+.icon-btn.success:hover{color:#16a34a;background:rgba(74,222,128,0.12)}
+.icon-btn:disabled{opacity:.35;cursor:default}
+.icon-btn:disabled:hover{background:transparent;color:var(--gray-400)}
+
+/* ---- MODAL ---- */
+.modal-wrap{display:none;position:fixed;inset:0;background:rgba(15,32,80,0.35);backdrop-filter:blur(2px);z-index:100;align-items:center;justify-content:center}
+.modal-box{background:var(--white);border-radius:var(--border-radius-lg);width:440px;max-width:92%;padding:24px;box-shadow:0 24px 60px rgba(15,32,80,0.25)}
+.modal-box.wide{width:560px}
+.modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.modal-title{font-size:15px;font-weight:700;color:var(--gray-900);letter-spacing:-0.2px}
+.modal-sub{font-size:11.5px;color:var(--gray-500);margin-top:3px}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:11.5px;font-weight:500;color:var(--gray-700);margin-bottom:5px}
+.field label span.req{color:var(--red)}
+.field label span.hint{color:var(--color-text-tertiary);font-weight:400}
+.field .inp,.field .select{width:100%}
+.form-grid{display:grid;gap:14px}
+.g2{grid-template-columns:1fr 1fr}
+.modal-footer{display:flex;justify-content:flex-end;gap:10px;margin-top:20px;padding-top:16px;border-top:1px solid var(--gray-100)}
+.icon-btn-x{border:none;background:transparent;cursor:pointer;color:var(--gray-400);padding:4px 5px;border-radius:6px;transition:all .15s}
+.icon-btn-x:hover{color:var(--gray-700);background:var(--gray-100)}
+
+.confirm-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:14px}
+.confirm-icon.warn{background:rgba(245,158,11,0.14);color:#b45309}
+.confirm-icon.danger{background:rgba(248,113,113,0.14);color:#dc2626}
+.confirm-text{font-size:12.5px;color:var(--gray-500);line-height:1.6;margin-bottom:4px}
+.confirm-text b{color:var(--gray-900)}
+
+/* ---- DETAIL MODAL ---- */
+.detail-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px}
+.detail-patient{font-size:15px;font-weight:700;color:var(--gray-900);letter-spacing:-0.2px}
+.detail-meta{font-size:11.5px;color:var(--gray-500);margin-top:3px}
+.detail-amount{font-size:22px;font-weight:700;color:var(--gray-900);letter-spacing:-0.4px;margin-top:2px}
+
+.kv-block{background:var(--gray-50);border:1px solid var(--gray-200);border-radius:var(--border-radius-md);padding:14px 16px;margin-bottom:12px}
+.kv-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 0}
+.kv-row + .kv-row{border-top:1px dashed var(--gray-200)}
+.kv-label{font-size:11px;color:var(--gray-500);flex-shrink:0}
+.kv-value{font-size:12px;color:var(--gray-900);font-weight:600;text-align:right;word-break:break-all}
+.copy-btn{border:none;background:transparent;color:var(--blue);cursor:pointer;font-size:12px;padding:2px 4px;display:inline-flex;align-items:center;gap:4px;flex-shrink:0}
+.copy-btn:hover{text-decoration:underline}
+
+.timeline{display:flex;flex-direction:column;gap:0;margin-bottom:4px}
+.tl-item{display:flex;gap:10px;padding:0 0 16px}
+.tl-item:last-child{padding-bottom:0}
+.tl-dot-wrap{display:flex;flex-direction:column;align-items:center}
+.tl-dot{width:9px;height:9px;border-radius:50%;background:var(--gray-300);flex-shrink:0;margin-top:2px}
+.tl-dot.done{background:var(--blue)}
+.tl-line{width:1.5px;flex:1;background:var(--gray-200);margin-top:2px}
+.tl-label{font-size:12px;font-weight:600;color:var(--gray-900)}
+.tl-label.muted{color:var(--gray-400);font-weight:500}
+.tl-date{font-size:11px;color:var(--gray-400);margin-top:1px}
+
+.detail-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px;padding-top:16px;border-top:1px solid var(--gray-100)}
+</style>
+</head>
+<body>
+
+  <div class="sidebar">
+    <div class="logo">
+      <div class="logo-sq"></div>
+      <div class="logo-name">OdontoSys<span>Gestão de Clínicas</span></div>
+    </div>
+
+    <div class="nav"><i class="ti ti-layout-dashboard" aria-hidden="true"></i>Dashboard</div>
+    <div class="nav"><i class="ti ti-users" aria-hidden="true"></i>Pacientes</div>
+    <div class="nav"><i class="ti ti-stethoscope" aria-hidden="true"></i>Dentistas</div>
+    <div class="nav"><i class="ti ti-user-check" aria-hidden="true"></i>Recepcionistas</div>
+    <div class="nav"><i class="ti ti-calendar" aria-hidden="true"></i>Agenda</div>
+
+    <div class="nav-sec">Financeiro</div>
+    <div class="nav sub"><i class="ti ti-report-money" aria-hidden="true"></i>Contas</div>
+    <div class="nav sub"><i class="ti ti-arrow-down-left" aria-hidden="true"></i>A receber</div>
+    <div class="nav sub"><i class="ti ti-arrow-up-right" aria-hidden="true"></i>A pagar</div>
+    <div class="nav sub on"><i class="ti ti-receipt" aria-hidden="true"></i>Boletos</div>
+
+    <div class="nav"><i class="ti ti-file-text" aria-hidden="true"></i>Contratos</div>
+    <div class="nav"><i class="ti ti-heart-rate-monitor" aria-hidden="true"></i>Planos</div>
+    <div class="nav"><i class="ti ti-adjustments" aria-hidden="true"></i>Auxiliares</div>
+
+    <div class="nav-sec">Administração</div>
+    <div class="nav"><i class="ti ti-lock-access" aria-hidden="true"></i>Usuários</div>
+    <div class="nav"><i class="ti ti-settings" aria-hidden="true"></i>Configurações</div>
+
+    <div class="sidebar-spacer"></div>
+    <div class="sidebar-footer">© 2025 OdontoSys</div>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <div>
+        <div class="eyebrow">Financeiro</div>
+        <div class="page-heading">Boletos</div>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <div class="kpi-row">
+        <div class="kpi-card">
+          <div class="kpi-icon" style="background:rgba(79,126,247,0.12)"><i class="ti ti-receipt" style="color:var(--blue)"></i></div>
+          <div class="kpi-label">Total de boletos</div>
+          <div class="kpi-val">86</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon" style="background:rgba(45,212,191,0.15)"><i class="ti ti-clock" style="color:#0d9488"></i></div>
+          <div class="kpi-label">Registrados / em aberto</div>
+          <div class="kpi-val">31</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon" style="background:rgba(74,222,128,0.14)"><i class="ti ti-circle-check" style="color:#16a34a"></i></div>
+          <div class="kpi-label">Pagos</div>
+          <div class="kpi-val">42</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon" style="background:rgba(248,113,113,0.14)"><i class="ti ti-alert-triangle" style="color:#dc2626"></i></div>
+          <div class="kpi-label">Vencidos</div>
+          <div class="kpi-val">9</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon" style="background:var(--gray-100)"><i class="ti ti-ban" style="color:var(--gray-400)"></i></div>
+          <div class="kpi-label">Valor vencido em aberto</div>
+          <div class="kpi-val">R$ 1.860</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <div class="card-title">Todos os boletos</div>
+            <div class="card-sub">Emitidos via Sicredi — atualizado automaticamente por retorno bancário</div>
+          </div>
+        </div>
+
+        <div class="tab-row">
+          <div class="tab-pill on" onclick="setStatusTab(this,'all')">Todos <span class="cnt">86</span></div>
+          <div class="tab-pill" onclick="setStatusTab(this,'issued')">Emitidos <span class="cnt">4</span></div>
+          <div class="tab-pill" onclick="setStatusTab(this,'registred')">Registrados <span class="cnt">31</span></div>
+          <div class="tab-pill" onclick="setStatusTab(this,'paid')">Pagos <span class="cnt">42</span></div>
+          <div class="tab-pill" onclick="setStatusTab(this,'overdue')">Vencidos <span class="cnt">9</span></div>
+          <div class="tab-pill" onclick="setStatusTab(this,'cancelled')">Cancelados <span class="cnt">4</span></div>
+        </div>
+
+        <div class="filter-row">
+          <div class="filter-field" style="flex:1">
+            <label>Paciente</label>
+            <div class="search-wrap">
+              <i class="ti ti-search"></i>
+              <input class="inp" placeholder="Buscar por nome do paciente...">
+            </div>
+          </div>
+          <div class="filter-field">
+            <label>Nosso número</label>
+            <input class="inp" placeholder="Ex: 00012345" style="min-width:150px">
+          </div>
+          <div class="filter-field">
+            <label>Vencimento de</label>
+            <input class="inp" placeholder="DD/MM/AAAA" style="min-width:130px">
+          </div>
+          <div class="filter-field">
+            <label>até</label>
+            <input class="inp" placeholder="DD/MM/AAAA" style="min-width:130px">
+          </div>
+        </div>
+
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th>Paciente</th>
+              <th>Nosso número</th>
+              <th>Vencimento</th>
+              <th>Valor</th>
+              <th>Status</th>
+              <th>Emitido em</th>
+              <th style="text-align:right">Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="font-weight:600">Kauê V. Gatti</td>
+              <td class="mono">00012381</td>
+              <td>15/07/2026</td>
+              <td>R$ 150,00</td>
+              <td><span class="badge badge-teal"><span class="dot"></span>Registrado</span></td>
+              <td>01/07/2026</td>
+              <td>
+                <div class="actions-cell">
+                  <button class="icon-btn" onclick="openDetail(this)" title="Ver detalhes"
+                    data-patient="Kauê V. Gatti" data-parcela="Parcela 2/3" data-amount="R$ 150,00"
+                    data-status="registred" data-ournumber="00012381" data-duedate="15/07/2026"
+                    data-issued="01/07/2026" data-registered="02/07/2026" data-paid="" data-cancelled=""
+                    data-line="34191.79001 01043.510047 91020.150008 8 96540000015000"
+                  ><i class="ti ti-eye"></i></button>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td style="font-weight:600">Renata M. Prado</td>
+              <td class="mono">00012379</td>
+              <td>10/07/2026</td>
+              <td>R$ 320,00</td>
+              <td><span class="badge badge-red"><span class="dot"></span>Vencido</span></td>
+              <td>25/06/2026</td>
+              <td>
+                <div class="actions-cell">
+                  <button class="icon-btn" onclick="openDetail(this)" title="Ver detalhes"
+                    data-patient="Renata M. Prado" data-parcela="Parcela 1/2" data-amount="R$ 320,00"
+                    data-status="overdue" data-ournumber="00012379" data-duedate="10/07/2026"
+                    data-issued="25/06/2026" data-registered="26/06/2026" data-paid="" data-cancelled=""
+                    data-line="34191.79001 01043.510047 91020.150008 8 96540000032000"
+                  ><i class="ti ti-eye"></i></button>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td style="font-weight:600">João Pedro Alencar</td>
+              <td class="mono">00012354</td>
+              <td>05/07/2026</td>
+              <td>R$ 480,00</td>
+              <td><span class="badge badge-green"><span class="dot"></span>Pago</span></td>
+              <td>18/06/2026</td>
+              <td>
+                <div class="actions-cell">
+                  <button class="icon-btn" onclick="openDetail(this)" title="Ver detalhes"
+                    data-patient="João Pedro Alencar" data-parcela="Parcela 3/3 (final)" data-amount="R$ 480,00"
+                    data-status="paid" data-ournumber="00012354" data-duedate="05/07/2026"
+                    data-issued="18/06/2026" data-registered="19/06/2026" data-paid="04/07/2026" data-cancelled=""
+                    data-line="34191.79001 01043.510047 91020.150008 8 96540000048000"
+                  ><i class="ti ti-eye"></i></button>
+                </div>
+              </td>
+            </tr>
+            <tr class="row-muted">
+              <td style="font-weight:600">Beatriz Nunes</td>
+              <td class="mono">00012340</td>
+              <td>28/06/2026</td>
+              <td>R$ 210,00</td>
+              <td><span class="badge badge-gray"><span class="dot"></span>Cancelado</span></td>
+              <td>10/06/2026</td>
+              <td>
+                <div class="actions-cell">
+                  <button class="icon-btn" onclick="openDetail(this)" title="Ver detalhes"
+                    data-patient="Beatriz Nunes" data-parcela="Parcela 1/1" data-amount="R$ 210,00"
+                    data-status="cancelled" data-ournumber="00012340" data-duedate="28/06/2026"
+                    data-issued="10/06/2026" data-registered="11/06/2026" data-paid="" data-cancelled="20/06/2026"
+                    data-line="34191.79001 01043.510047 91020.150008 8 96540000021000"
+                  ><i class="ti ti-eye"></i></button>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td style="font-weight:600">Marina Salgado</td>
+              <td class="mono">00012390</td>
+              <td>20/07/2026</td>
+              <td>R$ 150,00</td>
+              <td><span class="badge badge-blue"><span class="dot"></span>Emitido</span></td>
+              <td>11/07/2026</td>
+              <td>
+                <div class="actions-cell">
+                  <button class="icon-btn" onclick="openDetail(this)" title="Ver detalhes"
+                    data-patient="Marina Salgado" data-parcela="Parcela 1/3" data-amount="R$ 150,00"
+                    data-status="issued" data-ournumber="00012390" data-duedate="20/07/2026"
+                    data-issued="11/07/2026" data-registered="" data-paid="" data-cancelled=""
+                    data-line="34191.79001 01043.510047 91020.150008 8 96540000015000"
+                  ><i class="ti ti-eye"></i></button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MODAL: Detalhes do boleto -->
+  <div class="modal-wrap" id="modalDetail">
+    <div class="modal-box wide">
+      <div class="detail-head">
+        <div>
+          <div class="detail-patient" id="detPatient">Kauê V. Gatti</div>
+          <div class="detail-meta" id="detParcela">Parcela 2/3</div>
+          <div class="detail-amount" id="detAmount">R$ 150,00</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span class="badge" id="detStatusBadge">—</span>
+          <button class="icon-btn-x" onclick="hideModal('modalDetail')"><i class="ti ti-x" style="font-size:16px"></i></button>
+        </div>
+      </div>
+
+      <div class="kv-block">
+        <div class="kv-row">
+          <div class="kv-label">Nosso número</div>
+          <div class="kv-value mono" id="detOurNumber">00012381</div>
+        </div>
+        <div class="kv-row">
+          <div class="kv-label">Vencimento</div>
+          <div class="kv-value" id="detDueDate">15/07/2026</div>
+        </div>
+        <div class="kv-row">
+          <div class="kv-label">Linha digitável</div>
+          <div style="display:flex;align-items:center;gap:6px">
+            <div class="kv-value mono" id="detLine" style="font-weight:500">34191.79001 01043.510047 91020.150008 8 96540000015000</div>
+            <button class="copy-btn" onclick="copyLine()" title="Copiar linha digitável"><i class="ti ti-copy" style="font-size:13px"></i></button>
+          </div>
+        </div>
+      </div>
+
+      <div class="sec-label" style="font-size:11px;font-weight:600;color:var(--gray-500);letter-spacing:.06em;text-transform:uppercase;margin-bottom:12px">Linha do tempo</div>
+      <div class="timeline" id="detTimeline"></div>
+
+      <div class="detail-actions" id="detActions"></div>
+    </div>
+  </div>
+
+  <!-- MODAL: Adiar vencimento -->
+  <div class="modal-wrap" id="modalAdiar">
+    <div class="modal-box">
+      <div class="modal-head">
+        <div>
+          <div class="modal-title">Adiar vencimento</div>
+          <div class="modal-sub" id="adiarSub">Kauê V. Gatti — Nosso número 00012381</div>
+        </div>
+        <button class="icon-btn-x" onclick="hideModal('modalAdiar')"><i class="ti ti-x" style="font-size:16px"></i></button>
+      </div>
+      <div class="form-grid g2">
+        <div class="field"><label>Vencimento atual</label><input class="inp" id="adiarAtual" disabled style="opacity:.6" value="15/07/2026"></div>
+        <div class="field"><label>Novo vencimento <span class="req">*</span></label><input class="inp" placeholder="DD/MM/AAAA"></div>
+      </div>
+      <div class="field" style="margin-bottom:0"><label>Motivo <span class="hint">(opcional)</span></label><input class="inp" placeholder="Ex: solicitação do paciente"></div>
+      <div class="modal-footer">
+        <button class="btn" onclick="hideModal('modalAdiar')">Cancelar</button>
+        <button class="btn btn-dark" onclick="hideModal('modalAdiar')"><i class="ti ti-calendar-time" style="font-size:13px"></i>Confirmar novo vencimento</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Registrar pagamento manual -->
+  <div class="modal-wrap" id="modalPagamento">
+    <div class="modal-box">
+      <div class="modal-head">
+        <div>
+          <div class="modal-title">Registrar pagamento</div>
+          <div class="modal-sub" id="pagSub">Kauê V. Gatti — Nosso número 00012381 · R$ 150,00</div>
+        </div>
+        <button class="icon-btn-x" onclick="hideModal('modalPagamento')"><i class="ti ti-x" style="font-size:16px"></i></button>
+      </div>
+      <div class="form-grid g2">
+        <div class="field"><label>Valor pago <span class="req">*</span></label><input class="inp" value="R$ 150,00"></div>
+        <div class="field"><label>Data do pagamento <span class="req">*</span></label><input class="inp" value="11/07/2026"></div>
+      </div>
+      <div class="field">
+        <label>Forma de pagamento <span class="req">*</span></label>
+        <select class="select">
+          <option>Dinheiro</option>
+          <option>PIX</option>
+          <option>Cartão de Débito</option>
+          <option>Cartão de Crédito</option>
+          <option>Transferência bancária</option>
+        </select>
+      </div>
+      <div class="field" style="margin-bottom:0"><label>Observação</label><input class="inp" placeholder="Opcional — ex: pago diretamente na clínica"></div>
+      <div class="modal-footer">
+        <button class="btn" onclick="hideModal('modalPagamento')">Cancelar</button>
+        <button class="btn btn-dark" onclick="hideModal('modalPagamento')"><i class="ti ti-check" style="font-size:13px"></i>Confirmar pagamento</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Cancelar boleto -->
+  <div class="modal-wrap" id="modalCancelar">
+    <div class="modal-box">
+      <div class="modal-head">
+        <div><div class="modal-title">Cancelar boleto</div></div>
+        <button class="icon-btn-x" onclick="hideModal('modalCancelar')"><i class="ti ti-x" style="font-size:16px"></i></button>
+      </div>
+      <div class="confirm-icon danger"><i class="ti ti-ban"></i></div>
+      <div class="confirm-text" id="cancelText">Tem certeza que deseja cancelar o boleto de <b>Kauê V. Gatti</b> (nosso número <b>00012381</b>)? Esta ação não pode ser desfeita — um novo boleto precisará ser emitido caso a cobrança continue válida.</div>
+      <div class="modal-footer">
+        <button class="btn" onclick="hideModal('modalCancelar')">Voltar</button>
+        <button class="btn" style="background:#dc2626;color:#fff;border-color:#dc2626" onclick="hideModal('modalCancelar')"><i class="ti ti-ban" style="font-size:13px"></i>Cancelar boleto</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+function showModal(id){document.getElementById(id).style.display='flex'}
+function hideModal(id){document.getElementById(id).style.display='none'}
+
+function setStatusTab(el,status){
+  document.querySelectorAll('.tab-pill').forEach(function(t){t.classList.remove('on')});
+  el.classList.add('on');
+  // Em produção: refiltrar a tabela pelo status selecionado
+}
+
+var statusMap={
+  issued:{label:'Emitido',cls:'badge-blue'},
+  registred:{label:'Registrado',cls:'badge-teal'},
+  paid:{label:'Pago',cls:'badge-green'},
+  overdue:{label:'Vencido',cls:'badge-red'},
+  cancelled:{label:'Cancelado',cls:'badge-gray'}
+};
+
+function openDetail(btn){
+  var d=btn.dataset;
+  document.getElementById('detPatient').textContent=d.patient;
+  document.getElementById('detParcela').textContent=d.parcela;
+  document.getElementById('detAmount').textContent=d.amount;
+  document.getElementById('detOurNumber').textContent=d.ournumber;
+  document.getElementById('detDueDate').textContent=d.duedate;
+  document.getElementById('detLine').textContent=d.line;
+
+  var st=statusMap[d.status];
+  var badge=document.getElementById('detStatusBadge');
+  badge.className='badge '+st.cls;
+  badge.innerHTML='<span class="dot"></span>'+st.label;
+
+  // Timeline
+  var steps=[
+    {label:'Boleto emitido',date:d.issued,done:!!d.issued},
+    {label:'Registrado no banco (Sicredi)',date:d.registered,done:!!d.registered},
+  ];
+  if(d.status==='cancelled'){
+    steps.push({label:'Cancelado',date:d.cancelled,done:true,danger:true});
+  } else if(d.status==='paid'){
+    steps.push({label:'Pagamento confirmado',date:d.paid,done:true});
+  } else if(d.status==='overdue'){
+    steps.push({label:'Vencido — aguardando pagamento',date:d.duedate,done:false,warn:true});
+  } else {
+    steps.push({label:'Aguardando pagamento',date:'',done:false});
+  }
+
+  var tl=document.getElementById('detTimeline');
+  tl.innerHTML='';
+  steps.forEach(function(s,i){
+    var item=document.createElement('div');
+    item.className='tl-item';
+    var dotColor = s.danger ? '#dc2626' : (s.warn ? '#b45309' : (s.done ? 'var(--blue)' : 'var(--gray-300)'));
+    item.innerHTML=
+      '<div class="tl-dot-wrap"><div class="tl-dot" style="background:'+dotColor+'"></div>'+
+      (i<steps.length-1?'<div class="tl-line"></div>':'')+'</div>'+
+      '<div><div class="tl-label'+(s.done?'':' muted')+'">'+s.label+'</div>'+
+      '<div class="tl-date">'+(s.date||'Pendente')+'</div></div>';
+    tl.appendChild(item);
+  });
+
+  // Ações contextuais
+  var actions=document.getElementById('detActions');
+  actions.innerHTML='';
+  actions.appendChild(makeBtn('ti-file-text','Visualizar PDF','',function(){
+    alert('Em produção: abre o PDF do boleto (gerado a partir do bank_payload / linha digitável).');
+  }));
+
+  if(d.status==='issued' || d.status==='registred' || d.status==='overdue'){
+    actions.appendChild(makeBtn('ti-cash','Registrar pagamento manual','btn-dark',function(){
+      document.getElementById('pagSub').textContent=d.patient+' — Nosso número '+d.ournumber+' · '+d.amount;
+      hideModal('modalDetail');showModal('modalPagamento');
+    }));
+    actions.appendChild(makeBtn('ti-calendar-time','Adiar vencimento','',function(){
+      document.getElementById('adiarSub').textContent=d.patient+' — Nosso número '+d.ournumber;
+      document.getElementById('adiarAtual').value=d.duedate;
+      hideModal('modalDetail');showModal('modalAdiar');
+    }));
+    actions.appendChild(makeBtn('ti-ban','Cancelar boleto','btn-danger-ghost',function(){
+      document.getElementById('cancelText').innerHTML='Tem certeza que deseja cancelar o boleto de <b>'+d.patient+'</b> (nosso número <b>'+d.ournumber+'</b>)? Esta ação não pode ser desfeita — um novo boleto precisará ser emitido caso a cobrança continue válida.';
+      hideModal('modalDetail');showModal('modalCancelar');
+    }));
+  }
+
+  showModal('modalDetail');
+}
+
+function makeBtn(icon,label,extraClass,onClick){
+  var b=document.createElement('button');
+  b.className='btn btn-sm '+extraClass;
+  b.innerHTML='<i class="ti '+icon+'" style="font-size:13px"></i>'+label;
+  b.onclick=onClick;
+  return b;
+}
+
+function copyLine(){
+  var text=document.getElementById('detLine').textContent;
+  if(navigator.clipboard){navigator.clipboard.writeText(text).catch(function(){});}
+  var btn=event.currentTarget;
+  var original=btn.innerHTML;
+  btn.innerHTML='<i class="ti ti-check" style="font-size:13px"></i>';
+  setTimeout(function(){btn.innerHTML=original},1200);
+}
+</script>
+</body>
+</html>

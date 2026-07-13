@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Financeiro — OdontoSys</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<style>
+:root{
+  --blue:       #4F7EF7;
+  --blue-dark:  #0f2050;
+  --blue-mid:   #1a3580;
+  --white:      #ffffff;
+  --gray-50:    #f8fafc;
+  --gray-100:   #f1f5f9;
+  --gray-200:   #e2e8f0;
+  --gray-300:   #cbd5e1;
+  --gray-400:   #94a3b8;
+  --gray-500:   #64748b;
+  --gray-700:   #334155;
+  --gray-900:   #0f172a;
+  --green:      #4ade80;
+  --amber:      #f59e0b;
+  --red:        #f87171;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+
+  --color-background-primary: var(--white);
+  --color-background-secondary: var(--gray-50);
+  --color-background-tertiary: var(--gray-100);
+  --color-text-primary: var(--gray-900);
+  --color-text-secondary: var(--gray-500);
+  --color-text-tertiary: var(--gray-400);
+  --color-border-tertiary: var(--gray-200);
+  --border-radius-lg: 14px;
+  --border-radius-md: 10px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:var(--font-sans);font-size:13px;background:var(--color-background-tertiary);color:var(--color-text-primary);display:flex;overflow:hidden}
+
+/* ---- SIDEBAR ---- */
+.sidebar{width:216px;background:linear-gradient(180deg,var(--blue-dark) 0%,var(--blue-mid) 100%);padding:26px 16px;flex-shrink:0;display:flex;flex-direction:column}
+.logo{display:flex;align-items:center;gap:10px;margin-bottom:40px;padding:0 6px}
+.logo-sq{width:28px;height:28px;background:var(--blue);border-radius:7px;flex-shrink:0}
+.logo-name{font-size:13px;font-weight:600;color:var(--white);letter-spacing:-0.2px}
+.logo-name span{display:block;font-size:10px;color:rgba(255,255,255,0.4);font-weight:400;margin-top:1px}
+.nav{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;color:rgba(255,255,255,0.55);font-size:12.5px;font-weight:500;cursor:pointer;margin-bottom:2px;transition:background .15s,color .15s}
+.nav i{font-size:16px;width:16px;text-align:center}
+.nav:hover{background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.85)}
+.nav.on{background:rgba(255,255,255,0.1);color:#fff;box-shadow:inset 0 0 0 1px rgba(255,255,255,0.1)}
+.nav-sec{padding:16px 10px 6px;font-size:9.5px;font-weight:600;letter-spacing:0.08em;color:rgba(255,255,255,0.3)}
+.nav.sub{padding-left:32px;font-size:11.5px}
+.sidebar-spacer{flex:1}
+.sidebar-footer{font-size:10.5px;color:rgba(255,255,255,0.25);padding:10px 6px 0}
+
+/* ---- MAIN ---- */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{background:var(--color-background-primary);border-bottom:1px solid var(--color-border-tertiary);padding:18px 36px;box-shadow:0 4px 24px rgba(15,32,80,0.04)}
+.eyebrow{font-size:11px;font-weight:600;letter-spacing:0.09em;text-transform:uppercase;color:var(--blue);margin-bottom:6px}
+.page-heading{font-size:22px;font-weight:700;color:var(--gray-900);letter-spacing:-0.5px}
+.content{flex:1;overflow:auto;padding:28px 36px}
+.view{display:none}
+.view.on{display:block}
+
+/* ---- KPI CARDS ---- */
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}
+.kpi-card{background:var(--white);border-radius:var(--border-radius-lg);border:1px solid var(--gray-200);padding:18px 20px;box-shadow:0 4px 24px rgba(15,32,80,0.05)}
+.kpi-icon{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;margin-bottom:12px;font-size:15px}
+.kpi-label{font-size:11px;color:var(--gray-500);margin-bottom:4px}
+.kpi-val{font-size:20px;font-weight:700;color:var(--gray-900);letter-spacing:-0.3px}
+.kpi-sub{font-size:10.5px;color:var(--gray-400);margin-top:4px}
+
+/* ---- CARD / TABLE ---- */
+.card{background:var(--color-background-primary);border-radius:var(--border-radius-lg);border:1px solid var(--color-border-tertiary);padding:22px 24px;margin-bottom:16px;box-shadow:0 4px 24px rgba(15,32,80,0.05)}
+.card-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px}
+.card-title{font-size:15px;font-weight:700;color:var(--gray-900);letter-spacing:-0.2px}
+.card-sub{font-size:11.5px;color:var(--color-text-tertiary);margin-top:3px}
+
+.filter-row{display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;align-items:flex-end}
+.filter-field{display:flex;flex-direction:column;gap:5px}
+.filter-field label{font-size:10.5px;font-weight:500;color:var(--gray-500)}
+.select,.inp{height:32px;border:1.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:0 10px;font-size:12px;color:var(--gray-900);background:var(--gray-50);font-family:var(--font-sans);outline:none;transition:border-color .15s,box-shadow .15s,background .15s}
+.select{appearance:none;min-width:150px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2394a3b8'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center}
+.inp{min-width:170px}
+input.inp:focus,select.select:focus{border-color:var(--blue);background:var(--white);box-shadow:0 0 0 3px rgba(79,126,247,0.13)}
+
+.btn{height:34px;padding:0 16px;border-radius:var(--border-radius-md);font-size:12.5px;font-weight:600;font-family:var(--font-sans);cursor:pointer;display:inline-flex;align-items:center;gap:7px;border:1.5px solid var(--color-border-tertiary);background:var(--color-background-primary);color:var(--gray-700);transition:all .15s}
+.btn:hover{border-color:var(--gray-300)}
+.btn-dark{background:var(--blue);color:#fff;border-color:var(--blue);box-shadow:0 6px 16px rgba(79,126,247,0.3)}
+.btn-dark:hover{background:#3a6af3}
+.btn-sm{height:28px;padding:0 12px;font-size:11.5px}
+
+table.tbl{width:100%;border-collapse:collapse;font-size:12.5px}
+table.tbl th{font-size:10px;font-weight:600;color:var(--color-text-secondary);letter-spacing:.05em;text-transform:uppercase;padding:0 8px 10px;text-align:left;border-bottom:1.5px solid var(--gray-100)}
+table.tbl td{padding:12px 8px;border-bottom:1px solid var(--gray-100);color:var(--color-text-primary);vertical-align:middle}
+table.tbl tr:last-child td{border-bottom:none}
+
+.badge{font-size:10.5px;font-weight:600;padding:3px 10px;border-radius:20px;display:inline-flex;align-items:center;gap:5px}
+.badge-green{background:rgba(74,222,128,0.14);color:#16a34a}
+.badge-blue{background:rgba(79,126,247,0.12);color:var(--blue)}
+.badge-amber{background:rgba(245,158,11,0.14);color:#b45309}
+.badge-red{background:rgba(248,113,113,0.14);color:#dc2626}
+.badge-gray{background:var(--gray-100);color:var(--gray-400)}
+.dot{width:5px;height:5px;border-radius:50%;background:currentColor}
+
+.type-tag{font-size:10px;font-weight:600;padding:2px 8px;border-radius:6px;display:inline-flex;align-items:center;gap:4px}
+.type-tag.in{background:rgba(74,222,128,0.12);color:#16a34a}
+.type-tag.out{background:rgba(248,113,113,0.12);color:#dc2626}
+
+/* ---- MODAL ---- */
+.modal-wrap{display:none;position:fixed;inset:0;background:rgba(15,32,80,0.35);backdrop-filter:blur(2px);z-index:100;align-items:center;justify-content:center}
+.modal-box{background:var(--white);border-radius:var(--border-radius-lg);width:440px;max-width:92%;padding:24px;box-shadow:0 24px 60px rgba(15,32,80,0.25)}
+.modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.modal-title{font-size:15px;font-weight:700;color:var(--gray-900);letter-spacing:-0.2px}
+.modal-sub{font-size:11.5px;color:var(--gray-500);margin-top:3px}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:11.5px;font-weight:500;color:var(--gray-700);margin-bottom:5px}
+.field label span.req{color:var(--red)}
+.field .inp,.field .select{width:100%}
+.form-grid{display:grid;gap:14px}
+.g2{grid-template-columns:1fr 1fr}
+.modal-footer{display:flex;justify-content:flex-end;gap:10px;margin-top:20px;padding-top:16px;border-top:1px solid var(--gray-100)}
+.icon-btn{border:none;background:transparent;cursor:pointer;color:var(--gray-400);padding:4px 5px;border-radius:6px;transition:all .15s}
+.icon-btn:hover{color:var(--gray-700);background:var(--gray-100)}
+</style>
+</head>
+<body>
+
+  <div class="sidebar">
+    <div class="logo">
+      <div class="logo-sq"></div>
+      <div class="logo-name">OdontoSys<span>Gestão de Clínicas</span></div>
+    </div>
+
+    <div class="nav"><i class="ti ti-users" aria-hidden="true"></i>Pacientes</div>
+    <div class="nav"><i class="ti ti-stethoscope" aria-hidden="true"></i>Dentistas</div>
+    <div class="nav"><i class="ti ti-user-check" aria-hidden="true"></i>Recepcionistas</div>
+    <div class="nav"><i class="ti ti-calendar" aria-hidden="true"></i>Agenda</div>
+
+    <div class="nav-sec">Financeiro</div>
+    <div class="nav sub on" id="navContas" onclick="showView('contas')"><i class="ti ti-report-money" aria-hidden="true"></i>Contas</div>
+    <div class="nav sub" id="navReceber" onclick="showView('receber')"><i class="ti ti-arrow-down-left" aria-hidden="true"></i>A receber</div>
+    <div class="nav sub" id="navPagar" onclick="showView('pagar')"><i class="ti ti-arrow-up-right" aria-hidden="true"></i>A pagar</div>
+
+    <div class="nav"><i class="ti ti-file-text" aria-hidden="true"></i>Contratos</div>
+    <div class="nav"><i class="ti ti-heart-rate-monitor" aria-hidden="true"></i>Planos</div>
+    <div class="nav"><i class="ti ti-adjustments" aria-hidden="true"></i>Auxiliares</div>
+
+    <div class="sidebar-spacer"></div>
+
+    <div class="nav"><i class="ti ti-settings" aria-hidden="true"></i>Configurações</div>
+    <div class="sidebar-footer">© 2025 OdontoSys</div>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="eyebrow" id="eyebrow">Financeiro</div>
+      <div class="page-heading" id="heading">Contas</div>
+    </div>
+
+    <div class="content">
+
+      <!-- ============ CONTAS (RESUMO) ============ -->
+      <div class="view on" id="view-contas">
+        <div class="kpi-row">
+          <div class="kpi-card">
+            <div class="kpi-icon" style="background:rgba(74,222,128,0.14)"><i class="ti ti-arrow-down-left" style="color:#16a34a"></i></div>
+            <div class="kpi-label">A receber (pendente)</div>
+            <div class="kpi-val">R$ 18.420,00</div>
+            <div class="kpi-sub">32 parcelas em aberto</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon" style="background:rgba(248,113,113,0.14)"><i class="ti ti-arrow-up-right" style="color:#dc2626"></i></div>
+            <div class="kpi-label">A pagar (pendente)</div>
+            <div class="kpi-val">R$ 6.150,00</div>
+            <div class="kpi-sub">9 contas em aberto</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon" style="background:rgba(79,126,247,0.12)"><i class="ti ti-cash" style="color:var(--blue)"></i></div>
+            <div class="kpi-label">Recebido no mês</div>
+            <div class="kpi-val">R$ 24.780,00</div>
+            <div class="kpi-sub">Maio de 2025</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon" style="background:rgba(245,158,11,0.14)"><i class="ti ti-receipt" style="color:#b45309"></i></div>
+            <div class="kpi-label">Pago no mês</div>
+            <div class="kpi-val">R$ 8.930,00</div>
+            <div class="kpi-sub">Maio de 2025</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <div>
+              <div class="card-title">Próximos vencimentos</div>
+              <div class="card-sub">Contas a receber e a pagar, ordenadas por data de vencimento</div>
+            </div>
+          </div>
+          <table class="tbl">
+            <thead><tr><th>Tipo</th><th>Descrição</th><th>Vencimento</th><th>Valor</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+              <tr>
+                <td><span class="type-tag in"><i class="ti ti-arrow-down-left" style="font-size:10px"></i>Receber</span></td>
+                <td>Kauê V. Gatti — parcela 2/3</td>
+                <td>16/05/2025</td>
+                <td>R$ 150,00</td>
+                <td><span class="badge badge-red"><span class="dot"></span>Atrasado</span></td>
+                <td><button class="btn btn-sm" onclick="showModal('modalReceber')">Registrar</button></td>
+              </tr>
+              <tr>
+                <td><span class="type-tag out"><i class="ti ti-arrow-up-right" style="font-size:10px"></i>Pagar</span></td>
+                <td>Aluguel — maio</td>
+                <td>18/05/2025</td>
+                <td>R$ 3.200,00</td>
+                <td><span class="badge badge-amber"><span class="dot"></span>Pendente</span></td>
+                <td><button class="btn btn-sm" onclick="showModal('modalPagar')">Registrar</button></td>
+              </tr>
+              <tr>
+                <td><span class="type-tag in"><i class="ti ti-arrow-down-left" style="font-size:10px"></i>Receber</span></td>
+                <td>Roberto C. Lima — parcela 1/2</td>
+                <td>20/05/2025</td>
+                <td>R$ 620,00</td>
+                <td><span class="badge badge-amber"><span class="dot"></span>Pendente</span></td>
+                <td><button class="btn btn-sm" onclick="showModal('modalReceber')">Registrar</button></td>
+              </tr>
+              <tr>
+                <td><span class="type-tag out"><i class="ti ti-arrow-up-right" style="font-size:10px"></i>Pagar</span></td>
+                <td>Fornecedor de materiais</td>
+                <td>22/05/2025</td>
+                <td>R$ 890,00</td>
+                <td><span class="badge badge-amber"><span class="dot"></span>Pendente</span></td>
+                <td><button class="btn btn-sm" onclick="showModal('modalPagar')">Registrar</button></td>
+              </tr>
+              <tr>
+                <td><span class="type-tag in"><i class="ti ti-arrow-down-left" style="font-size:10px"></i>Receber</span></td>
+                <td>Ana Lucia M. — à vista</td>
+                <td>25/05/2025</td>
+                <td>R$ 250,00</td>
+                <td><span class="badge badge-blue"><span class="dot"></span>A vencer</span></td>
+                <td><button class="btn btn-sm" onclick="showModal('modalReceber')">Registrar</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ============ A RECEBER ============ -->
+      <div class="view" id="view-receber">
+        <div class="kpi-row" style="grid-template-columns:repeat(3,1fr);margin-bottom:16px">
+          <div class="kpi-card">
+            <div class="kpi-icon" style="background:rgba(245,158,11,0.14)"><i class="ti ti-hourglass" style="color:#b45309"></i></div>
+            <div class="kpi-label">Total pendente</div>
+            <div class="kpi-val">R$ 2.500,00</div>
+            <div class="kpi-sub">Todos os pacientes, todos os status em aberto</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon" style="background:rgba(74,222,128,0.14)"><i class="ti ti-calendar-check" style="color:#16a34a"></i></div>
+            <div class="kpi-label">Recebido hoje</div>
+            <div class="kpi-val">R$ 800,00</div>
+            <div class="kpi-sub">11/07/2026</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon" style="background:rgba(79,126,247,0.12)"><i class="ti ti-cash" style="color:var(--blue)"></i></div>
+            <div class="kpi-label">Recebido no mês</div>
+            <div class="kpi-val">R$ 24.780,00</div>
+            <div class="kpi-sub">Julho de 2026</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <div>
+              <div class="card-title">A receber</div>
+              <div class="card-sub">Parcelas geradas a partir de consultas concluídas</div>
+            </div>
+          </div>
+
+          <div class="filter-row">
+            <div class="filter-field"><label>Status</label>
+              <select class="select">
+                <option>Todos</option>
+                <option>Pendente</option>
+                <option>A vencer</option>
+                <option>Atrasado</option>
+                <option>Pago</option>
+                <option>Cancelado</option>
+              </select>
+            </div>
+            <div class="filter-field"><label>Período</label>
+              <select class="select">
+                <option>Este mês</option>
+                <option>Mês passado</option>
+                <option>Próximos 30 dias</option>
+                <option>Personalizado</option>
+              </select>
+            </div>
+            <div class="filter-field"><label>Paciente</label><input class="inp" placeholder="Buscar paciente..."></div>
+            <div class="filter-field"><label>Forma de pagamento</label>
+              <select class="select">
+                <option>Todas</option>
+                <option>Dinheiro</option>
+                <option>Cartão de Débito</option>
+                <option>Cartão de Crédito</option>
+                <option>Boleto</option>
+              </select>
+            </div>
+          </div>
+
+          <table class="tbl">
+            <thead><tr><th>Paciente</th><th>Consulta vinculada</th><th>Parcela</th><th>Valor</th><th>Vencimento</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+              <tr>
+                <td style="font-weight:600">Kauê V. Gatti</td>
+                <td>21/04/2025 — Consulta</td>
+                <td>2/3</td>
+                <td>R$ 150,00</td>
+                <td>16/05/2025</td>
+                <td><span class="badge badge-red"><span class="dot"></span>Atrasado</span></td>
+                <td><button class="btn btn-sm btn-dark" onclick="showModal('modalReceber')">Registrar recebimento</button></td>
+              </tr>
+              <tr>
+                <td style="font-weight:600">Roberto C. Lima</td>
+                <td>18/04/2025 — Procedimento</td>
+                <td>1/2</td>
+                <td>R$ 620,00</td>
+                <td>20/05/2025</td>
+                <td><span class="badge badge-amber"><span class="dot"></span>Pendente</span></td>
+                <td><button class="btn btn-sm btn-dark" onclick="showModal('modalReceber')">Registrar recebimento</button></td>
+              </tr>
+              <tr>
+                <td style="font-weight:600">Ana Lucia M.</td>
+                <td>22/04/2025 — Retorno</td>
+                <td>Única</td>
+                <td>R$ 250,00</td>
+                <td>25/05/2025</td>
+                <td><span class="badge badge-blue"><span class="dot"></span>A vencer</span></td>
+                <td><button class="btn btn-sm btn-dark" onclick="showModal('modalReceber')">Registrar recebimento</button></td>
+              </tr>
+              <tr>
+                <td style="font-weight:600">Marina T. Souza</td>
+                <td>05/04/2025 — Consulta</td>
+                <td>1/1</td>
+                <td>R$ 180,00</td>
+                <td>10/04/2025</td>
+                <td><span class="badge badge-green"><span class="dot"></span>Pago</span></td>
+                <td><button class="btn btn-sm" disabled style="opacity:.5;cursor:default">Registrar recebimento</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ============ A PAGAR ============ -->
+      <div class="view" id="view-pagar">
+        <div class="kpi-row" style="grid-template-columns:repeat(3,1fr);margin-bottom:16px">
+          <div class="kpi-card">
+            <div class="kpi-icon" style="background:rgba(248,113,113,0.14)"><i class="ti ti-hourglass" style="color:#dc2626"></i></div>
+            <div class="kpi-label">Total pendente</div>
+            <div class="kpi-val">R$ 6.150,00</div>
+            <div class="kpi-sub">Todas as contas, todos os status em aberto</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon" style="background:rgba(245,158,11,0.14)"><i class="ti ti-calendar-check" style="color:#b45309"></i></div>
+            <div class="kpi-label">Pago hoje</div>
+            <div class="kpi-val">R$ 0,00</div>
+            <div class="kpi-sub">11/07/2026</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon" style="background:rgba(79,126,247,0.12)"><i class="ti ti-receipt" style="color:var(--blue)"></i></div>
+            <div class="kpi-label">Pago no mês</div>
+            <div class="kpi-val">R$ 8.930,00</div>
+            <div class="kpi-sub">Julho de 2026</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <div>
+              <div class="card-title">A pagar</div>
+              <div class="card-sub">Despesas da clínica, com ou sem vínculo a um centro de custo</div>
+            </div>
+            <button class="btn btn-dark" onclick="showModal('modalNovaDespesa')"><i class="ti ti-plus" style="font-size:13px"></i>Nova despesa</button>
+          </div>
+
+          <div class="filter-row">
+            <div class="filter-field"><label>Status</label>
+              <select class="select">
+                <option>Todos</option>
+                <option>Pendente</option>
+                <option>Atrasado</option>
+                <option>Pago</option>
+                <option>Cancelado</option>
+              </select>
+            </div>
+            <div class="filter-field"><label>Período</label>
+              <select class="select">
+                <option>Este mês</option>
+                <option>Mês passado</option>
+                <option>Próximos 30 dias</option>
+                <option>Personalizado</option>
+              </select>
+            </div>
+            <div class="filter-field"><label>Centro de custo</label>
+              <select class="select">
+                <option>Todos</option>
+                <option>Materiais</option>
+                <option>Aluguel</option>
+                <option>Salários</option>
+                <option>Outros</option>
+              </select>
+            </div>
+          </div>
+
+          <table class="tbl">
+            <thead><tr><th>Descrição</th><th>Centro de custo</th><th>Valor</th><th>Vencimento</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+              <tr>
+                <td style="font-weight:600">Aluguel — maio</td>
+                <td>Aluguel</td>
+                <td>R$ 3.200,00</td>
+                <td>18/05/2025</td>
+                <td><span class="badge badge-amber"><span class="dot"></span>Pendente</span></td>
+                <td><button class="btn btn-sm btn-dark" onclick="showModal('modalPagar')">Registrar pagamento</button></td>
+              </tr>
+              <tr>
+                <td style="font-weight:600">Fornecedor de materiais odontológicos</td>
+                <td>Materiais</td>
+                <td>R$ 890,00</td>
+                <td>22/05/2025</td>
+                <td><span class="badge badge-amber"><span class="dot"></span>Pendente</span></td>
+                <td><button class="btn btn-sm btn-dark" onclick="showModal('modalPagar')">Registrar pagamento</button></td>
+              </tr>
+              <tr>
+                <td style="font-weight:600">Manutenção do compressor</td>
+                <td>Outros</td>
+                <td>R$ 350,00</td>
+                <td>05/05/2025</td>
+                <td><span class="badge badge-red"><span class="dot"></span>Atrasado</span></td>
+                <td><button class="btn btn-sm btn-dark" onclick="showModal('modalPagar')">Registrar pagamento</button></td>
+              </tr>
+              <tr>
+                <td style="font-weight:600">Salário — recepção (abril)</td>
+                <td>Salários</td>
+                <td>R$ 2.100,00</td>
+                <td>05/05/2025</td>
+                <td><span class="badge badge-green"><span class="dot"></span>Pago</span></td>
+                <td><button class="btn btn-sm" disabled style="opacity:.5;cursor:default">Registrar pagamento</button></td>
+              </tr>
+              <tr>
+                <td style="font-weight:600;text-decoration:line-through;color:var(--gray-400)">Assinatura de software (cancelada)</td>
+                <td style="color:var(--gray-400)">Outros</td>
+                <td style="color:var(--gray-400)">R$ 99,00</td>
+                <td style="color:var(--gray-400)">10/05/2025</td>
+                <td><span class="badge badge-gray"><span class="dot"></span>Cancelado</span></td>
+                <td><button class="btn btn-sm" disabled style="opacity:.5;cursor:default">Registrar pagamento</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MODAL: Registrar recebimento (installment) -->
+  <div class="modal-wrap" id="modalReceber">
+    <div class="modal-box">
+      <div class="modal-head">
+        <div>
+          <div class="modal-title">Registrar recebimento</div>
+          <div class="modal-sub">Kauê V. Gatti — parcela 2/3 · R$ 150,00</div>
+        </div>
+        <button class="icon-btn" onclick="hideModal('modalReceber')"><i class="ti ti-x" style="font-size:16px"></i></button>
+      </div>
+      <div class="form-grid g2" style="margin-bottom:0">
+        <div class="field"><label>Valor recebido <span class="req">*</span></label><input class="inp" value="R$ 150,00"></div>
+        <div class="field"><label>Data do recebimento <span class="req">*</span></label><input class="inp" value="11/07/2026"></div>
+      </div>
+      <div class="field">
+        <label>Forma de pagamento <span class="req">*</span></label>
+        <select class="select">
+          <option>Dinheiro</option>
+          <option>Cartão de Débito</option>
+          <option>Cartão de Crédito</option>
+          <option>Boleto</option>
+        </select>
+      </div>
+      <div class="field" style="margin-bottom:0"><label>Observação</label><input class="inp" placeholder="Opcional"></div>
+      <div class="modal-footer">
+        <button class="btn" onclick="hideModal('modalReceber')">Cancelar</button>
+        <button class="btn btn-dark" onclick="hideModal('modalReceber')">Confirmar recebimento</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Registrar pagamento (expense) -->
+  <div class="modal-wrap" id="modalPagar">
+    <div class="modal-box">
+      <div class="modal-head">
+        <div>
+          <div class="modal-title">Registrar pagamento</div>
+          <div class="modal-sub">Aluguel — maio · R$ 3.200,00</div>
+        </div>
+        <button class="icon-btn" onclick="hideModal('modalPagar')"><i class="ti ti-x" style="font-size:16px"></i></button>
+      </div>
+      <div class="form-grid g2" style="margin-bottom:0">
+        <div class="field"><label>Valor pago <span class="req">*</span></label><input class="inp" value="R$ 3.200,00"></div>
+        <div class="field"><label>Data do pagamento <span class="req">*</span></label><input class="inp" value="11/07/2026"></div>
+      </div>
+      <div class="field" style="margin-bottom:0">
+        <label>Forma de pagamento <span class="req">*</span></label>
+        <select class="select">
+          <option>Dinheiro</option>
+          <option>Cartão de Débito</option>
+          <option>Cartão de Crédito</option>
+          <option>Boleto</option>
+        </select>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" onclick="hideModal('modalPagar')">Cancelar</button>
+        <button class="btn btn-dark" onclick="hideModal('modalPagar')">Confirmar pagamento</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Nova despesa -->
+  <div class="modal-wrap" id="modalNovaDespesa">
+    <div class="modal-box">
+      <div class="modal-head">
+        <div>
+          <div class="modal-title">Nova despesa</div>
+          <div class="modal-sub">Cria uma conta a pagar pendente</div>
+        </div>
+        <button class="icon-btn" onclick="hideModal('modalNovaDespesa')"><i class="ti ti-x" style="font-size:16px"></i></button>
+      </div>
+      <div class="field"><label>Descrição <span class="req">*</span></label><input class="inp" placeholder="Ex: Conta de energia — maio"></div>
+      <div class="form-grid g2">
+        <div class="field"><label>Centro de custo <span class="req">*</span></label>
+          <select class="select">
+            <option>Materiais</option>
+            <option>Aluguel</option>
+            <option>Salários</option>
+            <option>Outros</option>
+          </select>
+        </div>
+        <div class="field"><label>Valor <span class="req">*</span></label><input class="inp" placeholder="R$ 0,00"></div>
+      </div>
+      <div class="field"><label>Vencimento <span class="req">*</span></label><input class="inp" placeholder="DD/MM/AAAA"></div>
+      <div class="field" style="margin-bottom:0"><label>Observação</label><input class="inp" placeholder="Opcional"></div>
+      <div class="modal-footer">
+        <button class="btn" onclick="hideModal('modalNovaDespesa')">Cancelar</button>
+        <button class="btn btn-dark" onclick="hideModal('modalNovaDespesa')">Criar despesa</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+function showView(id){
+  document.querySelectorAll('.view').forEach(function(v){v.classList.remove('on')});
+  document.querySelectorAll('.nav.sub').forEach(function(n){n.classList.remove('on')});
+  document.getElementById('view-'+id).classList.add('on');
+  var map={contas:['navContas','Contas'],receber:['navReceber','A receber'],pagar:['navPagar','A pagar']};
+  document.getElementById(map[id][0]).classList.add('on');
+  document.getElementById('heading').textContent=map[id][1];
+}
+function showModal(id){document.getElementById(id).style.display='flex'}
+function hideModal(id){document.getElementById(id).style.display='none'}
+</script>
+</body>
+</html>

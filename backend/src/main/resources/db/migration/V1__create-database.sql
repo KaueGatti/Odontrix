@@ -67,16 +67,57 @@ CREATE TABLE address
 -- ------------------------------------------------------------
 CREATE TABLE clinic
 (
+    id            SERIAL PRIMARY KEY,
+    name          VARCHAR(150)       NOT NULL,
+    cnpj          VARCHAR(18) UNIQUE NOT NULL,
+    logo_url      TEXT,
+    phone         VARCHAR(20),
+    contact_email VARCHAR(150),
+    address_id    INT REFERENCES address (id),
+    opening_time  TIME               NOT NULL,
+    closing_time  TIME               NOT NULL,
+    active        BOOLEAN            NOT NULL DEFAULT TRUE,
+    created_at    TIMESTAMPTZ        NOT NULL DEFAULT NOW()
+);
+
+-- ------------------------------------------------------------
+-- CLINIC BANK ACCOUNT
+-- ------------------------------------------------------------
+CREATE TABLE clinic_bank_account
+(
     id           SERIAL PRIMARY KEY,
-    name         VARCHAR(150)       NOT NULL,
-    cnpj         VARCHAR(18) UNIQUE NOT NULL,
-    logo_url     TEXT,
-    phone        VARCHAR(20),
-    address_id   INT REFERENCES address (id),
-    opening_time TIME               NOT NULL,
-    closing_time TIME               NOT NULL,
-    active       BOOLEAN            NOT NULL DEFAULT TRUE,
-    created_at   TIMESTAMPTZ        NOT NULL DEFAULT NOW()
+    clinic_id    INT UNIQUE   NOT NULL REFERENCES clinic (id),
+    bank_name    VARCHAR(100) NOT NULL,
+    agency       VARCHAR(20)  NOT NULL,
+    account      VARCHAR(20)  NOT NULL,
+    cedente_code VARCHAR(30)  NOT NULL, -- código do cedente / convênio junto ao banco
+    active       BOOLEAN      NOT NULL DEFAULT TRUE,
+    updated_at   TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE clinic_settings
+(
+    id                              SERIAL PRIMARY KEY,
+    clinic_id                       INT UNIQUE    NOT NULL REFERENCES clinic (id),
+
+    -- Financeiro: regras de cobrança para parcelas em atraso
+    late_interest_percent           NUMERIC(5, 2) NOT NULL DEFAULT 1.00,
+    late_fee_percent                NUMERIC(5, 2) NOT NULL DEFAULT 2.00,
+    default_due_days                INT           NOT NULL DEFAULT 30,
+
+    -- Notificações: apenas a antecedência do lembrete entra no MVP
+    appointment_reminder_lead_hours INT           NOT NULL DEFAULT 24,
+
+    -- Segurança e sessão
+    session_timeout_minutes         INT           NOT NULL DEFAULT 15,
+
+    updated_at                      TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
+
+    CONSTRAINT chk_late_interest_percent CHECK (late_interest_percent >= 0),
+    CONSTRAINT chk_late_fee_percent CHECK (late_fee_percent >= 0),
+    CONSTRAINT chk_default_due_days CHECK (default_due_days > 0),
+    CONSTRAINT chk_reminder_lead_hours CHECK (appointment_reminder_lead_hours > 0),
+    CONSTRAINT chk_session_timeout CHECK (session_timeout_minutes > 0)
 );
 
 -- ------------------------------------------------------------
@@ -307,6 +348,16 @@ CREATE TABLE dental_procedure
 );
 
 -- ------------------------------------------------------------
+-- CANCELLATION REASON
+-- ------------------------------------------------------------
+CREATE TABLE cancellation_reason
+(
+    id          SERIAL PRIMARY KEY,
+    description VARCHAR(100) NOT NULL UNIQUE,
+    active      BOOLEAN      NOT NULL DEFAULT TRUE
+);
+
+-- ------------------------------------------------------------
 -- APPOINTMENTS
 -- ------------------------------------------------------------
 CREATE TABLE appointment
@@ -321,7 +372,8 @@ CREATE TABLE appointment
     status                       appointment_status NOT NULL DEFAULT 'scheduled',
     scheduling_observations      TEXT,
     price                        NUMERIC(10, 2),
-    cancellation_reason          TEXT,
+    cancellation_reason_id       INT REFERENCES cancellation_reason (id),
+    cancellation_notes           TEXT,
 
     -- Preenchido pelo dentista após a consulta
     actual_start_date_time       TIMESTAMPTZ,
@@ -335,7 +387,7 @@ CREATE TABLE appointment
     created_at                   TIMESTAMPTZ        NOT NULL DEFAULT NOW(),
 
     CONSTRAINT cancellation_reason_check
-        CHECK (status != 'cancelled' OR cancellation_reason IS NOT NULL
+        CHECK (status != 'cancelled' OR cancellation_reason_id IS NOT NULL
 )
     );
 
@@ -402,6 +454,25 @@ CREATE TABLE cost_center
     description TEXT,
     type        payment_type NOT NULL,
     active      BOOLEAN      NOT NULL DEFAULT TRUE
+);
+
+-- ------------------------------------------------------------
+-- EXPENSE (contas a pagar)
+-- ------------------------------------------------------------
+CREATE TABLE expense
+(
+    id             SERIAL PRIMARY KEY,
+    cost_center_id INT            NOT NULL REFERENCES cost_center (id),
+    description    VARCHAR(200)   NOT NULL,
+    observation    TEXT,
+    amount         NUMERIC(10, 2) NOT NULL,
+    due_date       DATE           NOT NULL,
+    payment_date   DATE,                                 -- NULL = ainda não paga
+    active         BOOLEAN        NOT NULL DEFAULT TRUE, -- FALSE = cancelada
+    created_by     INT            NOT NULL REFERENCES users (id),
+    created_at     TIMESTAMPTZ    NOT NULL DEFAULT NOW(),
+
+    CONSTRAINT chk_expense_amount CHECK (amount > 0)
 );
 
 -- ------------------------------------------------------------
@@ -477,6 +548,17 @@ CREATE TABLE payment_installment
     installment_id INT            NOT NULL REFERENCES installment (id),
     amount_apllied NUMERIC(10, 2) NOT NULL,
     PRIMARY KEY (payment_id, installment_id)
+);
+
+-- ------------------------------------------------------------
+-- PAYMENTS EXPENSES (quitação de contas a pagar)
+-- ------------------------------------------------------------
+CREATE TABLE payment_expense
+(
+    payment_id     INT            NOT NULL REFERENCES payment (id),
+    expense_id     INT            NOT NULL REFERENCES expense (id),
+    amount_applied NUMERIC(10, 2) NOT NULL,
+    PRIMARY KEY (payment_id, expense_id)
 );
 
 -- ------------------------------------------------------------
@@ -723,3 +805,8 @@ CREATE INDEX idx_dentist_work_schedule_day ON dentist_work_schedule (day_of_week
 CREATE INDEX idx_dentist_work_schedule_valid ON dentist_work_schedule (valid_from, valid_to);
 CREATE INDEX idx_dentist_schedule_exception_dentist ON dentist_schedule_exception (dentist_id);
 CREATE INDEX idx_dentist_schedule_exception_date ON dentist_schedule_exception (exception_date);
+CREATE INDEX idx_clinic_bank_account_clinic ON clinic_bank_account (clinic_id);
+CREATE INDEX idx_clinic_settings_clinic ON clinic_settings (clinic_id);
+CREATE INDEX idx_expense_cost_center ON expense (cost_center_id);
+CREATE INDEX idx_expense_due_date ON expense (due_date);
+CREATE INDEX idx_expense_created_by ON expense (created_by);

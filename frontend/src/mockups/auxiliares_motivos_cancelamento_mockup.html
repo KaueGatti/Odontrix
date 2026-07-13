@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Auxiliares — Motivos de Cancelamento</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --blue:       #4F7EF7;
+    --blue-dark:  #0f2050;
+    --blue-mid:   #1a3580;
+    --blue-light: #2a4eaa;
+    --white:      #ffffff;
+    --gray-50:    #f8fafc;
+    --gray-100:   #f1f5f9;
+    --gray-200:   #e2e8f0;
+    --gray-300:   #cbd5e1;
+    --gray-400:   #94a3b8;
+    --gray-500:   #64748b;
+    --gray-700:   #334155;
+    --gray-900:   #0f172a;
+    --green:      #4ade80;
+    --red:        #f87171;
+    --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+    --r-sm: 8px;
+    --r-md: 10px;
+    --r-lg: 14px;
+  }
+
+  html, body { height: 100%; }
+
+  body {
+    font-family: var(--font);
+    display: flex;
+    overflow: hidden;
+    background: var(--gray-100);
+    color: var(--gray-900);
+    font-size: 13px;
+  }
+
+  /* ─────────────────────────────────────────
+     SIDEBAR
+  ───────────────────────────────────────── */
+  .sidebar {
+    width: 216px;
+    flex-shrink: 0;
+    background: linear-gradient(180deg, var(--blue-dark) 0%, var(--blue-mid) 100%);
+    display: flex;
+    flex-direction: column;
+    padding: 26px 16px;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 40px;
+    padding: 0 6px;
+  }
+
+  .logo-sq {
+    width: 28px; height: 28px;
+    background: var(--blue);
+    border-radius: 7px;
+    flex-shrink: 0;
+  }
+
+  .logo-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--white);
+    letter-spacing: -0.2px;
+  }
+
+  .logo-name span {
+    display: block;
+    font-size: 10px;
+    color: rgba(255,255,255,0.4);
+    font-weight: 400;
+    margin-top: 1px;
+  }
+
+  .nav {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 10px;
+    border-radius: var(--r-sm);
+    color: rgba(255,255,255,0.55);
+    font-size: 12.5px;
+    font-weight: 500;
+    cursor: pointer;
+    margin-bottom: 2px;
+    transition: background .15s, color .15s;
+  }
+
+  .nav i { font-size: 16px; width: 16px; text-align: center; }
+  .nav:hover { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.85); }
+
+  .nav.on {
+    background: rgba(255,255,255,0.1);
+    color: var(--white);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.1);
+  }
+
+  .nav-sec {
+    padding: 16px 10px 6px;
+    font-size: 9.5px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: rgba(255,255,255,0.3);
+  }
+
+  .nav.sub { padding-left: 32px; font-size: 11.5px; }
+
+  .sidebar-spacer { flex: 1; }
+
+  .sidebar-footer {
+    font-size: 10.5px;
+    color: rgba(255,255,255,0.25);
+    padding: 10px 6px 0;
+  }
+
+  /* ─────────────────────────────────────────
+     MAIN
+  ───────────────────────────────────────── */
+  .main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .topbar {
+    background: var(--white);
+    border-bottom: 1px solid var(--gray-200);
+    padding: 18px 36px;
+    box-shadow: 0 4px 24px rgba(15,32,80,0.04);
+  }
+
+  .eyebrow {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--blue);
+    margin-bottom: 6px;
+  }
+
+  .page-heading {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--gray-900);
+    letter-spacing: -0.5px;
+  }
+
+  .content {
+    flex: 1;
+    overflow: auto;
+    padding: 28px 36px;
+  }
+
+  .tab-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 22px;
+  }
+
+  .tab-pill {
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 12.5px;
+    font-weight: 500;
+    cursor: pointer;
+    color: var(--gray-500);
+    background: var(--white);
+    border: 1.5px solid var(--gray-200);
+    transition: all .15s;
+  }
+
+  .tab-pill:hover { border-color: var(--gray-300); color: var(--gray-700); }
+
+  .tab-pill.on {
+    background: var(--blue);
+    color: var(--white);
+    border-color: var(--blue);
+    box-shadow: 0 6px 16px rgba(79,126,247,0.32);
+  }
+
+  .card {
+    background: var(--white);
+    border-radius: var(--r-lg);
+    border: 1px solid var(--gray-200);
+    padding: 26px 28px;
+    max-width: 820px;
+    box-shadow: 0 4px 24px rgba(15,32,80,0.05);
+  }
+
+  .sub-tab-row {
+    display: flex;
+    gap: 26px;
+    border-bottom: 1.5px solid var(--gray-100);
+    margin-bottom: 22px;
+  }
+
+  .sub-tab {
+    padding: 0 0 12px;
+    font-size: 12.5px;
+    font-weight: 500;
+    color: var(--gray-400);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: color .15s, border-color .15s;
+  }
+
+  .sub-tab.on { color: var(--blue); border-bottom-color: var(--blue); }
+
+  .panel { display: none; }
+  .panel.on { display: block; }
+
+  .sec-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 18px;
+  }
+
+  .sec-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--gray-900);
+    letter-spacing: -0.2px;
+  }
+
+  .sec-sub {
+    font-size: 11.5px;
+    color: var(--gray-400);
+    margin-top: 3px;
+  }
+
+  .btn {
+    height: 34px;
+    padding: 0 16px;
+    border-radius: var(--r-md);
+    font-size: 12.5px;
+    font-weight: 600;
+    font-family: var(--font);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    border: 1.5px solid var(--gray-200);
+    background: var(--white);
+    color: var(--gray-700);
+    transition: all .15s;
+  }
+
+  .btn:hover { border-color: var(--gray-300); }
+
+  .btn-primary {
+    background: var(--blue);
+    color: var(--white);
+    border-color: var(--blue);
+    box-shadow: 0 6px 16px rgba(79,126,247,0.3);
+  }
+
+  .btn-primary:hover { background: #3a6af3; }
+
+  table.tbl { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+
+  table.tbl th {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--gray-400);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 0 6px 10px;
+    text-align: left;
+    border-bottom: 1.5px solid var(--gray-100);
+  }
+
+  table.tbl td {
+    padding: 13px 6px;
+    border-bottom: 1px solid var(--gray-100);
+    color: var(--gray-700);
+    vertical-align: middle;
+  }
+
+  table.tbl tr:last-child td { border-bottom: none; }
+  table.tbl td.actions { width: 70px; text-align: right; white-space: nowrap; }
+
+  .badge {
+    font-size: 10.5px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .badge-green { background: rgba(74,222,128,0.14); color: #16a34a; }
+  .badge-gray  { background: var(--gray-100); color: var(--gray-400); }
+  .dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+
+  .icon-btn {
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    color: var(--gray-400);
+    padding: 4px 5px;
+    border-radius: 6px;
+    transition: all .15s;
+  }
+
+  .icon-btn:hover { color: var(--gray-700); background: var(--gray-100); }
+  .icon-btn.danger:hover { color: var(--red); background: rgba(248,113,113,0.1); }
+
+  .add-row {
+    margin-top: 14px;
+    padding: 12px 14px;
+    border-radius: var(--r-md);
+    border: 1.5px dashed var(--gray-200);
+    color: var(--blue);
+    font-size: 12.5px;
+    font-weight: 500;
+    text-align: center;
+    cursor: pointer;
+    background: rgba(79,126,247,0.03);
+    transition: all .15s;
+  }
+
+  .add-row:hover { background: rgba(79,126,247,0.07); border-color: var(--blue); }
+
+  /* ─────────────────────────────────────────
+     MODAL
+  ───────────────────────────────────────── */
+  #modal-wrap {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(15,32,80,0.35);
+    backdrop-filter: blur(2px);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .modal {
+    background: var(--white);
+    border-radius: var(--r-lg);
+    width: 420px;
+    max-width: 92%;
+    padding: 26px;
+    box-shadow: 0 24px 60px rgba(15,32,80,0.25);
+  }
+
+  .modal-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+
+  .modal-title { font-size: 15px; font-weight: 700; color: var(--gray-900); letter-spacing: -0.2px; }
+
+  .field { margin-bottom: 16px; }
+
+  .field label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--gray-700);
+    margin-bottom: 6px;
+  }
+
+  .field label span.req { color: var(--red); }
+
+  .field .inp {
+    width: 100%;
+    height: 40px;
+    border: 1.5px solid var(--gray-200);
+    border-radius: var(--r-md);
+    padding: 0 12px;
+    font-size: 13px;
+    font-family: var(--font);
+    color: var(--gray-900);
+    background: var(--gray-50);
+    outline: none;
+    transition: border-color .15s, box-shadow .15s, background .15s;
+  }
+
+  .field .inp:focus {
+    border-color: var(--blue);
+    background: var(--white);
+    box-shadow: 0 0 0 3px rgba(79,126,247,0.13);
+  }
+
+  .field .inp::placeholder { color: var(--gray-400); }
+
+  .toggle-row { display: flex; align-items: center; justify-content: space-between; }
+  .toggle-row .lbl { font-size: 12.5px; font-weight: 500; color: var(--gray-900); }
+  .toggle-row .hint { font-size: 11px; color: var(--gray-400); margin-top: 3px; max-width: 280px; line-height: 1.5; }
+
+  .switch { position: relative; width: 36px; height: 20px; flex-shrink: 0; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .switch .track { position: absolute; inset: 0; border-radius: 10px; background: var(--blue); cursor: pointer; transition: background .15s; }
+  .switch .thumb { position: absolute; top: 3px; left: 19px; width: 14px; height: 14px; border-radius: 50%; background: var(--white); transition: left .15s; pointer-events: none; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+
+  .modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 22px;
+    padding-top: 18px;
+    border-top: 1px solid var(--gray-100);
+  }
+</style>
+</head>
+<body>
+
+  <!-- ===== SIDEBAR ===== -->
+  <div class="sidebar">
+    <div class="logo">
+      <div class="logo-sq"></div>
+      <div class="logo-name">OdontoSys<span>Gestão de Clínicas</span></div>
+    </div>
+
+    <div class="nav"><i class="ti ti-users"></i>Pacientes</div>
+    <div class="nav"><i class="ti ti-stethoscope"></i>Dentistas</div>
+    <div class="nav"><i class="ti ti-user-check"></i>Recepcionistas</div>
+    <div class="nav"><i class="ti ti-calendar"></i>Agenda</div>
+
+    <div class="nav-sec">Financeiro</div>
+    <div class="nav sub"><i class="ti ti-circle"></i>Contas</div>
+    <div class="nav sub"><i class="ti ti-circle"></i>A receber</div>
+    <div class="nav sub"><i class="ti ti-circle"></i>A pagar</div>
+
+    <div class="nav"><i class="ti ti-file-text"></i>Contratos</div>
+    <div class="nav"><i class="ti ti-heart-rate-monitor"></i>Planos</div>
+    <div class="nav on"><i class="ti ti-adjustments"></i>Auxiliares</div>
+
+    <div class="sidebar-spacer"></div>
+
+    <div class="nav"><i class="ti ti-settings"></i>Configurações</div>
+    <div class="sidebar-footer">© 2025 OdontoSys</div>
+  </div>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="topbar">
+      <div class="eyebrow">Configurações auxiliares</div>
+      <div class="page-heading">Auxiliares</div>
+    </div>
+
+    <div class="content">
+      <div class="tab-row">
+        <div class="tab-pill">Clínico</div>
+        <div class="tab-pill">Financeiro</div>
+        <div class="tab-pill">Sistema</div>
+        <div class="tab-pill on">Atendimento</div>
+      </div>
+
+      <div class="card">
+        <div class="sub-tab-row">
+          <div class="sub-tab on" onclick="showPanel('motivos')">Motivos de Cancelamento</div>
+          <div class="sub-tab" onclick="showPanel('origem')">Origem do Paciente</div>
+        </div>
+
+        <!-- MOTIVOS DE CANCELAMENTO -->
+        <div class="panel on" id="panel-motivos">
+          <div class="sec-head">
+            <div>
+              <div class="sec-title">Motivos de Cancelamento</div>
+              <div class="sec-sub">Motivos disponíveis ao cancelar um agendamento</div>
+            </div>
+            <button class="btn btn-primary" onclick="openModal('motivo')"><i class="ti ti-plus" style="font-size:14px"></i>Novo motivo</button>
+          </div>
+          <table class="tbl">
+            <thead><tr><th>Descrição</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+              <tr>
+                <td>Paciente desmarcou</td>
+                <td><span class="badge badge-green"><span class="dot"></span>Ativo</span></td>
+                <td class="actions">
+                  <button class="icon-btn" onclick="openModal('motivo','Paciente desmarcou')"><i class="ti ti-pencil" style="font-size:15px"></i></button>
+                  <button class="icon-btn danger"><i class="ti ti-trash" style="font-size:15px"></i></button>
+                </td>
+              </tr>
+              <tr>
+                <td>Paciente não compareceu (no-show)</td>
+                <td><span class="badge badge-green"><span class="dot"></span>Ativo</span></td>
+                <td class="actions">
+                  <button class="icon-btn" onclick="openModal('motivo','Paciente não compareceu (no-show)')"><i class="ti ti-pencil" style="font-size:15px"></i></button>
+                  <button class="icon-btn danger"><i class="ti ti-trash" style="font-size:15px"></i></button>
+                </td>
+              </tr>
+              <tr>
+                <td>Erro de agendamento</td>
+                <td><span class="badge badge-green"><span class="dot"></span>Ativo</span></td>
+                <td class="actions">
+                  <button class="icon-btn" onclick="openModal('motivo','Erro de agendamento')"><i class="ti ti-pencil" style="font-size:15px"></i></button>
+                  <button class="icon-btn danger"><i class="ti ti-trash" style="font-size:15px"></i></button>
+                </td>
+              </tr>
+              <tr>
+                <td>Conflito de horário do dentista</td>
+                <td><span class="badge badge-green"><span class="dot"></span>Ativo</span></td>
+                <td class="actions">
+                  <button class="icon-btn" onclick="openModal('motivo','Conflito de horário do dentista')"><i class="ti ti-pencil" style="font-size:15px"></i></button>
+                  <button class="icon-btn danger"><i class="ti ti-trash" style="font-size:15px"></i></button>
+                </td>
+              </tr>
+              <tr>
+                <td>Clínica fechada / feriado</td>
+                <td><span class="badge badge-green"><span class="dot"></span>Ativo</span></td>
+                <td class="actions">
+                  <button class="icon-btn" onclick="openModal('motivo','Clínica fechada / feriado')"><i class="ti ti-pencil" style="font-size:15px"></i></button>
+                  <button class="icon-btn danger"><i class="ti ti-trash" style="font-size:15px"></i></button>
+                </td>
+              </tr>
+              <tr>
+                <td>Outros</td>
+                <td><span class="badge badge-gray"><span class="dot"></span>Inativo</span></td>
+                <td class="actions">
+                  <button class="icon-btn" onclick="openModal('motivo','Outros')"><i class="ti ti-pencil" style="font-size:15px"></i></button>
+                  <button class="icon-btn danger"><i class="ti ti-trash" style="font-size:15px"></i></button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="add-row" onclick="openModal('motivo')">+ Adicionar novo motivo de cancelamento</div>
+        </div>
+
+        <!-- ORIGEM DO PACIENTE -->
+        <div class="panel" id="panel-origem">
+          <div class="sec-head">
+            <div>
+              <div class="sec-title">Origem do Paciente</div>
+              <div class="sec-sub">Como o paciente chegou até a clínica</div>
+            </div>
+            <button class="btn btn-primary" onclick="openModal('origem')"><i class="ti ti-plus" style="font-size:14px"></i>Nova origem</button>
+          </div>
+          <table class="tbl">
+            <thead><tr><th>Descrição</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+              <tr>
+                <td>Indicação</td>
+                <td><span class="badge badge-green"><span class="dot"></span>Ativo</span></td>
+                <td class="actions">
+                  <button class="icon-btn"><i class="ti ti-pencil" style="font-size:15px"></i></button>
+                  <button class="icon-btn danger"><i class="ti ti-trash" style="font-size:15px"></i></button>
+                </td>
+              </tr>
+              <tr>
+                <td>Google</td>
+                <td><span class="badge badge-green"><span class="dot"></span>Ativo</span></td>
+                <td class="actions">
+                  <button class="icon-btn"><i class="ti ti-pencil" style="font-size:15px"></i></button>
+                  <button class="icon-btn danger"><i class="ti ti-trash" style="font-size:15px"></i></button>
+                </td>
+              </tr>
+              <tr>
+                <td>Instagram</td>
+                <td><span class="badge badge-green"><span class="dot"></span>Ativo</span></td>
+                <td class="actions">
+                  <button class="icon-btn"><i class="ti ti-pencil" style="font-size:15px"></i></button>
+                  <button class="icon-btn danger"><i class="ti ti-trash" style="font-size:15px"></i></button>
+                </td>
+              </tr>
+              <tr>
+                <td>Outros</td>
+                <td><span class="badge badge-green"><span class="dot"></span>Ativo</span></td>
+                <td class="actions">
+                  <button class="icon-btn"><i class="ti ti-pencil" style="font-size:15px"></i></button>
+                  <button class="icon-btn danger"><i class="ti ti-trash" style="font-size:15px"></i></button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="add-row" onclick="openModal('origem')">+ Adicionar nova origem</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MODAL ===== -->
+  <div id="modal-wrap">
+    <div class="modal">
+      <div class="modal-head">
+        <div class="modal-title" id="modal-title">Novo motivo</div>
+        <button class="icon-btn" onclick="closeModal()"><i class="ti ti-x" style="font-size:17px"></i></button>
+      </div>
+      <div class="field">
+        <label>Descrição <span class="req">*</span></label>
+        <input class="inp" id="modal-input" type="text" placeholder="Ex: Paciente desmarcou">
+      </div>
+      <div class="field" style="margin-bottom:0">
+        <div class="toggle-row">
+          <div>
+            <div class="lbl">Ativo</div>
+            <div class="hint">Motivos inativos não aparecem para seleção em novos cancelamentos</div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" checked>
+            <div class="track"></div>
+            <div class="thumb"></div>
+          </label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" onclick="closeModal()">Cancelar</button>
+        <button class="btn btn-primary" onclick="closeModal()">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+function showPanel(id){
+  document.querySelectorAll('.sub-tab').forEach(function(t){t.classList.remove('on')});
+  document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('on')});
+  var map={motivos:'Motivos de Cancelamento',origem:'Origem do Paciente'};
+  document.querySelectorAll('.sub-tab').forEach(function(t){if(t.textContent.trim()===map[id])t.classList.add('on')});
+  document.getElementById('panel-'+id).classList.add('on');
+}
+function openModal(type, value){
+  var w=document.getElementById('modal-wrap');
+  var title=document.getElementById('modal-title');
+  var input=document.getElementById('modal-input');
+  title.textContent = type==='motivo' ? (value ? 'Editar motivo' : 'Novo motivo') : (value ? 'Editar origem' : 'Nova origem');
+  input.value = value || '';
+  w.style.display='flex';
+}
+function closeModal(){document.getElementById('modal-wrap').style.display='none'}
+document.querySelector('.switch .track').addEventListener('click',function(){
+  var input=this.parentElement.querySelector('input');
+  input.checked=!input.checked;
+  this.style.background=input.checked?'var(--blue)':'var(--gray-300)';
+  this.nextElementSibling.style.left=input.checked?'19px':'3px';
+});
+</script>
+</body>
+</html>

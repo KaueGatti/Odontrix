@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Usuários — OdontoSys</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<style>
+:root{
+  --blue:       #4F7EF7;
+  --blue-dark:  #0f2050;
+  --blue-mid:   #1a3580;
+  --white:      #ffffff;
+  --gray-50:    #f8fafc;
+  --gray-100:   #f1f5f9;
+  --gray-200:   #e2e8f0;
+  --gray-300:   #cbd5e1;
+  --gray-400:   #94a3b8;
+  --gray-500:   #64748b;
+  --gray-700:   #334155;
+  --gray-900:   #0f172a;
+  --green:      #4ade80;
+  --amber:      #f59e0b;
+  --red:        #f87171;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+
+  --color-background-primary: var(--white);
+  --color-background-secondary: var(--gray-50);
+  --color-background-tertiary: var(--gray-100);
+  --color-text-primary: var(--gray-900);
+  --color-text-secondary: var(--gray-500);
+  --color-text-tertiary: var(--gray-400);
+  --color-border-tertiary: var(--gray-200);
+  --border-radius-lg: 14px;
+  --border-radius-md: 10px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:var(--font-sans);font-size:13px;background:var(--color-background-tertiary);color:var(--color-text-primary);display:flex;overflow:hidden}
+
+/* ---- SIDEBAR ---- */
+.sidebar{width:216px;background:linear-gradient(180deg,var(--blue-dark) 0%,var(--blue-mid) 100%);padding:26px 16px;flex-shrink:0;display:flex;flex-direction:column}
+.logo{display:flex;align-items:center;gap:10px;margin-bottom:40px;padding:0 6px}
+.logo-sq{width:28px;height:28px;background:var(--blue);border-radius:7px;flex-shrink:0}
+.logo-name{font-size:13px;font-weight:600;color:var(--white);letter-spacing:-0.2px}
+.logo-name span{display:block;font-size:10px;color:rgba(255,255,255,0.4);font-weight:400;margin-top:1px}
+.nav{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;color:rgba(255,255,255,0.55);font-size:12.5px;font-weight:500;cursor:pointer;margin-bottom:2px;transition:background .15s,color .15s}
+.nav i{font-size:16px;width:16px;text-align:center}
+.nav:hover{background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.85)}
+.nav.on{background:rgba(255,255,255,0.1);color:#fff;box-shadow:inset 0 0 0 1px rgba(255,255,255,0.1)}
+.nav-sec{padding:16px 10px 6px;font-size:9.5px;font-weight:600;letter-spacing:0.08em;color:rgba(255,255,255,0.3)}
+.nav.sub{padding-left:32px;font-size:11.5px}
+.sidebar-spacer{flex:1}
+.sidebar-footer{font-size:10.5px;color:rgba(255,255,255,0.25);padding:10px 6px 0}
+
+/* ---- MAIN ---- */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{background:var(--color-background-primary);border-bottom:1px solid var(--color-border-tertiary);padding:18px 36px;box-shadow:0 4px 24px rgba(15,32,80,0.04);display:flex;align-items:center;justify-content:space-between}
+.eyebrow{font-size:11px;font-weight:600;letter-spacing:0.09em;text-transform:uppercase;color:var(--blue);margin-bottom:6px}
+.page-heading{font-size:22px;font-weight:700;color:var(--gray-900);letter-spacing:-0.5px}
+.content{flex:1;overflow:auto;padding:28px 36px}
+
+/* ---- KPI CARDS ---- */
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}
+.kpi-card{background:var(--white);border-radius:var(--border-radius-lg);border:1px solid var(--gray-200);padding:18px 20px;box-shadow:0 4px 24px rgba(15,32,80,0.05)}
+.kpi-icon{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;margin-bottom:12px;font-size:15px}
+.kpi-label{font-size:11px;color:var(--gray-500);margin-bottom:4px}
+.kpi-val{font-size:20px;font-weight:700;color:var(--gray-900);letter-spacing:-0.3px}
+.kpi-sub{font-size:10.5px;color:var(--gray-400);margin-top:4px}
+
+/* ---- CARD / TABLE ---- */
+.card{background:var(--color-background-primary);border-radius:var(--border-radius-lg);border:1px solid var(--color-border-tertiary);padding:22px 24px;margin-bottom:16px;box-shadow:0 4px 24px rgba(15,32,80,0.05)}
+.card-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px;gap:16px;flex-wrap:wrap}
+.card-title{font-size:15px;font-weight:700;color:var(--gray-900);letter-spacing:-0.2px}
+.card-sub{font-size:11.5px;color:var(--color-text-tertiary);margin-top:3px}
+
+.filter-row{display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;align-items:flex-end}
+.filter-field{display:flex;flex-direction:column;gap:5px}
+.filter-field label{font-size:10.5px;font-weight:500;color:var(--gray-500)}
+.select,.inp{height:32px;border:1.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:0 10px;font-size:12px;color:var(--gray-900);background:var(--gray-50);font-family:var(--font-sans);outline:none;transition:border-color .15s,box-shadow .15s,background .15s}
+.select{appearance:none;min-width:150px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2394a3b8'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center}
+.inp{min-width:210px}
+input.inp:focus,select.select:focus{border-color:var(--blue);background:var(--white);box-shadow:0 0 0 3px rgba(79,126,247,0.13)}
+.search-wrap{position:relative}
+.search-wrap i{position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:13px;color:var(--gray-400)}
+.search-wrap .inp{padding-left:30px}
+
+.btn{height:34px;padding:0 16px;border-radius:var(--border-radius-md);font-size:12.5px;font-weight:600;font-family:var(--font-sans);cursor:pointer;display:inline-flex;align-items:center;gap:7px;border:1.5px solid var(--color-border-tertiary);background:var(--color-background-primary);color:var(--gray-700);transition:all .15s}
+.btn:hover{border-color:var(--gray-300)}
+.btn-dark{background:var(--blue);color:#fff;border-color:var(--blue);box-shadow:0 6px 16px rgba(79,126,247,0.3)}
+.btn-dark:hover{background:#3a6af3}
+.btn-sm{height:28px;padding:0 12px;font-size:11.5px}
+.btn-danger-ghost{color:#dc2626;border-color:rgba(248,113,113,0.35)}
+.btn-danger-ghost:hover{background:rgba(248,113,113,0.08);border-color:#dc2626}
+
+table.tbl{width:100%;border-collapse:collapse;font-size:12.5px}
+table.tbl th{font-size:10px;font-weight:600;color:var(--color-text-secondary);letter-spacing:.05em;text-transform:uppercase;padding:0 8px 10px;text-align:left;border-bottom:1.5px solid var(--gray-100)}
+table.tbl td{padding:13px 8px;border-bottom:1px solid var(--gray-100);color:var(--color-text-primary);vertical-align:middle}
+table.tbl tr:last-child td{border-bottom:none}
+table.tbl tr.inactive-row td{color:var(--gray-400)}
+
+.user-cell{display:flex;align-items:center;gap:10px}
+.avatar{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:12px;flex-shrink:0}
+.user-name{font-weight:600;color:var(--gray-900)}
+.inactive-row .user-name{color:var(--gray-400)}
+.user-email{font-size:11.5px;color:var(--gray-400);margin-top:1px}
+
+.badge{font-size:10.5px;font-weight:600;padding:3px 10px;border-radius:20px;display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.badge-blue{background:rgba(79,126,247,0.12);color:var(--blue)}
+.badge-teal{background:rgba(45,212,191,0.15);color:#0d9488}
+.badge-amber{background:rgba(245,158,11,0.14);color:#b45309}
+.badge-green{background:rgba(74,222,128,0.14);color:#16a34a}
+.badge-gray{background:var(--gray-100);color:var(--gray-400)}
+.dot{width:5px;height:5px;border-radius:50%;background:currentColor}
+
+.actions-cell{display:flex;gap:4px;justify-content:flex-end}
+.icon-btn{border:none;background:transparent;cursor:pointer;color:var(--gray-400);padding:6px 7px;border-radius:7px;transition:all .15s;font-size:14px;display:flex;align-items:center}
+.icon-btn:hover{color:var(--gray-700);background:var(--gray-100)}
+.icon-btn.danger:hover{color:#dc2626;background:rgba(248,113,113,0.1)}
+.icon-btn.success:hover{color:#16a34a;background:rgba(74,222,128,0.12)}
+.icon-btn:disabled{opacity:.35;cursor:default}
+.icon-btn:disabled:hover{background:transparent;color:var(--gray-400)}
+
+.self-tag{font-size:9.5px;font-weight:600;color:var(--gray-400);background:var(--gray-100);padding:2px 7px;border-radius:6px;margin-left:6px}
+
+.info-banner{background:rgba(79,126,247,0.07);border:1px solid rgba(79,126,247,0.18);border-radius:var(--border-radius-md);padding:10px 14px;font-size:11.5px;font-weight:500;color:var(--blue);display:flex;align-items:center;gap:8px;margin-bottom:16px}
+
+/* ---- MODAL ---- */
+.modal-wrap{display:none;position:fixed;inset:0;background:rgba(15,32,80,0.35);backdrop-filter:blur(2px);z-index:100;align-items:center;justify-content:center}
+.modal-box{background:var(--white);border-radius:var(--border-radius-lg);width:440px;max-width:92%;padding:24px;box-shadow:0 24px 60px rgba(15,32,80,0.25)}
+.modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.modal-title{font-size:15px;font-weight:700;color:var(--gray-900);letter-spacing:-0.2px}
+.modal-sub{font-size:11.5px;color:var(--gray-500);margin-top:3px}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:11.5px;font-weight:500;color:var(--gray-700);margin-bottom:5px}
+.field label span.req{color:var(--red)}
+.field label span.hint{color:var(--color-text-tertiary);font-weight:400}
+.field .inp,.field .select{width:100%}
+.form-grid{display:grid;gap:14px}
+.g2{grid-template-columns:1fr 1fr}
+.modal-footer{display:flex;justify-content:flex-end;gap:10px;margin-top:20px;padding-top:16px;border-top:1px solid var(--gray-100)}
+
+.confirm-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:14px}
+.confirm-icon.warn{background:rgba(245,158,11,0.14);color:#b45309}
+.confirm-icon.ok{background:rgba(74,222,128,0.14);color:#16a34a}
+.confirm-text{font-size:12.5px;color:var(--gray-500);line-height:1.6;margin-bottom:4px}
+.confirm-text b{color:var(--gray-900)}
+</style>
+</head>
+<body>
+
+  <div class="sidebar">
+    <div class="logo">
+      <div class="logo-sq"></div>
+      <div class="logo-name">OdontoSys<span>Gestão de Clínicas</span></div>
+    </div>
+
+    <div class="nav"><i class="ti ti-layout-dashboard" aria-hidden="true"></i>Dashboard</div>
+    <div class="nav"><i class="ti ti-users" aria-hidden="true"></i>Pacientes</div>
+    <div class="nav"><i class="ti ti-stethoscope" aria-hidden="true"></i>Dentistas</div>
+    <div class="nav"><i class="ti ti-user-check" aria-hidden="true"></i>Recepcionistas</div>
+    <div class="nav"><i class="ti ti-calendar" aria-hidden="true"></i>Agenda</div>
+
+    <div class="nav-sec">Financeiro</div>
+    <div class="nav sub"><i class="ti ti-report-money" aria-hidden="true"></i>Contas</div>
+    <div class="nav sub"><i class="ti ti-arrow-down-left" aria-hidden="true"></i>A receber</div>
+    <div class="nav sub"><i class="ti ti-arrow-up-right" aria-hidden="true"></i>A pagar</div>
+
+    <div class="nav"><i class="ti ti-file-text" aria-hidden="true"></i>Contratos</div>
+    <div class="nav"><i class="ti ti-heart-rate-monitor" aria-hidden="true"></i>Planos</div>
+    <div class="nav"><i class="ti ti-adjustments" aria-hidden="true"></i>Auxiliares</div>
+
+    <div class="nav-sec">Administração</div>
+    <div class="nav on"><i class="ti ti-lock-access" aria-hidden="true"></i>Usuários</div>
+    <div class="nav"><i class="ti ti-settings" aria-hidden="true"></i>Configurações</div>
+
+    <div class="sidebar-spacer"></div>
+    <div class="sidebar-footer">© 2025 OdontoSys</div>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <div>
+        <div class="eyebrow">Administração</div>
+        <div class="page-heading">Usuários</div>
+      </div>
+      <button class="btn btn-dark" onclick="showModal('modalNovoUsuario')"><i class="ti ti-plus" style="font-size:13px"></i>Novo usuário</button>
+    </div>
+
+    <div class="content">
+
+      <div class="kpi-row">
+        <div class="kpi-card">
+          <div class="kpi-icon" style="background:rgba(79,126,247,0.12)"><i class="ti ti-users" style="color:var(--blue)"></i></div>
+          <div class="kpi-label">Total de usuários</div>
+          <div class="kpi-val">14</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon" style="background:rgba(74,222,128,0.14)"><i class="ti ti-user-check" style="color:#16a34a"></i></div>
+          <div class="kpi-label">Ativos</div>
+          <div class="kpi-val">12</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon" style="background:var(--gray-100)"><i class="ti ti-user-off" style="color:var(--gray-400)"></i></div>
+          <div class="kpi-label">Inativos</div>
+          <div class="kpi-val">2</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon" style="background:rgba(245,158,11,0.14)"><i class="ti ti-shield-lock" style="color:#b45309"></i></div>
+          <div class="kpi-label">Gerentes</div>
+          <div class="kpi-val">2</div>
+          <div class="kpi-sub">Únicos com acesso a esta tela</div>
+        </div>
+      </div>
+
+      <div class="info-banner">
+        <i class="ti ti-info-circle" style="font-size:14px"></i>
+        Contas de Dentista e Recepcionista são criadas na etapa "Acesso" do cadastro de cada perfil. Aqui você gerencia todos os usuários do sistema — inativação, reativação e alteração de e-mail.
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <div class="card-title">Todos os usuários</div>
+            <div class="card-sub">14 contas cadastradas no sistema</div>
+          </div>
+        </div>
+
+        <div class="filter-row">
+          <div class="filter-field" style="flex:1">
+            <label>Buscar</label>
+            <div class="search-wrap">
+              <i class="ti ti-search"></i>
+              <input class="inp" style="width:100%;min-width:0" placeholder="Nome ou e-mail...">
+            </div>
+          </div>
+          <div class="filter-field">
+            <label>Perfil</label>
+            <select class="select">
+              <option>Todos</option>
+              <option>Gerente</option>
+              <option>Dentista</option>
+              <option>Recepcionista</option>
+            </select>
+          </div>
+          <div class="filter-field">
+            <label>Status</label>
+            <select class="select">
+              <option>Todos</option>
+              <option>Ativo</option>
+              <option>Inativo</option>
+            </select>
+          </div>
+        </div>
+
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th>Usuário</th>
+              <th>Perfil</th>
+              <th>Status</th>
+              <th>Criado em</th>
+              <th style="text-align:right">Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <div class="user-cell">
+                  <div class="avatar" style="background:var(--blue)">RC</div>
+                  <div>
+                    <div class="user-name">Renata Costa <span class="self-tag">Você</span></div>
+                    <div class="user-email">renata.costa@odontosys.com</div>
+                  </div>
+                </div>
+              </td>
+              <td><span class="badge badge-amber"><span class="dot"></span>Gerente</span></td>
+              <td><span class="badge badge-green"><span class="dot"></span>Ativo</span></td>
+              <td>12/01/2024</td>
+              <td>
+                <div class="actions-cell">
+                  <button class="icon-btn" disabled title="Você não pode editar sua própria conta"><i class="ti ti-pencil"></i></button>
+                  <button class="icon-btn" disabled title="Você não pode inativar sua própria conta"><i class="ti ti-power"></i></button>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <div class="user-cell">
+                  <div class="avatar" style="background:#8b5cf6">MS</div>
+                  <div>
+                    <div class="user-name">Marcos Silva</div>
+                    <div class="user-email">marcos.silva@odontosys.com</div>
+                  </div>
+                </div>
+              </td>
+              <td><span class="badge badge-teal"><span class="dot"></span>Dentista</span></td>
+              <td><span class="badge badge-green"><span class="dot"></span>Ativo</span></td>
+              <td>03/02/2024</td>
+              <td>
+                <div class="actions-cell">
+                  <button class="icon-btn" onclick="openEditEmail('Marcos Silva','marcos.silva@odontosys.com')" title="Alterar e-mail"><i class="ti ti-pencil"></i></button>
+                  <button class="icon-btn danger" onclick="openConfirm('inativar','Marcos Silva')" title="Inativar"><i class="ti ti-power"></i></button>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <div class="user-cell">
+                  <div class="avatar" style="background:#06b6d4">CR</div>
+                  <div>
+                    <div class="user-name">Camila Rocha</div>
+                    <div class="user-email">camila.rocha@odontosys.com</div>
+                  </div>
+                </div>
+              </td>
+              <td><span class="badge badge-teal"><span class="dot"></span>Dentista</span></td>
+              <td><span class="badge badge-green"><span class="dot"></span>Ativo</span></td>
+              <td>17/03/2024</td>
+              <td>
+                <div class="actions-cell">
+                  <button class="icon-btn" onclick="openEditEmail('Camila Rocha','camila.rocha@odontosys.com')" title="Alterar e-mail"><i class="ti ti-pencil"></i></button>
+                  <button class="icon-btn danger" onclick="openConfirm('inativar','Camila Rocha')" title="Inativar"><i class="ti ti-power"></i></button>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <div class="user-cell">
+                  <div class="avatar" style="background:var(--blue)">JR</div>
+                  <div>
+                    <div class="user-name">Juliana Ramos</div>
+                    <div class="user-email">juliana.ramos@odontosys.com</div>
+                  </div>
+                </div>
+              </td>
+              <td><span class="badge badge-blue"><span class="dot"></span>Recepcionista</span></td>
+              <td><span class="badge badge-green"><span class="dot"></span>Ativo</span></td>
+              <td>22/03/2024</td>
+              <td>
+                <div class="actions-cell">
+                  <button class="icon-btn" onclick="openEditEmail('Juliana Ramos','juliana.ramos@odontosys.com')" title="Alterar e-mail"><i class="ti ti-pencil"></i></button>
+                  <button class="icon-btn danger" onclick="openConfirm('inativar','Juliana Ramos')" title="Inativar"><i class="ti ti-power"></i></button>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <div class="user-cell">
+                  <div class="avatar" style="background:var(--blue)">PA</div>
+                  <div>
+                    <div class="user-name">Pedro Alves</div>
+                    <div class="user-email">pedro.alves@odontosys.com</div>
+                  </div>
+                </div>
+              </td>
+              <td><span class="badge badge-blue"><span class="dot"></span>Recepcionista</span></td>
+              <td><span class="badge badge-green"><span class="dot"></span>Ativo</span></td>
+              <td>02/04/2024</td>
+              <td>
+                <div class="actions-cell">
+                  <button class="icon-btn" onclick="openEditEmail('Pedro Alves','pedro.alves@odontosys.com')" title="Alterar e-mail"><i class="ti ti-pencil"></i></button>
+                  <button class="icon-btn danger" onclick="openConfirm('inativar','Pedro Alves')" title="Inativar"><i class="ti ti-power"></i></button>
+                </div>
+              </td>
+            </tr>
+            <tr class="inactive-row">
+              <td>
+                <div class="user-cell">
+                  <div class="avatar" style="background:var(--gray-300)">FT</div>
+                  <div>
+                    <div class="user-name">Felipe Trigo</div>
+                    <div class="user-email">felipe.trigo@odontosys.com</div>
+                  </div>
+                </div>
+              </td>
+              <td><span class="badge badge-gray"><span class="dot"></span>Dentista</span></td>
+              <td><span class="badge badge-gray"><span class="dot"></span>Inativo</span></td>
+              <td>11/05/2024</td>
+              <td>
+                <div class="actions-cell">
+                  <button class="icon-btn" onclick="openEditEmail('Felipe Trigo','felipe.trigo@odontosys.com')" title="Alterar e-mail"><i class="ti ti-pencil"></i></button>
+                  <button class="icon-btn success" onclick="openConfirm('reativar','Felipe Trigo')" title="Reativar"><i class="ti ti-power"></i></button>
+                </div>
+              </td>
+            </tr>
+            <tr class="inactive-row">
+              <td>
+                <div class="user-cell">
+                  <div class="avatar" style="background:var(--gray-300)">BS</div>
+                  <div>
+                    <div class="user-name">Bianca Souza</div>
+                    <div class="user-email">bianca.souza@odontosys.com</div>
+                  </div>
+                </div>
+              </td>
+              <td><span class="badge badge-blue" style="opacity:.5"><span class="dot"></span>Recepcionista</span></td>
+              <td><span class="badge badge-gray"><span class="dot"></span>Inativo</span></td>
+              <td>28/06/2024</td>
+              <td>
+                <div class="actions-cell">
+                  <button class="icon-btn" onclick="openEditEmail('Bianca Souza','bianca.souza@odontosys.com')" title="Alterar e-mail"><i class="ti ti-pencil"></i></button>
+                  <button class="icon-btn success" onclick="openConfirm('reativar','Bianca Souza')" title="Reativar"><i class="ti ti-power"></i></button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MODAL: Editar e-mail -->
+  <div class="modal-wrap" id="modalEditarEmail">
+    <div class="modal-box">
+      <div class="modal-head">
+        <div>
+          <div class="modal-title">Alterar e-mail</div>
+          <div class="modal-sub" id="editEmailSub">Marcos Silva</div>
+        </div>
+        <button class="icon-btn" onclick="hideModal('modalEditarEmail')"><i class="ti ti-x" style="font-size:16px"></i></button>
+      </div>
+      <div class="field">
+        <label>E-mail atual</label>
+        <input class="inp" id="editEmailCurrent" disabled style="opacity:.6" value="marcos.silva@odontosys.com">
+      </div>
+      <div class="field" style="margin-bottom:0">
+        <label>Novo e-mail <span class="req">*</span></label>
+        <input class="inp" placeholder="novo.email@odontosys.com">
+      </div>
+      <div class="modal-footer">
+        <button class="btn" onclick="hideModal('modalEditarEmail')">Cancelar</button>
+        <button class="btn btn-dark" onclick="hideModal('modalEditarEmail')"><i class="ti ti-check" style="font-size:13px"></i>Salvar e-mail</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Confirmar inativação/reativação -->
+  <div class="modal-wrap" id="modalConfirm">
+    <div class="modal-box">
+      <div class="modal-head">
+        <div>
+          <div class="modal-title" id="confirmTitle">Inativar usuário</div>
+        </div>
+        <button class="icon-btn" onclick="hideModal('modalConfirm')"><i class="ti ti-x" style="font-size:16px"></i></button>
+      </div>
+      <div class="confirm-icon warn" id="confirmIcon"><i class="ti ti-alert-triangle"></i></div>
+      <div class="confirm-text" id="confirmText">Tem certeza que deseja inativar <b>Marcos Silva</b>? O usuário perderá o acesso ao sistema imediatamente, mas seu histórico será mantido.</div>
+      <div class="modal-footer">
+        <button class="btn" onclick="hideModal('modalConfirm')">Cancelar</button>
+        <button class="btn btn-dark" id="confirmActionBtn" onclick="hideModal('modalConfirm')"><i class="ti ti-power" style="font-size:13px"></i>Inativar usuário</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Novo usuário (Gerente) -->
+  <div class="modal-wrap" id="modalNovoUsuario">
+    <div class="modal-box">
+      <div class="modal-head">
+        <div>
+          <div class="modal-title">Novo usuário</div>
+          <div class="modal-sub">Cria uma nova conta de acesso Gerente</div>
+        </div>
+        <button class="icon-btn" onclick="hideModal('modalNovoUsuario')"><i class="ti ti-x" style="font-size:16px"></i></button>
+      </div>
+      <div class="info-banner" style="margin-bottom:18px">
+        <i class="ti ti-info-circle" style="font-size:14px"></i>
+        Dentistas e recepcionistas são cadastrados na etapa "Acesso" do respectivo formulário de perfil.
+      </div>
+      <div class="field"><label>Nome completo <span class="req">*</span></label><input class="inp" placeholder="Ex: Ana Beatriz Lima"></div>
+      <div class="field"><label>E-mail <span class="req">*</span></label><input class="inp" placeholder="ana.lima@odontosys.com"></div>
+      <div class="form-grid g2" style="margin-bottom:0">
+        <div class="field">
+          <label>Perfil</label>
+          <select class="select" disabled style="opacity:.7">
+            <option selected>Gerente</option>
+          </select>
+        </div>
+        <div class="field"><label>Senha provisória <span class="req">*</span></label><input class="inp" placeholder="Gerada automaticamente" disabled style="opacity:.7"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" onclick="hideModal('modalNovoUsuario')">Cancelar</button>
+        <button class="btn btn-dark" onclick="hideModal('modalNovoUsuario')"><i class="ti ti-check" style="font-size:13px"></i>Criar usuário</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+function showModal(id){document.getElementById(id).style.display='flex'}
+function hideModal(id){document.getElementById(id).style.display='none'}
+
+function openEditEmail(name,email){
+  document.getElementById('editEmailSub').textContent=name;
+  document.getElementById('editEmailCurrent').value=email;
+  showModal('modalEditarEmail');
+}
+
+function openConfirm(action,name){
+  var title=document.getElementById('confirmTitle');
+  var icon=document.getElementById('confirmIcon');
+  var text=document.getElementById('confirmText');
+  var btn=document.getElementById('confirmActionBtn');
+
+  if(action==='inativar'){
+    title.textContent='Inativar usuário';
+    icon.className='confirm-icon warn';
+    icon.innerHTML='<i class="ti ti-alert-triangle"></i>';
+    text.innerHTML='Tem certeza que deseja inativar <b>'+name+'</b>? O usuário perderá o acesso ao sistema imediatamente, mas seu histórico será mantido.';
+    btn.innerHTML='<i class="ti ti-power" style="font-size:13px"></i>Inativar usuário';
+  } else {
+    title.textContent='Reativar usuário';
+    icon.className='confirm-icon ok';
+    icon.innerHTML='<i class="ti ti-user-check"></i>';
+    text.innerHTML='Deseja reativar o acesso de <b>'+name+'</b>? O usuário poderá fazer login normalmente novamente.';
+    btn.innerHTML='<i class="ti ti-user-check" style="font-size:13px"></i>Reativar usuário';
+  }
+  showModal('modalConfirm');
+}
+</script>
+</body>
+</html>

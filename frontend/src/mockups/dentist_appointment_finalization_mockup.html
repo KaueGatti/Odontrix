@@ -6,82 +6,121 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css">
 <style>
 :root{
+  /* ---- design tokens (login.html / auxiliares v2) ---- */
+  --blue:       #4F7EF7;
+  --blue-dark:  #0f2050;
+  --blue-mid:   #1a3580;
+  --blue-light: #2a4eaa;
+  --white:      #ffffff;
+  --gray-50:    #f8fafc;
+  --gray-100:   #f1f5f9;
+  --gray-200:   #e2e8f0;
+  --gray-300:   #cbd5e1;
+  --gray-400:   #94a3b8;
+  --gray-500:   #64748b;
+  --gray-700:   #334155;
+  --gray-900:   #0f172a;
+  --green:      #4ade80;
+  --amber:      #f59e0b;
+  --red:        #f87171;
   --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  --color-background-primary:#ffffff;
-  --color-background-secondary:#f7f8fa;
-  --color-background-tertiary:#eef0f3;
-  --color-text-primary:#20232a;
-  --color-text-secondary:#5b6270;
-  --color-text-tertiary:#9aa0ab;
-  --color-border-tertiary:#dde1e7;
-  --border-radius-lg:12px;
-  --border-radius-md:8px;
+
+  /* ---- legacy aliases so the component CSS below (written against
+       these names) inherits the new palette without a full rewrite ---- */
+  --color-background-primary: var(--white);
+  --color-background-secondary: var(--gray-50);
+  --color-background-tertiary: var(--gray-100);
+  --color-text-primary: var(--gray-900);
+  --color-text-secondary: var(--gray-500);
+  --color-text-tertiary: var(--gray-400);
+  --color-border-tertiary: var(--gray-200);
+  --border-radius-lg: 14px;
+  --border-radius-md: 10px;
 }
-html,body{background:var(--color-background-tertiary);margin:0;padding:24px}
+html,body{background:var(--gray-100);margin:0;padding:24px}
 </style>
 </head>
 <body>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:var(--font-sans);font-size:13px;background:var(--color-background-tertiary)}
-.wrap{display:flex;min-height:700px;border-radius:var(--border-radius-lg);overflow:hidden;border:0.5px solid var(--color-border-tertiary)}
-.sidebar{width:148px;background:#1a1a1a;padding:16px 0;flex-shrink:0;display:flex;flex-direction:column}
-.logo-sq{width:20px;height:20px;background:#4F7EF7;border-radius:4px;margin:0 14px 20px}
-.nav{padding:7px 14px;color:#888;display:flex;align-items:center;gap:7px;font-size:12px;border-left:2px solid transparent;cursor:pointer}
-.nav.on{color:#fff;border-left-color:#4F7EF7;background:rgba(255,255,255,0.06)}
+body{font-family:var(--font-sans);font-size:13px;background:var(--color-background-tertiary);color:var(--color-text-primary)}
+.wrap{display:flex;min-height:700px;border-radius:var(--border-radius-lg);overflow:hidden;border:1px solid var(--color-border-tertiary);box-shadow:0 24px 60px rgba(15,32,80,0.08)}
+
+/* ---- SIDEBAR ---- */
+.sidebar{width:216px;background:linear-gradient(180deg,var(--blue-dark) 0%,var(--blue-mid) 100%);padding:26px 16px;flex-shrink:0;display:flex;flex-direction:column}
+.logo{display:flex;align-items:center;gap:10px;margin-bottom:40px;padding:0 6px}
+.logo-sq{width:28px;height:28px;background:var(--blue);border-radius:7px;flex-shrink:0}
+.logo-name{font-size:13px;font-weight:600;color:var(--white);letter-spacing:-0.2px}
+.logo-name span{display:block;font-size:10px;color:rgba(255,255,255,0.4);font-weight:400;margin-top:1px}
+.nav{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;color:rgba(255,255,255,0.55);font-size:12.5px;font-weight:500;cursor:pointer;margin-bottom:2px;transition:background .15s,color .15s}
+.nav i{font-size:16px;width:16px;text-align:center}
+.nav:hover{background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.85)}
+.nav.on{background:rgba(255,255,255,0.1);color:#fff;box-shadow:inset 0 0 0 1px rgba(255,255,255,0.1)}
+.nav-sec{padding:16px 10px 6px;font-size:9.5px;font-weight:600;letter-spacing:0.08em;color:rgba(255,255,255,0.3)}
+.nav.sub{padding-left:32px;font-size:11.5px}
+.sidebar-spacer{flex:1}
+.sidebar-footer{font-size:10.5px;color:rgba(255,255,255,0.25);padding:10px 6px 0}
 .main{flex:1;display:flex;flex-direction:column;background:var(--color-background-tertiary);overflow:hidden}
 
-.header{background:var(--color-background-primary);border-bottom:0.5px solid var(--color-border-tertiary);padding:14px 24px}
+/* ---- HEADER ---- */
+.header{background:var(--color-background-primary);border-bottom:1px solid var(--color-border-tertiary);padding:16px 28px;box-shadow:0 4px 24px rgba(15,32,80,0.04)}
 .hrow{display:flex;align-items:center;gap:14px}
-.av{width:44px;height:44px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-weight:500;font-size:14px;color:#1d4ed8;flex-shrink:0}
-.hname{font-size:15px;font-weight:500;color:var(--color-text-primary)}
-.hmeta{font-size:11px;color:var(--color-text-secondary);margin-top:2px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.av{width:44px;height:44px;border-radius:50%;background:rgba(79,126,247,0.14);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;color:var(--blue);flex-shrink:0}
+.hname{font-size:15px;font-weight:700;color:var(--color-text-primary);letter-spacing:-0.2px}
+.hmeta{font-size:11.5px;color:var(--color-text-secondary);margin-top:3px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .dot{width:3px;height:3px;border-radius:50%;background:var(--color-text-tertiary)}
-.badge{font-size:11px;padding:2px 10px;border-radius:20px}
-.badge-amber{background:#fef3c7;color:#92400e;border:0.5px solid #fde68a}
-.badge-green{background:#dcfce7;color:#166534;border:0.5px solid #bbf7d0}
-.back-link{font-size:11px;color:var(--color-text-secondary);display:flex;align-items:center;gap:4px;cursor:pointer;margin-bottom:8px}
+.badge{font-size:10.5px;font-weight:600;padding:3px 10px;border-radius:20px;display:inline-flex;align-items:center;gap:5px}
+.badge-amber{background:rgba(245,158,11,0.14);color:#b45309}
+.badge-green{background:rgba(74,222,128,0.14);color:#16a34a}
+.badge-gray{background:var(--gray-100);color:var(--gray-400)}
+.back-link{font-size:11.5px;font-weight:500;color:var(--color-text-secondary);display:flex;align-items:center;gap:5px;cursor:pointer;margin-bottom:10px;transition:color .15s}
+.back-link:hover{color:var(--blue)}
 
 .real-times{display:flex;align-items:center;gap:16px;margin-left:auto;flex-shrink:0}
-.rt-field{display:flex;flex-direction:column;gap:2px}
-.rt-field label{font-size:10px;color:var(--color-text-tertiary)}
-.rt-inp{height:26px;width:78px;border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:0 8px;font-size:12px;color:var(--color-text-primary);background:var(--color-background-secondary);display:flex;align-items:center}
-.rt-dur{font-size:11px;color:var(--color-text-secondary);align-self:flex-end;padding-bottom:5px}
+.rt-field{display:flex;flex-direction:column;gap:3px}
+.rt-field label{font-size:10px;font-weight:500;color:var(--color-text-tertiary)}
+.rt-inp{height:30px;width:80px;border:1.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:0 10px;font-size:12.5px;color:var(--color-text-primary);background:var(--color-background-secondary);display:flex;align-items:center}
+.rt-dur{font-size:11.5px;font-weight:600;color:var(--blue);align-self:flex-end;padding-bottom:6px}
 
-.content{flex:1;padding:20px 24px;overflow:auto}
-.card{background:var(--color-background-primary);border-radius:var(--border-radius-lg);border:0.5px solid var(--color-border-tertiary);padding:18px 20px;margin-bottom:14px}
-.sec-label{font-size:11px;font-weight:500;color:var(--color-text-secondary);letter-spacing:.06em;text-transform:uppercase;margin-bottom:12px;padding-bottom:8px;border-bottom:0.5px solid var(--color-border-tertiary);display:flex;align-items:center;justify-content:space-between}
-.sec-label span.req{color:#e24b4a;font-weight:400;text-transform:none;letter-spacing:0;margin-left:4px}
-.btn{height:28px;padding:0 12px;border-radius:var(--border-radius-md);font-size:11px;cursor:pointer;font-weight:500;display:inline-flex;align-items:center;gap:5px;border:0.5px solid var(--color-border-tertiary);background:var(--color-background-primary);color:var(--color-text-primary)}
-.btn-dark{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
-.btn-ghost{border:none;background:transparent;color:var(--color-text-secondary);cursor:pointer;font-size:11px;display:inline-flex;align-items:center;gap:4px;padding:0}
+/* ---- CONTENT / CARDS ---- */
+.content{flex:1;padding:22px 28px;overflow:auto}
+.card{background:var(--color-background-primary);border-radius:var(--border-radius-lg);border:1px solid var(--color-border-tertiary);padding:20px 22px;margin-bottom:16px;box-shadow:0 4px 24px rgba(15,32,80,0.05)}
+.sec-label{font-size:11px;font-weight:600;color:var(--color-text-secondary);letter-spacing:.06em;text-transform:uppercase;margin-bottom:14px;padding-bottom:10px;border-bottom:1.5px solid var(--gray-100);display:flex;align-items:center;justify-content:space-between}
+.sec-label span.req{color:var(--red);font-weight:400;text-transform:none;letter-spacing:0;margin-left:4px}
+.btn{height:32px;padding:0 14px;border-radius:var(--border-radius-md);font-size:12px;font-weight:600;font-family:var(--font-sans);cursor:pointer;display:inline-flex;align-items:center;gap:6px;border:1.5px solid var(--color-border-tertiary);background:var(--color-background-primary);color:var(--gray-700);transition:all .15s}
+.btn:hover{border-color:var(--gray-300)}
+.btn-dark{background:var(--blue);color:#fff;border-color:var(--blue);box-shadow:0 6px 16px rgba(79,126,247,0.3)}
+.btn-dark:hover{background:#3a6af3}
+.btn-ghost{border:none;background:transparent;color:var(--color-text-secondary);cursor:pointer;font-size:11.5px;font-weight:500;display:inline-flex;align-items:center;gap:4px;padding:4px 6px;border-radius:6px;transition:all .15s}
+.btn-ghost:hover{color:var(--red);background:rgba(248,113,113,0.1)}
 
-.field label{display:block;font-size:11px;color:var(--color-text-secondary);margin-bottom:4px}
-.field label span.req{color:#e24b4a}
-.inp,.select,.txt{width:100%;border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:0 10px;font-size:12px;color:var(--color-text-primary);background:var(--color-background-secondary);font-family:var(--font-sans)}
-.inp{height:30px;display:flex;align-items:center;color:var(--color-text-tertiary)}
-.select{height:30px;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23888'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center}
-.txt{padding:8px 10px;resize:none;line-height:1.5}
+.field label{display:block;font-size:11.5px;font-weight:500;color:var(--gray-700);margin-bottom:5px}
+.field label span.req{color:var(--red)}
+.inp,.select,.txt{width:100%;border:1.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:0 10px;font-size:12.5px;color:var(--color-text-primary);background:var(--color-background-secondary);font-family:var(--font-sans);outline:none;transition:border-color .15s,box-shadow .15s,background .15s}
+.inp{height:32px;display:flex;align-items:center;color:var(--color-text-tertiary)}
+.select{height:32px;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2394a3b8'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center}
+.txt{padding:9px 10px;resize:none;line-height:1.55}
+input.inp:focus,select.select:focus,textarea.txt:focus{border-color:var(--blue);background:var(--white);box-shadow:0 0 0 3px rgba(79,126,247,0.13)}
 .form-grid{display:grid;gap:12px}
 .g2{grid-template-columns:1fr 1fr}
 .g3{grid-template-columns:1fr 1fr 1fr}
 .g4{grid-template-columns:1fr 1fr 1fr 1fr}
 
-table.tbl{width:100%;border-collapse:collapse;font-size:12px}
-table.tbl th{font-size:10px;font-weight:500;color:var(--color-text-secondary);letter-spacing:.05em;text-transform:uppercase;padding:0 8px 8px;text-align:left;border-bottom:0.5px solid var(--color-border-tertiary)}
-table.tbl td{padding:9px 8px;border-bottom:0.5px solid var(--color-border-tertiary);color:var(--color-text-primary);vertical-align:middle}
+table.tbl{width:100%;border-collapse:collapse;font-size:12.5px}
+table.tbl th{font-size:10px;font-weight:600;color:var(--color-text-secondary);letter-spacing:.05em;text-transform:uppercase;padding:0 8px 10px;text-align:left;border-bottom:1.5px solid var(--gray-100)}
+table.tbl td{padding:11px 8px;border-bottom:1px solid var(--gray-100);color:var(--color-text-primary);vertical-align:middle}
 table.tbl tr:last-child td{border-bottom:none}
-.tooth-pill{display:inline-block;font-size:10px;padding:1px 6px;border-radius:10px;background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);color:var(--color-text-secondary);margin-right:2px}
+.tooth-pill{display:inline-block;font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px;background:rgba(79,126,247,0.1);border:1px solid rgba(79,126,247,0.2);color:var(--blue);margin-right:2px}
 .empty-row{padding:18px 8px;text-align:center;color:var(--color-text-tertiary);font-size:12px;font-style:italic}
 
-.add-panel{background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:14px;margin-bottom:14px;display:none}
+.add-panel{background:var(--color-background-secondary);border:1.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:16px;margin-bottom:16px;display:none}
 .add-panel.show{display:block}
 
-.odontogram{display:inline-block;padding:14px 14px 10px;background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md)}
+.odontogram{display:inline-block;padding:16px 16px 12px;background:var(--color-background-primary);border:1.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md)}
 .tooth-row{display:flex;align-items:flex-end;gap:1px}
 .tooth-row.lower{align-items:flex-start;margin-top:2px}
 .tooth-mid-gap{width:10px;flex-shrink:0}
-.quad-labels{display:flex;font-size:9px;color:var(--color-text-tertiary);margin-bottom:4px}
+.quad-labels{display:flex;font-size:9px;font-weight:600;letter-spacing:.03em;color:var(--color-text-tertiary);margin-bottom:4px}
 .quad-labels span{flex:1;text-align:center}
 
 .tooth-cell{display:flex;flex-direction:column;align-items:center;width:25px;flex-shrink:0;cursor:pointer;user-select:none}
@@ -92,52 +131,68 @@ table.tbl tr:last-child td{border-bottom:none}
 .tooth-svg .t-crown{fill:#f5f6f9;stroke:#aab0bd;stroke-width:1.1;transition:fill .1s,stroke .1s}
 .tooth-svg .t-detail{fill:#aab0bd;opacity:.55}
 .tooth-cell.lower .tooth-svg{transform:scaleY(-1)}
-.tooth-cell:hover .t-crown{stroke:#4F7EF7}
-.tooth-cell.sel .t-crown{fill:#4F7EF7;stroke:#3d64c9}
+.tooth-cell:hover .t-crown{stroke:var(--blue)}
+.tooth-cell.sel .t-crown{fill:var(--blue);stroke:#3d64c9}
 .tooth-cell.sel .t-root{fill:#c8d7fb;stroke:#3d64c9}
 .tooth-cell.sel .t-detail{fill:#fff;opacity:.85}
-.tooth-cell.sel .tooth-num{color:#4F7EF7;font-weight:600}
-.odo-legend{display:flex;align-items:center;gap:10px;margin-top:10px;padding-top:8px;border-top:0.5px dashed var(--color-border-tertiary);font-size:10px;color:var(--color-text-tertiary)}
+.tooth-cell.sel .tooth-num{color:var(--blue);font-weight:700}
+.odo-legend{display:flex;align-items:center;gap:10px;margin-top:12px;padding-top:10px;border-top:1px dashed var(--color-border-tertiary);font-size:10px;color:var(--color-text-tertiary)}
 .odo-legend-sw{width:13px;height:13px;border-radius:3px;border:1.1px solid #aab0bd;background:#f5f6f9;display:inline-block;vertical-align:-2px;margin-right:4px}
-.odo-legend-sw.sel{background:#4F7EF7;border-color:#3d64c9}
-.odo-selected-txt{margin-left:auto;font-size:11px;color:var(--color-text-primary)}
-.odo-selected-txt b{color:#4F7EF7}
+.odo-legend-sw.sel{background:var(--blue);border-color:#3d64c9}
+.odo-selected-txt{margin-left:auto;font-size:11.5px;color:var(--color-text-primary)}
+.odo-selected-txt b{color:var(--blue)}
 
-.info-banner{background:rgba(79,126,247,0.07);border:0.5px solid rgba(79,126,247,0.2);border-radius:var(--border-radius-md);padding:8px 12px;font-size:11px;color:#4F7EF7;display:flex;align-items:center;gap:6px;margin-bottom:14px}
+.info-banner{background:rgba(79,126,247,0.07);border:1px solid rgba(79,126,247,0.18);border-radius:var(--border-radius-md);padding:10px 14px;font-size:11.5px;font-weight:500;color:var(--blue);display:flex;align-items:center;gap:7px;margin-bottom:16px}
 
-.vigente-tag{font-size:10px;padding:2px 7px;border-radius:20px;background:#dcfce7;color:#166534;border:0.5px solid #bbf7d0}
+.vigente-tag{font-size:10px;font-weight:600;padding:3px 9px;border-radius:20px;background:rgba(74,222,128,0.14);color:#16a34a}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-.field-item{display:flex;flex-direction:column;gap:2px}
+.field-item{display:flex;flex-direction:column;gap:3px}
 .fi-label{font-size:11px;color:var(--color-text-tertiary)}
-.fi-val{font-size:12px;color:var(--color-text-primary);line-height:1.5}
+.fi-val{font-size:12.5px;color:var(--color-text-primary);line-height:1.5}
 
-.hist-item{border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);margin-top:10px;overflow:hidden}
-.hist-header{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;cursor:pointer;background:var(--color-background-secondary)}
-.hist-header:hover{background:var(--color-background-tertiary)}
-.hist-body{padding:12px;border-top:0.5px solid var(--color-border-tertiary);display:none;font-size:11px;color:var(--color-text-secondary)}
+.hist-item{border:1.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);margin-top:12px;overflow:hidden}
+.hist-header{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;cursor:pointer;background:var(--color-background-secondary)}
+.hist-header:hover{background:var(--gray-100)}
+.hist-body{padding:14px;border-top:1px solid var(--color-border-tertiary);display:none;font-size:11.5px;color:var(--color-text-secondary);line-height:1.6}
 .hist-body.open{display:block}
 
-.dropzone{border:1.5px dashed var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:20px;text-align:center;color:var(--color-text-tertiary);font-size:12px;margin-bottom:12px;cursor:pointer}
-.dropzone:hover{background:var(--color-background-secondary)}
-.att-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);margin-bottom:6px}
-.att-icon{width:30px;height:30px;border-radius:6px;background:var(--color-background-secondary);display:flex;align-items:center;justify-content:center;color:var(--color-text-secondary);flex-shrink:0}
-.att-name{font-size:12px;color:var(--color-text-primary);flex:1}
-.badge-gray{background:var(--color-background-secondary);color:var(--color-text-secondary);border:0.5px solid var(--color-border-tertiary)}
+.dropzone{border:1.5px dashed var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:22px;text-align:center;color:var(--color-text-tertiary);font-size:12px;margin-bottom:14px;cursor:pointer;transition:all .15s}
+.dropzone:hover{background:rgba(79,126,247,0.04);border-color:var(--blue)}
+.att-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border:1px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);margin-bottom:8px}
+.att-icon{width:32px;height:32px;border-radius:8px;background:var(--color-background-secondary);display:flex;align-items:center;justify-content:center;color:var(--color-text-secondary);flex-shrink:0}
+.att-name{font-size:12.5px;color:var(--color-text-primary);flex:1}
 
-.footer-bar{position:sticky;bottom:0;background:var(--color-background-primary);border-top:0.5px solid var(--color-border-tertiary);padding:12px 24px;display:flex;justify-content:space-between;align-items:center}
+.footer-bar{position:sticky;bottom:0;background:var(--color-background-primary);border-top:1px solid var(--color-border-tertiary);padding:14px 28px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 -4px 24px rgba(15,32,80,0.04)}
 
-.modal-wrap{display:none;position:absolute;inset:0;background:rgba(0,0,0,0.4);z-index:100;align-items:center;justify-content:center;border-radius:var(--border-radius-lg)}
-.modal-box{background:var(--color-background-primary);border-radius:var(--border-radius-lg);border:0.5px solid var(--color-border-tertiary);width:480px;max-width:95%;padding:20px;max-height:90%;overflow:auto}
+.modal-wrap{display:none;position:absolute;inset:0;background:rgba(15,32,80,0.35);backdrop-filter:blur(2px);z-index:100;align-items:center;justify-content:center;border-radius:var(--border-radius-lg)}
+.modal-box{background:var(--color-background-primary);border-radius:var(--border-radius-lg);width:480px;max-width:95%;padding:24px;max-height:90%;overflow:auto;box-shadow:0 24px 60px rgba(15,32,80,0.25)}
 </style>
 
 <div class="wrap" style="position:relative">
   <div class="sidebar">
-    <div class="logo-sq"></div>
-    <div class="nav on"><i class="ti ti-calendar" aria-hidden="true"></i>Minha Agenda</div>
-    <div class="nav"><i class="ti ti-users" aria-hidden="true"></i>Meus Pacientes</div>
-    <div class="nav"><i class="ti ti-cash" aria-hidden="true"></i>Financeiro</div>
-    <div style="flex:1"></div>
+    <div class="logo">
+      <div class="logo-sq"></div>
+      <div class="logo-name">OdontoSys<span>Gestão de Clínicas</span></div>
+    </div>
+
+    <div class="nav"><i class="ti ti-users" aria-hidden="true"></i>Pacientes</div>
+    <div class="nav"><i class="ti ti-stethoscope" aria-hidden="true"></i>Dentistas</div>
+    <div class="nav"><i class="ti ti-user-check" aria-hidden="true"></i>Recepcionistas</div>
+    <div class="nav on"><i class="ti ti-calendar" aria-hidden="true"></i>Agenda</div>
+
+    <div class="nav-sec">Financeiro</div>
+    <div class="nav sub"><i class="ti ti-circle" aria-hidden="true"></i>Contas</div>
+    <div class="nav sub"><i class="ti ti-circle" aria-hidden="true"></i>A receber</div>
+    <div class="nav sub"><i class="ti ti-circle" aria-hidden="true"></i>A pagar</div>
+
+    <div class="nav"><i class="ti ti-file-text" aria-hidden="true"></i>Contratos</div>
+    <div class="nav"><i class="ti ti-heart-rate-monitor" aria-hidden="true"></i>Planos</div>
+    <div class="nav"><i class="ti ti-adjustments" aria-hidden="true"></i>Auxiliares</div>
+
+    <div class="sidebar-spacer"></div>
+
     <div class="nav"><i class="ti ti-settings" aria-hidden="true"></i>Configurações</div>
+    <div class="sidebar-footer">© 2025 OdontoSys</div>
   </div>
 
   <div class="main">
@@ -168,7 +223,7 @@ table.tbl tr:last-child td{border-bottom:none}
 
     <div class="content">
 
-      <div class="info-banner"><i class="ti ti-info-circle" style="font-size:14px"></i>Campos com <span class="req" style="color:#4F7EF7">*</span> são obrigatórios para finalizar a consulta</div>
+      <div class="info-banner"><i class="ti ti-info-circle" style="font-size:14px"></i>Campos com <span class="req" style="color:var(--blue)">*</span> são obrigatórios para finalizar a consulta</div>
 
       <!-- PROCEDIMENTOS -->
       <div class="card">
@@ -228,20 +283,20 @@ table.tbl tr:last-child td{border-bottom:none}
           <thead><tr><th>Procedimento</th><th>Dente(s)</th><th>Valor</th><th>Desconto</th><th>Valor final</th><th>Obs.</th><th></th></tr></thead>
           <tbody id="procTableBody">
             <tr>
-              <td style="font-weight:500">Restauração em resina</td>
+              <td style="font-weight:600">Restauração em resina</td>
               <td><span class="tooth-pill">36</span></td>
               <td>R$ 180,00</td>
               <td>R$ 0,00</td>
-              <td style="font-weight:500">R$ 180,00</td>
+              <td style="font-weight:600">R$ 180,00</td>
               <td style="color:var(--color-text-secondary)">—</td>
               <td><button class="btn-ghost"><i class="ti ti-trash" aria-hidden="true" style="font-size:13px"></i></button></td>
             </tr>
             <tr>
-              <td style="font-weight:500">Aplicação de flúor</td>
+              <td style="font-weight:600">Aplicação de flúor</td>
               <td style="color:var(--color-text-tertiary)">—</td>
               <td>R$ 60,00</td>
               <td>R$ 0,00</td>
-              <td style="font-weight:500">R$ 60,00</td>
+              <td style="font-weight:600">R$ 60,00</td>
               <td style="color:var(--color-text-secondary)">—</td>
               <td><button class="btn-ghost"><i class="ti ti-trash" aria-hidden="true" style="font-size:13px"></i></button></td>
             </tr>
@@ -284,7 +339,7 @@ table.tbl tr:last-child td{border-bottom:none}
           <div class="hist-header" onclick="toggleHist(this)">
             <div style="display:flex;align-items:center;gap:8px">
               <i class="ti ti-history" aria-hidden="true" style="font-size:13px;color:var(--color-text-secondary)"></i>
-              <span style="font-size:11px;color:var(--color-text-primary)">Registro anterior — 05/11/2023</span>
+              <span style="font-size:11.5px;font-weight:500;color:var(--color-text-primary)">Registro anterior — 05/11/2023</span>
             </div>
             <i class="ti ti-chevron-down" aria-hidden="true" style="font-size:12px;color:var(--color-text-tertiary)"></i>
           </div>
@@ -302,7 +357,7 @@ table.tbl tr:last-child td{border-bottom:none}
         <div class="form-grid g2" style="margin-bottom:0">
           <div class="field"><label>Próxima consulta recomendada</label><div class="inp" style="color:var(--color-text-tertiary)">DD/MM/AAAA</div></div>
         </div>
-        <div style="font-size:11px;color:var(--color-text-tertiary);margin-top:10px"><i class="ti ti-info-circle" style="font-size:13px;vertical-align:-2px"></i> Ao preencher, a recepção receberá uma sugestão automática de agendamento</div>
+        <div style="font-size:11.5px;color:var(--color-text-tertiary);margin-top:12px"><i class="ti ti-info-circle" style="font-size:13px;vertical-align:-2px"></i> Ao preencher, a recepção receberá uma sugestão automática de agendamento</div>
       </div>
 
       <!-- ANEXOS -->
@@ -326,7 +381,7 @@ table.tbl tr:last-child td{border-bottom:none}
     </div>
 
     <div class="footer-bar">
-      <button class="btn btn-ghost">Cancelar</button>
+      <button class="btn btn-ghost" style="height:32px;padding:0 14px;border:1.5px solid var(--color-border-tertiary)">Cancelar</button>
       <div style="display:flex;gap:8px">
         <button class="btn">Salvar rascunho</button>
         <button class="btn btn-dark"><i class="ti ti-check" aria-hidden="true" style="font-size:13px"></i>Finalizar consulta</button>
@@ -337,10 +392,10 @@ table.tbl tr:last-child td{border-bottom:none}
   <!-- MODAL ANAMNESE -->
   <div id="anamneseModal" class="modal-wrap">
     <div class="modal-box">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
         <div>
-          <div style="font-size:14px;font-weight:500;color:var(--color-text-primary)">Atualizar anamnese</div>
-          <div style="font-size:11px;color:var(--color-text-secondary);margin-top:2px">O registro anterior será preservado no histórico</div>
+          <div style="font-size:15px;font-weight:700;color:var(--color-text-primary);letter-spacing:-0.2px">Atualizar anamnese</div>
+          <div style="font-size:11.5px;color:var(--color-text-secondary);margin-top:3px">O registro anterior será preservado no histórico</div>
         </div>
         <button class="btn-ghost" onclick="hideAnamneseModal()"><i class="ti ti-x" aria-hidden="true" style="font-size:15px"></i></button>
       </div>
@@ -353,7 +408,7 @@ table.tbl tr:last-child td{border-bottom:none}
       <div class="form-grid" style="margin-bottom:16px">
         <div class="field"><label>Doenças preexistentes</label><textarea class="txt" rows="2">Hipertensão controlada</textarea></div>
       </div>
-      <div style="display:flex;justify-content:flex-end;gap:8px;padding-top:14px;border-top:0.5px solid var(--color-border-tertiary)">
+      <div style="display:flex;justify-content:flex-end;gap:8px;padding-top:16px;border-top:1px solid var(--color-border-tertiary)">
         <button class="btn" onclick="hideAnamneseModal()">Cancelar</button>
         <button class="btn btn-dark" onclick="hideAnamneseModal()">Salvar anamnese</button>
       </div>
@@ -428,7 +483,7 @@ function addProcedure(){
   var desc=document.getElementById('procDesc').value;
   var final=document.getElementById('procFinal').textContent;
   var tr=document.createElement('tr');
-  tr.innerHTML='<td style="font-weight:500">'+name+'</td><td>'+teeth+'</td><td>'+valor+'</td><td>'+desc+'</td><td style="font-weight:500">'+final+'</td><td style="color:var(--color-text-secondary)">'+obs+'</td><td><button class="btn-ghost" onclick="this.closest(\'tr\').remove()"><i class="ti ti-trash" aria-hidden="true" style="font-size:13px"></i></button></td>';
+  tr.innerHTML='<td style="font-weight:600">'+name+'</td><td>'+teeth+'</td><td>'+valor+'</td><td>'+desc+'</td><td style="font-weight:600">'+final+'</td><td style="color:var(--color-text-secondary)">'+obs+'</td><td><button class="btn-ghost" onclick="this.closest(\'tr\').remove()"><i class="ti ti-trash" aria-hidden="true" style="font-size:13px"></i></button></td>';
   document.getElementById('procTableBody').appendChild(tr);
   selectedTeeth=[];sel.value='';document.getElementById('procObs').value='';
   document.getElementById('procValor').value='R$ 0,00';document.getElementById('procDesc').value='R$ 0,00';

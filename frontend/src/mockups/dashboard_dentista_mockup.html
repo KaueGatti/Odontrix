@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — Dentista — OdontoSys</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<style>
+:root{
+  --blue:#4F7EF7;--blue-dark:#0f2050;--blue-mid:#1a3580;--white:#ffffff;
+  --gray-50:#f8fafc;--gray-100:#f1f5f9;--gray-200:#e2e8f0;--gray-300:#cbd5e1;
+  --gray-400:#94a3b8;--gray-500:#64748b;--gray-700:#334155;--gray-900:#0f172a;
+  --green:#4ade80;--amber:#f59e0b;--red:#f87171;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:var(--font-sans);font-size:13px;background:var(--gray-100);color:var(--gray-900);display:flex;overflow:hidden}
+
+.sidebar{width:200px;background:linear-gradient(180deg,var(--blue-dark) 0%,var(--blue-mid) 100%);padding:26px 16px;flex-shrink:0;display:flex;flex-direction:column}
+.logo{display:flex;align-items:center;gap:10px;margin-bottom:40px;padding:0 6px}
+.logo-sq{width:28px;height:28px;background:var(--blue);border-radius:7px;flex-shrink:0}
+.logo-name{font-size:13px;font-weight:600;color:var(--white)}
+.logo-name span{display:block;font-size:10px;color:rgba(255,255,255,0.4);font-weight:400;margin-top:1px}
+.nav{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;color:rgba(255,255,255,0.55);font-size:12.5px;font-weight:500;cursor:pointer;margin-bottom:2px}
+.nav i{font-size:16px;width:16px;text-align:center}
+.nav:hover{background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.85)}
+.nav.on{background:rgba(255,255,255,0.1);color:#fff;box-shadow:inset 0 0 0 1px rgba(255,255,255,0.1)}
+.sidebar-spacer{flex:1}
+.sidebar-footer{font-size:10.5px;color:rgba(255,255,255,0.25);padding:10px 6px 0}
+
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{background:var(--white);border-bottom:1px solid var(--gray-200);padding:18px 36px;box-shadow:0 4px 24px rgba(15,32,80,0.04)}
+.eyebrow{font-size:11px;font-weight:600;letter-spacing:0.09em;text-transform:uppercase;color:var(--blue);margin-bottom:6px}
+.page-heading{font-size:22px;font-weight:700;letter-spacing:-0.5px}
+.content{flex:1;overflow:auto;padding:28px 36px}
+
+.kpi-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px}
+.kpi-card{background:var(--white);border-radius:14px;border:1px solid var(--gray-200);padding:18px 20px;box-shadow:0 4px 24px rgba(15,32,80,0.05)}
+.kpi-icon{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;margin-bottom:12px;font-size:15px}
+.kpi-label{font-size:11px;color:var(--gray-500);margin-bottom:4px}
+.kpi-val{font-size:20px;font-weight:700;letter-spacing:-0.3px}
+.kpi-sub{font-size:10.5px;color:var(--gray-400);margin-top:4px}
+
+.card{background:var(--white);border-radius:14px;border:1px solid var(--gray-200);padding:20px 22px;margin-bottom:16px;box-shadow:0 4px 24px rgba(15,32,80,0.05)}
+.card-title{font-size:14px;font-weight:700;letter-spacing:-0.1px;margin-bottom:2px}
+.card-sub{font-size:11px;color:var(--gray-400);margin-bottom:16px}
+
+/* próximo paciente - card destacado */
+.next-patient{background:linear-gradient(135deg,rgba(79,126,247,0.06),rgba(79,126,247,0.02));border:1.5px solid rgba(79,126,247,0.18)}
+.np-head{display:flex;align-items:center;gap:14px;margin-bottom:16px}
+.np-av{width:46px;height:46px;border-radius:50%;background:var(--blue);color:#fff;font-weight:700;font-size:15px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.np-name{font-size:15px;font-weight:700;letter-spacing:-0.2px}
+.np-meta{font-size:11.5px;color:var(--gray-500);margin-top:2px}
+.np-badge{margin-left:auto;background:var(--blue);color:#fff;font-size:11px;font-weight:600;padding:5px 12px;border-radius:20px}
+.np-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.np-box{background:var(--white);border:1px solid var(--gray-200);border-radius:10px;padding:12px 14px}
+.np-box-label{font-size:10px;font-weight:600;color:var(--gray-400);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px}
+.np-box-val{font-size:12px;color:var(--gray-700);line-height:1.55}
+
+table.tbl{width:100%;border-collapse:collapse;font-size:12.5px}
+table.tbl th{font-size:10px;font-weight:600;color:var(--gray-500);letter-spacing:.05em;text-transform:uppercase;padding:0 8px 8px;text-align:left;border-bottom:1.5px solid var(--gray-100)}
+table.tbl td{padding:11px 8px;border-bottom:1px solid var(--gray-100);vertical-align:middle}
+table.tbl tr:last-child td{border-bottom:none}
+.badge{font-size:10.5px;font-weight:600;padding:3px 10px;border-radius:20px;display:inline-flex;align-items:center;gap:5px}
+.badge-green{background:rgba(74,222,128,0.14);color:#16a34a}
+.badge-blue{background:rgba(79,126,247,0.12);color:var(--blue)}
+.badge-amber{background:rgba(245,158,11,0.14);color:#b45309}
+.dot{width:5px;height:5px;border-radius:50%;background:currentColor}
+
+.tx-item{padding:12px 0;border-bottom:1px solid var(--gray-100)}
+.tx-item:last-child{border-bottom:none}
+.tx-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.tx-name{font-size:12.5px;font-weight:600}
+.tx-bar-bg{height:6px;border-radius:3px;background:var(--gray-100);overflow:hidden;margin-bottom:5px}
+.tx-bar-fill{height:100%;background:var(--blue);border-radius:3px}
+.tx-meta{font-size:10.5px;color:var(--gray-400)}
+</style>
+</head>
+<body>
+
+  <div class="sidebar">
+    <div class="logo"><div class="logo-sq"></div><div class="logo-name">OdontoSys<span>Gestão de Clínicas</span></div></div>
+    <div class="nav on"><i class="ti ti-layout-dashboard"></i>Dashboard</div>
+    <div class="nav"><i class="ti ti-calendar"></i>Minha Agenda</div>
+    <div class="nav"><i class="ti ti-users"></i>Meus Pacientes</div>
+    <div class="nav"><i class="ti ti-cash"></i>Financeiro</div>
+    <div class="sidebar-spacer"></div>
+    <div class="nav"><i class="ti ti-settings"></i>Configurações</div>
+    <div class="sidebar-footer">© 2025 OdontoSys</div>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="eyebrow">Bom dia, Dr. Marcos</div>
+      <div class="page-heading">Dashboard</div>
+    </div>
+
+    <div class="content">
+
+      <div class="kpi-row">
+        <div class="kpi-card">
+          <div class="kpi-icon" style="background:rgba(79,126,247,0.12)"><i class="ti ti-calendar-event" style="color:var(--blue)"></i></div>
+          <div class="kpi-label">Consultas hoje</div>
+          <div class="kpi-val">8</div>
+          <div class="kpi-sub">2 já realizadas</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon" style="background:rgba(74,222,128,0.14)"><i class="ti ti-calendar-week" style="color:#16a34a"></i></div>
+          <div class="kpi-label">Consultas esta semana</div>
+          <div class="kpi-val">31</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon" style="background:rgba(245,158,11,0.14)"><i class="ti ti-clipboard-list" style="color:#b45309"></i></div>
+          <div class="kpi-label">Tratamentos em andamento</div>
+          <div class="kpi-val">6</div>
+        </div>
+      </div>
+
+      <div class="card next-patient">
+        <div class="np-head">
+          <div class="np-av">KG</div>
+          <div>
+            <div class="np-name">Kauê V. Gatti</div>
+            <div class="np-meta">Próxima consulta · 10:15 · Consulta de rotina · 50 min</div>
+          </div>
+          <div class="np-badge">Em 25 min</div>
+        </div>
+        <div class="np-grid">
+          <div class="np-box">
+            <div class="np-box-label">Anamnese</div>
+            <div class="np-box-val"><b>Alergias:</b> Penicilina<br><b>Doenças preexistentes:</b> Hipertensão controlada</div>
+          </div>
+          <div class="np-box">
+            <div class="np-box-label">Última consulta — 21/04/2025</div>
+            <div class="np-box-val">Restauração em resina no dente 36. Plano: acompanhar em 30 dias, avaliar dente 37.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Consultas a realizar hoje</div>
+        <div class="card-sub">Ordenadas por horário</div>
+        <table class="tbl">
+          <thead><tr><th>Horário</th><th>Paciente</th><th>Tipo</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td style="color:var(--gray-400)">09:00</td><td style="color:var(--gray-400)">Marina T. Souza</td><td style="color:var(--gray-400)">Consulta de rotina</td><td><span class="badge" style="background:var(--gray-100);color:var(--gray-400)"><span class="dot"></span>Realizada</span></td></tr>
+            <tr><td style="font-weight:600">10:15</td><td style="font-weight:600">Kauê V. Gatti</td><td>Consulta de rotina</td><td><span class="badge badge-green"><span class="dot"></span>Confirmado</span></td></tr>
+            <tr><td>11:10</td><td>Roberto C. Lima</td><td>Retorno</td><td><span class="badge badge-green"><span class="dot"></span>Confirmado</span></td></tr>
+            <tr><td>14:00</td><td>Ana Lucia M.</td><td>Emergência</td><td><span class="badge badge-blue"><span class="dot"></span>Agendado</span></td></tr>
+            <tr><td>15:30</td><td>Paulo Henrique</td><td>Procedimento</td><td><span class="badge badge-amber"><span class="dot"></span>A confirmar</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Tratamentos em andamento</div>
+        <div class="card-sub">Planos de tratamento ainda incompletos</div>
+        <div class="tx-item">
+          <div class="tx-top"><div class="tx-name">Kauê V. Gatti</div><div class="tx-meta">2 de 3 etapas</div></div>
+          <div class="tx-bar-bg"><div class="tx-bar-fill" style="width:66%"></div></div>
+          <div class="tx-meta">Próximo passo: avaliar dente 37 · recomendado para 20/06/2025</div>
+        </div>
+        <div class="tx-item">
+          <div class="tx-top"><div class="tx-name">Marina T. Souza</div><div class="tx-meta">1 de 4 etapas</div></div>
+          <div class="tx-bar-bg"><div class="tx-bar-fill" style="width:25%"></div></div>
+          <div class="tx-meta">Próximo passo: canal no dente 26 · recomendado para 02/06/2025</div>
+        </div>
+        <div class="tx-item">
+          <div class="tx-top"><div class="tx-name">Paulo Henrique</div><div class="tx-meta">3 de 4 etapas</div></div>
+          <div class="tx-bar-bg"><div class="tx-bar-fill" style="width:75%"></div></div>
+          <div class="tx-meta">Próximo passo: restauração final · recomendado para 28/05/2025</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</body>
+</html>

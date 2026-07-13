@@ -116,6 +116,8 @@ Campos obrigatórios marcados com `*`
 - Relatórios exportáveis em PDF e Excel (pagamentos, consultas, inadimplência)
 - Log de auditoria registrando quem alterou o quê e quando em todas as áreas do sistema
 - Configurações da clínica (nome, CNPJ, logo, horário de funcionamento — utilizados em documentos gerados pelo sistema)
+- Geração de Boletos a vulso
+- Plano de Tratamento por etapas
 
 ---
 

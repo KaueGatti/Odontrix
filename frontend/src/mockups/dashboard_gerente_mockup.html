@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — Gerente — OdontoSys</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<style>
+:root{
+  --blue:#4F7EF7;--blue-dark:#0f2050;--blue-mid:#1a3580;--white:#ffffff;
+  --gray-50:#f8fafc;--gray-100:#f1f5f9;--gray-200:#e2e8f0;--gray-300:#cbd5e1;
+  --gray-400:#94a3b8;--gray-500:#64748b;--gray-700:#334155;--gray-900:#0f172a;
+  --green:#4ade80;--amber:#f59e0b;--red:#f87171;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:var(--font-sans);font-size:13px;background:var(--gray-100);color:var(--gray-900);display:flex;overflow:hidden}
+
+.sidebar{width:216px;background:linear-gradient(180deg,var(--blue-dark) 0%,var(--blue-mid) 100%);padding:26px 16px;flex-shrink:0;display:flex;flex-direction:column}
+.logo{display:flex;align-items:center;gap:10px;margin-bottom:40px;padding:0 6px}
+.logo-sq{width:28px;height:28px;background:var(--blue);border-radius:7px;flex-shrink:0}
+.logo-name{font-size:13px;font-weight:600;color:var(--white)}
+.logo-name span{display:block;font-size:10px;color:rgba(255,255,255,0.4);font-weight:400;margin-top:1px}
+.nav{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;color:rgba(255,255,255,0.55);font-size:12.5px;font-weight:500;cursor:pointer;margin-bottom:2px}
+.nav i{font-size:16px;width:16px;text-align:center}
+.nav:hover{background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.85)}
+.nav.on{background:rgba(255,255,255,0.1);color:#fff;box-shadow:inset 0 0 0 1px rgba(255,255,255,0.1)}
+.nav-sec{padding:16px 10px 6px;font-size:9.5px;font-weight:600;letter-spacing:0.08em;color:rgba(255,255,255,0.3)}
+.nav.sub{padding-left:32px;font-size:11.5px}
+.sidebar-spacer{flex:1}
+.sidebar-footer{font-size:10.5px;color:rgba(255,255,255,0.25);padding:10px 6px 0}
+
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{background:var(--white);border-bottom:1px solid var(--gray-200);padding:18px 36px;box-shadow:0 4px 24px rgba(15,32,80,0.04);display:flex;align-items:center;justify-content:space-between}
+.eyebrow{font-size:11px;font-weight:600;letter-spacing:0.09em;text-transform:uppercase;color:var(--blue);margin-bottom:6px}
+.page-heading{font-size:22px;font-weight:700;letter-spacing:-0.5px}
+.period-select{height:32px;border:1.5px solid var(--gray-200);border-radius:10px;padding:0 12px;font-size:12px;color:var(--gray-700);background:var(--gray-50);appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2394a3b8'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:28px;font-family:var(--font-sans)}
+.content{flex:1;overflow:auto;padding:28px 36px}
+
+.kpi-row{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:20px}
+.kpi-card{background:var(--white);border-radius:14px;border:1px solid var(--gray-200);padding:16px 16px;box-shadow:0 4px 24px rgba(15,32,80,0.05)}
+.kpi-icon{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;margin-bottom:10px;font-size:13px}
+.kpi-label{font-size:10px;color:var(--gray-500);margin-bottom:3px;line-height:1.3}
+.kpi-val{font-size:17px;font-weight:700;letter-spacing:-0.3px}
+.kpi-sub{font-size:9.5px;color:var(--gray-400);margin-top:3px}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.card{background:var(--white);border-radius:14px;border:1px solid var(--gray-200);padding:20px 22px;box-shadow:0 4px 24px rgba(15,32,80,0.05)}
+.card-title{font-size:13.5px;font-weight:700;letter-spacing:-0.1px;margin-bottom:2px}
+.card-sub{font-size:11px;color:var(--gray-400);margin-bottom:16px}
+
+.rank-row{display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid var(--gray-100)}
+.rank-row:last-child{border-bottom:none}
+.rank-pos{width:20px;height:20px;border-radius:6px;background:var(--gray-100);color:var(--gray-500);font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.rank-pos.top{background:rgba(79,126,247,0.14);color:var(--blue)}
+.rank-info{flex:1;min-width:0}
+.rank-name{font-size:12px;font-weight:600;color:var(--gray-900)}
+.rank-bar-bg{height:5px;border-radius:3px;background:var(--gray-100);margin-top:5px;overflow:hidden}
+.rank-bar-fill{height:100%;background:var(--blue);border-radius:3px}
+.rank-val{font-size:11.5px;font-weight:600;color:var(--gray-700);flex-shrink:0;white-space:nowrap}
+
+.stat-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--gray-100);font-size:12px}
+.stat-row:last-child{border-bottom:none}
+.stat-row .lbl{display:flex;align-items:center;gap:8px;color:var(--gray-700)}
+.stat-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.stat-row .val{font-weight:700;color:var(--gray-900)}
+
+.mini-list-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--gray-100);font-size:12px}
+.mini-list-row:last-child{border-bottom:none}
+.mini-list-row .name{color:var(--gray-700)}
+.pill-count{background:rgba(79,126,247,0.12);color:var(--blue);font-size:10.5px;font-weight:700;padding:2px 9px;border-radius:20px}
+</style>
+</head>
+<body>
+
+  <div class="sidebar">
+    <div class="logo"><div class="logo-sq"></div><div class="logo-name">OdontoSys<span>Gestão de Clínicas</span></div></div>
+    <div class="nav on"><i class="ti ti-layout-dashboard"></i>Dashboard</div>
+    <div class="nav"><i class="ti ti-users"></i>Pacientes</div>
+    <div class="nav"><i class="ti ti-stethoscope"></i>Dentistas</div>
+    <div class="nav"><i class="ti ti-user-check"></i>Recepcionistas</div>
+    <div class="nav"><i class="ti ti-calendar"></i>Agenda</div>
+    <div class="nav-sec">Financeiro</div>
+    <div class="nav sub"><i class="ti ti-report-money"></i>Contas</div>
+    <div class="nav sub"><i class="ti ti-arrow-down-left"></i>A receber</div>
+    <div class="nav sub"><i class="ti ti-arrow-up-right"></i>A pagar</div>
+    <div class="nav"><i class="ti ti-file-text"></i>Contratos</div>
+    <div class="nav"><i class="ti ti-heart-rate-monitor"></i>Planos</div>
+    <div class="nav"><i class="ti ti-adjustments"></i>Auxiliares</div>
+    <div class="sidebar-spacer"></div>
+    <div class="nav"><i class="ti ti-settings"></i>Configurações</div>
+    <div class="sidebar-footer">© 2025 OdontoSys</div>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <div><div class="eyebrow">Visão geral</div><div class="page-heading">Dashboard</div></div>
+      <select class="period-select"><option>Hoje</option><option selected>Este mês</option><option>Últimos 30 dias</option><option>Este ano</option></select>
+    </div>
+
+    <div class="content">
+
+      <div class="kpi-row">
+        <div class="kpi-card">
+          <div class="kpi-icon" style="background:rgba(74,222,128,0.14)"><i class="ti ti-arrow-down-left" style="color:#16a34a"></i></div>
+          <div class="kpi-label">Total recebido</div>
+          <div class="kpi-val">R$ 24.780</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon" style="background:rgba(248,113,113,0.14)"><i class="ti ti-arrow-up-right" style="color:#dc2626"></i></div>
+          <div class="kpi-label">Total gasto</div>
+          <div class="kpi-val">R$ 8.930</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon" style="background:rgba(79,126,247,0.12)"><i class="ti ti-checkup-list" style="color:var(--blue)"></i></div>
+          <div class="kpi-label">Consultas realizadas</div>
+          <div class="kpi-val">142</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon" style="background:rgba(79,126,247,0.12)"><i class="ti ti-user-plus" style="color:var(--blue)"></i></div>
+          <div class="kpi-label">Novos pacientes</div>
+          <div class="kpi-val">18</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon" style="background:rgba(245,158,11,0.14)"><i class="ti ti-calendar-x" style="color:#b45309"></i></div>
+          <div class="kpi-label">Cancelamento / no-show</div>
+          <div class="kpi-val">9,2%</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon" style="background:rgba(248,113,113,0.14)"><i class="ti ti-alert-triangle" style="color:#dc2626"></i></div>
+          <div class="kpi-label">Inadimplência total</div>
+          <div class="kpi-val">R$ 3.140</div>
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="card">
+          <div class="card-title">Ranking de dentistas</div>
+          <div class="card-sub">Por valor total das consultas realizadas</div>
+          <div class="rank-row">
+            <div class="rank-pos top">1</div>
+            <div class="rank-info"><div class="rank-name">Dr. Marcos Silva</div><div class="rank-bar-bg"><div class="rank-bar-fill" style="width:92%"></div></div></div>
+            <div class="rank-val">R$ 9.200 · 38 consultas</div>
+          </div>
+          <div class="rank-row">
+            <div class="rank-pos">2</div>
+            <div class="rank-info"><div class="rank-name">Dra. Camila Rocha</div><div class="rank-bar-bg"><div class="rank-bar-fill" style="width:74%;background:var(--gray-300)"></div></div></div>
+            <div class="rank-val">R$ 7.400 · 31 consultas</div>
+          </div>
+          <div class="rank-row">
+            <div class="rank-pos">3</div>
+            <div class="rank-info"><div class="rank-name">Dr. Felipe Trigo</div><div class="rank-bar-bg"><div class="rank-bar-fill" style="width:58%;background:var(--gray-300)"></div></div></div>
+            <div class="rank-val">R$ 5.800 · 24 consultas</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Ranking de recepcionistas</div>
+          <div class="card-sub">Por quantidade de consultas agendadas</div>
+          <div class="rank-row">
+            <div class="rank-pos top">1</div>
+            <div class="rank-info"><div class="rank-name">Juliana Ramos</div><div class="rank-bar-bg"><div class="rank-bar-fill" style="width:88%"></div></div></div>
+            <div class="rank-val">76 agendamentos</div>
+          </div>
+          <div class="rank-row">
+            <div class="rank-pos">2</div>
+            <div class="rank-info"><div class="rank-name">Pedro Alves</div><div class="rank-bar-bg"><div class="rank-bar-fill" style="width:61%;background:var(--gray-300)"></div></div></div>
+            <div class="rank-val">53 agendamentos</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="card">
+          <div class="card-title">Centro de custos</div>
+          <div class="card-sub">Gastos do período por categoria</div>
+          <div class="stat-row"><div class="lbl"><span class="stat-dot" style="background:var(--blue)"></span>Aluguel</div><div class="val">R$ 3.200</div></div>
+          <div class="stat-row"><div class="lbl"><span class="stat-dot" style="background:#f59e0b"></span>Salários</div><div class="val">R$ 4.100</div></div>
+          <div class="stat-row"><div class="lbl"><span class="stat-dot" style="background:#f87171"></span>Materiais</div><div class="val">R$ 1.280</div></div>
+          <div class="stat-row"><div class="lbl"><span class="stat-dot" style="background:var(--gray-300)"></span>Outros</div><div class="val">R$ 350</div></div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Consultas por status</div>
+          <div class="card-sub">Período selecionado</div>
+          <div class="stat-row"><div class="lbl"><span class="stat-dot" style="background:var(--green)"></span>Realizadas</div><div class="val">142</div></div>
+          <div class="stat-row"><div class="lbl"><span class="stat-dot" style="background:var(--blue)"></span>Confirmadas</div><div class="val">21</div></div>
+          <div class="stat-row"><div class="lbl"><span class="stat-dot" style="background:var(--gray-300)"></span>Agendadas</div><div class="val">34</div></div>
+          <div class="stat-row"><div class="lbl"><span class="stat-dot" style="background:var(--red)"></span>Canceladas</div><div class="val">15</div></div>
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="card">
+          <div class="card-title">Tipos de consulta mais realizados</div>
+          <div class="mini-list-row"><div class="name">Consulta de rotina</div><span class="pill-count">58</span></div>
+          <div class="mini-list-row"><div class="name">Retorno</div><span class="pill-count">44</span></div>
+          <div class="mini-list-row"><div class="name">Emergência</div><span class="pill-count">21</span></div>
+          <div class="mini-list-row"><div class="name">Avaliação</div><span class="pill-count">19</span></div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Procedimentos mais realizados</div>
+          <div class="mini-list-row"><div class="name">Limpeza (Profilaxia)</div><span class="pill-count">39</span></div>
+          <div class="mini-list-row"><div class="name">Restauração em resina</div><span class="pill-count">27</span></div>
+          <div class="mini-list-row"><div class="name">Aplicação de flúor</div><span class="pill-count">22</span></div>
+          <div class="mini-list-row"><div class="name">Extração simples</div><span class="pill-count">11</span></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</body>
+</html>
