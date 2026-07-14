@@ -1,253 +1,276 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agenda — Filtro de Paciente — OdontoSys</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
 <style>
+:root{
+  --blue:#4F7EF7;--blue-dark:#0f2050;--blue-mid:#1a3580;--white:#ffffff;
+  --gray-50:#f8fafc;--gray-100:#f1f5f9;--gray-200:#e2e8f0;--gray-300:#cbd5e1;
+  --gray-400:#94a3b8;--gray-500:#64748b;--gray-700:#334155;--gray-900:#0f172a;
+  --green:#4ade80;--amber:#f59e0b;--red:#f87171;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --border-radius-lg:14px;--border-radius-md:10px;
+}
 *{box-sizing:border-box;margin:0;padding:0}
-.fm-app{font-family:var(--font-sans, -apple-system, Segoe UI, Roboto, sans-serif);font-size:13px;background:#dcdcdc;border-radius:var(--border-radius-lg, 10px);overflow:hidden;border:0.5px solid #c7c7c7;color:#2b2b2b}
-.fm-wrap{display:flex;min-height:700px}
+html,body{height:100%}
+body{font-family:var(--font-sans);font-size:13px;background:var(--gray-100);color:var(--gray-900);display:flex;overflow:hidden}
 
-/* ---------- NAV RAIL ---------- */
-.fm-navrail{width:148px;flex-shrink:0;background:#ececec;border-right:0.5px solid #cfcfcf;padding:16px 0;display:flex;flex-direction:column}
-.fm-logo{width:20px;height:20px;background:#9aa6b2;border-radius:4px;margin:0 14px 18px}
-.fm-nav{padding:7px 14px;color:#7a7a7a;display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer}
-.fm-nav .dot{width:6px;height:6px;border-radius:50%;border:1.2px solid #9a9a9a;flex-shrink:0}
-.fm-nav.on{color:#1f1f1f;font-weight:600;background:#dadada;border-radius:6px;margin:0 6px;padding:7px 8px}
-.fm-nav.on .dot{background:#1f1f1f;border-color:#1f1f1f}
-.fm-nav.sub{padding-left:30px;font-size:11px;color:#8a8a8a}
-.fm-navsec{padding:12px 14px 4px;font-size:10px;color:#9a9a9a;letter-spacing:.06em}
+/* ---------- SIDEBAR ---------- */
+.sidebar{width:216px;background:linear-gradient(180deg,var(--blue-dark) 0%,var(--blue-mid) 100%);padding:26px 16px;flex-shrink:0;display:flex;flex-direction:column}
+.logo{display:flex;align-items:center;gap:10px;margin-bottom:40px;padding:0 6px}
+.logo-sq{width:28px;height:28px;background:var(--blue);border-radius:7px;flex-shrink:0}
+.logo-name{font-size:13px;font-weight:600;color:var(--white)}
+.logo-name span{display:block;font-size:10px;color:rgba(255,255,255,0.4);font-weight:400;margin-top:1px}
+.nav{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;color:rgba(255,255,255,0.55);font-size:12.5px;font-weight:500;cursor:pointer;margin-bottom:2px;transition:background .15s,color .15s}
+.nav i{font-size:16px;width:16px;text-align:center}
+.nav:hover{background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.85)}
+.nav.on{background:rgba(255,255,255,0.1);color:#fff;box-shadow:inset 0 0 0 1px rgba(255,255,255,0.1)}
+.nav-sec{padding:16px 10px 6px;font-size:9.5px;font-weight:600;letter-spacing:0.08em;color:rgba(255,255,255,0.3)}
+.nav.sub{padding-left:32px;font-size:11.5px}
+.sidebar-spacer{flex:1}
+.sidebar-footer{font-size:10.5px;color:rgba(255,255,255,0.25);padding:10px 6px 0}
 
 /* ---------- FILTER PANEL ---------- */
-.fm-filters{width:228px;flex-shrink:0;background:#ececec;border-right:0.5px solid #cfcfcf;padding:18px 16px;overflow-y:auto}
-.fm-flabel{font-size:11px;font-weight:600;color:#5b5b5b;letter-spacing:.06em;margin-bottom:9px;display:flex;align-items:center;justify-content:space-between}
-.fm-pillrow{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
-.fm-pill{padding:5px 12px;border-radius:20px;font-size:12px;color:#555;border:1px solid #bdbdbd;background:transparent;cursor:pointer}
-.fm-pill.on{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
+.fm-filters{width:228px;flex-shrink:0;background:var(--white);border-right:1px solid var(--gray-200);padding:20px 18px;overflow-y:auto}
+.fm-flabel{font-size:10.5px;font-weight:700;color:var(--gray-500);letter-spacing:.06em;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
+.fm-pillrow{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:18px}
+.fm-pill{padding:5px 12px;border-radius:20px;font-size:12px;color:var(--gray-700);border:1.5px solid var(--gray-200);background:var(--white);cursor:pointer;transition:all .15s}
+.fm-pill.on{background:var(--blue);color:#fff;border-color:var(--blue)}
 
-.fm-new{font-size:9px;font-weight:700;letter-spacing:.04em;color:#92400e;background:#fde9c8;border:1px solid #f6d49a;border-radius:8px;padding:1px 6px}
+.fm-new{font-size:9px;font-weight:700;letter-spacing:.04em;color:#b45309;background:rgba(245,158,11,0.14);border:1px solid rgba(245,158,11,0.3);border-radius:8px;padding:1px 6px}
 
-.fm-search-box{position:relative;margin-bottom:6px}
-.fm-search-input{width:100%;height:32px;border:1px solid #bdbdbd;border-radius:8px;background:#fff;padding:0 30px 0 28px;font-size:12px;color:#2b2b2b}
-.fm-search-input::placeholder{color:#9a9a9a}
-.fm-search-ic{position:absolute;left:9px;top:8px;font-size:13px;color:#9a9a9a}
-.fm-search-clear{position:absolute;right:7px;top:6px;width:18px;height:18px;border-radius:50%;border:none;background:transparent;color:#9a9a9a;font-size:14px;cursor:pointer;display:none}
-.fm-suggest{position:absolute;top:36px;left:0;right:0;background:#fff;border:1px solid #c7c7c7;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.12);z-index:20;overflow:hidden;display:none}
+.fm-search-box{position:relative;margin-bottom:8px}
+.fm-search-input{width:100%;height:32px;border:1.5px solid var(--gray-200);border-radius:var(--border-radius-md);background:var(--gray-50);padding:0 30px 0 28px;font-size:12px;color:var(--gray-900);font-family:var(--font-sans);outline:none;transition:border-color .15s,box-shadow .15s,background .15s}
+.fm-search-input:focus{border-color:var(--blue);background:var(--white);box-shadow:0 0 0 3px rgba(79,126,247,0.13)}
+.fm-search-input::placeholder{color:var(--gray-400)}
+.fm-search-ic{position:absolute;left:9px;top:9px;font-size:13px;color:var(--gray-400)}
+.fm-search-clear{position:absolute;right:7px;top:6px;width:18px;height:18px;border-radius:50%;border:none;background:transparent;color:var(--gray-400);font-size:14px;cursor:pointer;display:none}
+.fm-suggest{position:absolute;top:36px;left:0;right:0;background:var(--white);border:1px solid var(--gray-200);border-radius:var(--border-radius-md);box-shadow:0 12px 28px rgba(15,32,80,0.12);z-index:20;overflow:hidden;display:none}
 .fm-suggest.show{display:block}
-.fm-suggest-item{padding:8px 10px;font-size:12px;color:#333;cursor:pointer;border-bottom:1px solid #eee}
+.fm-suggest-item{padding:8px 10px;font-size:12px;color:var(--gray-700);cursor:pointer;border-bottom:1px solid var(--gray-100)}
 .fm-suggest-item:last-child{border-bottom:none}
-.fm-suggest-item:hover{background:#f3f3f3}
-.fm-suggest-empty{padding:10px;font-size:11px;color:#9a9a9a;font-style:italic}
+.fm-suggest-item:hover{background:var(--gray-50)}
+.fm-suggest-empty{padding:10px;font-size:11px;color:var(--gray-400);font-style:italic}
 
-.fm-chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 16px}
-.fm-chip{display:inline-flex;align-items:center;gap:6px;background:#dde7fb;color:#1f3a66;border:1px solid #b9cdf2;border-radius:20px;padding:4px 6px 4px 10px;font-size:11.5px}
-.fm-chip button{border:none;background:transparent;color:#5577ad;cursor:pointer;font-size:13px;line-height:1;padding:0 2px}
+.fm-chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 18px}
+.fm-chip{display:inline-flex;align-items:center;gap:6px;background:rgba(79,126,247,0.1);color:var(--blue);border:1px solid rgba(79,126,247,0.25);border-radius:20px;padding:4px 6px 4px 10px;font-size:11.5px;font-weight:500}
+.fm-chip button{border:none;background:transparent;color:var(--blue);cursor:pointer;font-size:13px;line-height:1;padding:0 2px;opacity:.7}
+.fm-chip button:hover{opacity:1}
 
-.fm-dentist-row{display:flex;align-items:center;gap:8px;padding:6px 0}
-.fm-dentist-row .dname{font-size:12px;color:#2b2b2b}
-.fm-dentist-row .dspec{font-size:10.5px;color:#8a8a8a}
+.fm-dentist-row{display:flex;align-items:center;gap:8px;padding:7px 0}
+.fm-dentist-row .dname{font-size:12px;color:var(--gray-900);font-weight:500}
+.fm-dentist-row .dspec{font-size:10.5px;color:var(--gray-400)}
 .fm-dotcolor{width:7px;height:7px;border-radius:50%;flex-shrink:0}
-.fm-toggle{width:30px;height:17px;border-radius:9px;background:#c7c7c7;position:relative;cursor:pointer;flex-shrink:0;border:none;margin-left:auto}
-.fm-toggle.on{background:#1a1a1a}
+.fm-toggle{width:30px;height:17px;border-radius:9px;background:var(--gray-200);position:relative;cursor:pointer;flex-shrink:0;border:none;margin-left:auto;transition:background .15s}
+.fm-toggle.on{background:var(--blue)}
 .fm-toggle span{position:absolute;top:2px;left:2px;width:13px;height:13px;border-radius:50%;background:#fff;transition:left .15s}
 .fm-toggle.on span{left:15px}
 
-.fm-infobox{background:#e2e2e2;border-radius:8px;padding:9px 11px;font-size:11px;color:#666;margin:12px 0 14px}
-.fm-infobox a{color:#3a5fb0;text-decoration:none;font-weight:600}
-.fm-inactive-label{font-size:11px;color:#9a9a9a;margin-bottom:4px}
-.fm-inactive-name{font-size:12px;color:#aaaaaa;padding:4px 0}
+.fm-infobox{background:var(--gray-50);border:1px solid var(--gray-200);border-radius:var(--border-radius-md);padding:9px 11px;font-size:11px;color:var(--gray-500);margin:14px 0 14px}
+.fm-infobox a{color:var(--blue);text-decoration:none;font-weight:600}
+.fm-inactive-label{font-size:11px;color:var(--gray-400);margin-bottom:4px}
+.fm-inactive-name{font-size:12px;color:var(--gray-300);padding:4px 0}
 
 /* ---------- MAIN ---------- */
-.fm-main{flex:1;display:flex;flex-direction:column;background:#dcdcdc;min-width:0}
-.fm-header{background:#f5f5f5;border-bottom:0.5px solid #cfcfcf;padding:14px 22px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
-.fm-datenav{font-size:15px;font-weight:600;color:#222;display:flex;align-items:center;gap:10px;flex:1;min-width:200px}
-.fm-datenav span.chev{color:#9a9a9a;cursor:pointer;font-weight:400}
-.fm-hbtn{height:30px;padding:0 13px;border-radius:8px;font-size:12px;border:1px solid #c7c7c7;background:#fff;color:#3a3a3a;cursor:pointer;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
-.fm-hbtn.on{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
-.fm-hbtn.dark{background:#1a1a1a;color:#fff;border-color:#1a1a1a;font-weight:600}
+.fm-main{flex:1;display:flex;flex-direction:column;background:var(--gray-100);min-width:0}
+.fm-header{background:var(--white);border-bottom:1px solid var(--gray-200);box-shadow:0 4px 24px rgba(15,32,80,0.04);padding:16px 24px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.fm-datenav{font-size:15px;font-weight:700;color:var(--gray-900);letter-spacing:-0.3px;display:flex;align-items:center;gap:10px;flex:1;min-width:200px}
+.fm-datenav span.chev{color:var(--gray-400);cursor:pointer;font-weight:400}
+.fm-hbtn{height:32px;padding:0 14px;border-radius:var(--border-radius-md);font-size:12px;font-weight:500;border:1.5px solid var(--gray-200);background:var(--white);color:var(--gray-700);cursor:pointer;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;transition:all .15s;font-family:var(--font-sans)}
+.fm-hbtn:hover{border-color:var(--gray-300)}
+.fm-hbtn.on{background:var(--blue);color:#fff;border-color:var(--blue)}
+.fm-hbtn.dark{background:var(--blue);color:#fff;border-color:var(--blue);font-weight:600;box-shadow:0 6px 16px rgba(79,126,247,0.3)}
+.fm-hbtn.dark:hover{background:#3a6af3}
 .fm-hbtn.filter{position:relative}
-.fm-badge-count{position:absolute;top:-7px;right:-7px;background:#d9534f;color:#fff;font-size:9.5px;font-weight:700;min-width:16px;height:16px;border-radius:9px;display:flex;align-items:center;justify-content:center;padding:0 3px}
+.fm-badge-count{position:absolute;top:-7px;right:-7px;background:var(--red);color:#fff;font-size:9.5px;font-weight:700;min-width:16px;height:16px;border-radius:9px;display:flex;align-items:center;justify-content:center;padding:0 3px}
 
-.fm-cols{display:grid;grid-template-columns:56px 1fr 1fr 1fr;background:#f5f5f5;border-bottom:0.5px solid #cfcfcf;padding:12px 22px 12px 0}
+.fm-cols{display:grid;grid-template-columns:56px 1fr 1fr 1fr;background:var(--white);border-bottom:1px solid var(--gray-200);padding:14px 24px 14px 0}
 .fm-colhead{padding:0 14px}
-.fm-colhead .dn{font-size:13.5px;font-weight:600;color:#222}
+.fm-colhead .dn{font-size:13.5px;font-weight:700;color:var(--gray-900)}
 .fm-colhead .tag{display:inline-block;margin-top:4px;font-size:10.5px;padding:2px 9px;border-radius:20px;border:1px solid;margin-right:6px}
-.fm-colhead .hrs{font-size:11px;color:#8a8a8a}
+.fm-colhead .hrs{font-size:11px;color:var(--gray-400)}
 
-.fm-gridscroll{flex:1;overflow:auto;padding:0 22px 18px 0}
+.fm-gridscroll{flex:1;overflow:auto;padding:0 24px 20px 0}
 .fm-grid{display:grid;grid-template-columns:56px 1fr 1fr 1fr;position:relative}
-.fm-timecell{font-size:11px;color:#9a9a9a;padding-top:2px}
-.fm-hourline{grid-column:1/-1;height:1px;background:#cfcfcf;margin:60px 0 0}
-.fm-slotcol{border-left:0.5px solid #d6d6d6;position:relative;min-height:64px}
+.fm-timecell{font-size:11px;color:var(--gray-400);padding-top:2px}
+.fm-hourline{grid-column:1/-1;height:1px;background:var(--gray-200);margin:60px 0 0}
+.fm-slotcol{border-left:1px solid var(--gray-200);position:relative;min-height:64px}
 
-.fm-appt{position:absolute;left:6px;right:6px;top:6px;border-radius:7px;background:#cdd9ef;border:1px solid #a8bfe0;border-left:3px solid #4F7EF7;padding:7px 9px;font-size:11.5px;transition:opacity .15s, filter .15s}
-.fm-appt.status-done{background:#d4e8da;border-color:#b6d6c0;border-left-color:#3f9d5d}
-.fm-appt .pname{font-weight:600;color:#1f1f1f;margin-bottom:2px}
-.fm-appt .ptime{color:#4a4a4a;font-size:10.5px;margin-bottom:4px}
+.fm-appt{position:absolute;left:6px;right:6px;top:6px;border-radius:var(--border-radius-md);background:rgba(79,126,247,0.1);border:1px solid rgba(79,126,247,0.25);border-left:3px solid var(--blue);padding:7px 9px;font-size:11.5px;transition:opacity .15s, filter .15s}
+.fm-appt.status-done{background:rgba(74,222,128,0.1);border-color:rgba(74,222,128,0.3);border-left-color:#16a34a}
+.fm-appt .pname{font-weight:600;color:var(--gray-900);margin-bottom:2px}
+.fm-appt .ptime{color:var(--gray-500);font-size:10.5px;margin-bottom:4px}
 .fm-appt .pbadge{display:inline-block;font-size:9.5px;padding:1px 7px;border-radius:20px}
 .fm-appt.dimmed{opacity:.28;filter:saturate(.4)}
-.fm-appt.highlighted{box-shadow:0 0 0 2px #4F7EF7}
+.fm-appt.highlighted{box-shadow:0 0 0 2px var(--blue)}
 .fm-col-hidden{display:none}
 
-.badge-blue{background:#dbeafe;color:#1e40af}
-.badge-gray{background:#e5e5e5;color:#555}
-.badge-green{background:#dcfce7;color:#166534}
-.badge-red{background:#fee2e2;color:#991b1b}
+.badge-blue{background:rgba(79,126,247,0.12);color:var(--blue)}
+.badge-gray{background:var(--gray-100);color:var(--gray-500)}
+.badge-green{background:rgba(74,222,128,0.14);color:#16a34a}
+.badge-red{background:rgba(248,113,113,0.14);color:#dc2626}
 
 /* ---------- MODAL ---------- */
-.fm-overlay{display:none;position:fixed;inset:0;background:rgba(20,20,20,0.45);z-index:200;align-items:center;justify-content:center}
+.fm-overlay{display:none;position:fixed;inset:0;background:rgba(15,32,80,0.35);backdrop-filter:blur(2px);z-index:200;align-items:center;justify-content:center}
 .fm-overlay.show{display:flex}
-.fm-modal{width:560px;max-width:94%;max-height:88vh;display:flex;flex-direction:column;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 16px 48px rgba(0,0,0,.25)}
-.fm-mhead{padding:18px 22px 14px;border-bottom:1px solid #e6e6e6;display:flex;align-items:flex-start;justify-content:space-between}
-.fm-mtitle{font-size:15px;font-weight:700;color:#1f1f1f}
-.fm-msub{font-size:11.5px;color:#888;margin-top:3px}
-.fm-mclose{border:none;background:transparent;font-size:17px;color:#999;cursor:pointer;line-height:1}
-.fm-mbody{padding:16px 22px;overflow-y:auto;flex:1}
+.fm-modal{width:560px;max-width:94%;max-height:88vh;display:flex;flex-direction:column;background:var(--white);border-radius:var(--border-radius-lg);overflow:hidden;box-shadow:0 24px 60px rgba(15,32,80,0.25)}
+.fm-mhead{padding:20px 24px 16px;border-bottom:1px solid var(--gray-100);display:flex;align-items:flex-start;justify-content:space-between}
+.fm-mtitle{font-size:15px;font-weight:700;color:var(--gray-900)}
+.fm-msub{font-size:11.5px;color:var(--gray-500);margin-top:3px}
+.fm-mclose{border:none;background:transparent;font-size:17px;color:var(--gray-400);cursor:pointer;line-height:1}
+.fm-mbody{padding:18px 24px;overflow-y:auto;flex:1}
 .fm-msection{margin-bottom:20px}
 .fm-msection:last-child{margin-bottom:0}
-.fm-mlabel{font-size:11px;font-weight:700;letter-spacing:.05em;color:#666;text-transform:uppercase;margin-bottom:10px}
+.fm-mlabel{font-size:11px;font-weight:700;letter-spacing:.05em;color:var(--gray-500);text-transform:uppercase;margin-bottom:10px}
 .fm-chiprow{display:flex;flex-wrap:wrap;gap:7px}
-.fm-fchip{padding:6px 13px;border-radius:20px;font-size:12px;border:1px solid #d2d2d2;color:#555;background:#fafafa;cursor:pointer}
+.fm-fchip{padding:6px 13px;border-radius:20px;font-size:12px;border:1.5px solid var(--gray-200);color:var(--gray-700);background:var(--gray-50);cursor:pointer;transition:all .15s}
 .fm-fchip.on{color:#fff;border-color:transparent}
-.fm-fchip.on.st-gray{background:#7a7a7a}
-.fm-fchip.on.st-blue{background:#3b67c4}
-.fm-fchip.on.st-green{background:#2f8f57}
-.fm-fchip.on.st-red{background:#c4453f}
-.fm-fchip.on.st-default{background:#1a1a1a}
+.fm-fchip.on.st-gray{background:var(--gray-500)}
+.fm-fchip.on.st-blue{background:var(--blue)}
+.fm-fchip.on.st-green{background:#16a34a}
+.fm-fchip.on.st-red{background:#dc2626}
+.fm-fchip.on.st-default{background:var(--blue)}
 .fm-periodrow{display:flex;gap:7px;margin-bottom:10px;flex-wrap:wrap}
 .fm-daterow{display:none;gap:10px;margin-top:10px}
 .fm-daterow.show{display:flex}
 .fm-datefield{flex:1}
-.fm-datefield label{display:block;font-size:10.5px;color:#888;margin-bottom:4px}
-.fm-datefield .box{height:30px;border:1px solid #d2d2d2;border-radius:7px;display:flex;align-items:center;padding:0 10px;font-size:12px;color:#aaa;background:#fafafa}
-.fm-mfoot{padding:14px 22px;border-top:1px solid #e6e6e6;display:flex;align-items:center;justify-content:space-between;gap:10px}
-.fm-clearlink{font-size:12px;color:#888;background:transparent;border:none;cursor:pointer;text-decoration:underline}
+.fm-datefield label{display:block;font-size:10.5px;color:var(--gray-500);margin-bottom:4px}
+.fm-datefield .box{height:32px;border:1.5px solid var(--gray-200);border-radius:var(--border-radius-md);display:flex;align-items:center;padding:0 10px;font-size:12px;color:var(--gray-400);background:var(--gray-50)}
+.fm-mfoot{padding:16px 24px;border-top:1px solid var(--gray-100);display:flex;align-items:center;justify-content:space-between;gap:10px}
+.fm-clearlink{font-size:12px;color:var(--gray-500);background:transparent;border:none;cursor:pointer;text-decoration:underline}
 .fm-footbtns{display:flex;gap:8px}
-.fm-btn{height:34px;padding:0 16px;border-radius:8px;font-size:12.5px;font-weight:600;cursor:pointer;border:1px solid #d2d2d2;background:#fff;color:#333}
-.fm-btn.primary{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
+.fm-btn{height:34px;padding:0 16px;border-radius:var(--border-radius-md);font-size:12.5px;font-weight:600;cursor:pointer;border:1.5px solid var(--gray-200);background:var(--white);color:var(--gray-700);font-family:var(--font-sans);transition:all .15s}
+.fm-btn:hover{border-color:var(--gray-300)}
+.fm-btn.primary{background:var(--blue);color:#fff;border-color:var(--blue);box-shadow:0 6px 16px rgba(79,126,247,0.3)}
 </style>
+</head>
+<body>
 
-<div class="fm-app">
-  <div class="fm-wrap">
+  <div class="sidebar">
+    <div class="logo"><div class="logo-sq"></div><div class="logo-name">OdontoSys<span>Gestão de Clínicas</span></div></div>
+    <div class="nav"><i class="ti ti-users"></i>Pacientes</div>
+    <div class="nav"><i class="ti ti-stethoscope"></i>Dentistas</div>
+    <div class="nav"><i class="ti ti-user-check"></i>Recepcionistas</div>
+    <div class="nav on"><i class="ti ti-calendar"></i>Agenda</div>
+    <div class="nav-sec">Financeiro</div>
+    <div class="nav sub"><i class="ti ti-report-money"></i>Contas</div>
+    <div class="nav sub"><i class="ti ti-arrow-down-left"></i>A receber</div>
+    <div class="nav sub"><i class="ti ti-arrow-up-right"></i>A pagar</div>
+    <div class="nav"><i class="ti ti-file-text"></i>Contratos</div>
+    <div class="nav"><i class="ti ti-heart-rate-monitor"></i>Planos</div>
+    <div class="nav"><i class="ti ti-adjustments"></i>Auxiliares</div>
+    <div class="sidebar-spacer"></div>
+    <div class="nav"><i class="ti ti-settings"></i>Configurações</div>
+    <div class="sidebar-footer">© 2025 OdontoSys</div>
+  </div>
 
-    <!-- NAV RAIL -->
-    <div class="fm-navrail">
-      <div class="fm-logo"></div>
-      <div class="fm-nav"><span class="dot"></span>Pacientes</div>
-      <div class="fm-nav"><span class="dot"></span>Dentistas</div>
-      <div class="fm-nav"><span class="dot"></span>Recepcionistas</div>
-      <div class="fm-nav on"><span class="dot"></span>Agenda</div>
-      <div class="fm-navsec">FINANCEIRO</div>
-      <div class="fm-nav sub">Contas</div>
-      <div class="fm-nav sub">A receber</div>
-      <div class="fm-nav sub">A pagar</div>
-      <div class="fm-nav">Contratos</div>
-      <div class="fm-nav">Planos</div>
-      <div style="flex:1"></div>
-      <div class="fm-nav">Configurações</div>
+  <!-- FILTER PANEL -->
+  <div class="fm-filters">
+
+    <div class="fm-flabel">ESPECIALIDADE</div>
+    <div class="fm-pillrow" id="specRow">
+      <div class="fm-pill on" data-spec="Todas">Todas</div>
+      <div class="fm-pill" data-spec="Ortodontia">Ortodontia</div>
+      <div class="fm-pill" data-spec="Implante">Implante</div>
+      <div class="fm-pill" data-spec="Dentística">Dentística</div>
     </div>
 
-    <!-- FILTER PANEL -->
-    <div class="fm-filters">
+    <div class="fm-flabel">PACIENTE <span class="fm-new">NOVO</span></div>
+    <div class="fm-search-box">
+      <span class="fm-search-ic">⌕</span>
+      <input class="fm-search-input" id="sideSearch" placeholder="Buscar paciente..." autocomplete="off">
+      <button class="fm-search-clear" id="sideClear">×</button>
+      <div class="fm-suggest" id="sideSuggest"></div>
+    </div>
+    <div class="fm-chips" id="sideChips"></div>
 
-      <div class="fm-flabel">ESPECIALIDADE</div>
-      <div class="fm-pillrow" id="specRow">
-        <div class="fm-pill on" data-spec="Todas">Todas</div>
-        <div class="fm-pill" data-spec="Ortodontia">Ortodontia</div>
-        <div class="fm-pill" data-spec="Implante">Implante</div>
-        <div class="fm-pill" data-spec="Dentística">Dentística</div>
-      </div>
+    <div class="fm-flabel">DENTISTAS</div>
+    <div id="dentistList"></div>
 
-      <div class="fm-flabel">PACIENTE <span class="fm-new">NOVO</span></div>
-      <div class="fm-search-box">
-        <span class="fm-search-ic">⌕</span>
-        <input class="fm-search-input" id="sideSearch" placeholder="Buscar paciente..." autocomplete="off">
-        <button class="fm-search-clear" id="sideClear">×</button>
-        <div class="fm-suggest" id="sideSuggest"></div>
-      </div>
-      <div class="fm-chips" id="sideChips"></div>
+    <div class="fm-infobox">Mostrando quem atende hoje. <a href="#" onclick="return false">Ver todos</a></div>
 
-      <div class="fm-flabel">DENTISTAS</div>
-      <div id="dentistList"></div>
+    <div class="fm-inactive-label">Não atendem hoje</div>
+    <div class="fm-inactive-name">Dr. Pedro L.</div>
+    <div class="fm-inactive-name">Dr. João L.</div>
+    <div class="fm-inactive-name">Dra. Ana L.</div>
+  </div>
 
-      <div class="fm-infobox">Mostrando quem atende hoje. <a href="#" onclick="return false">Ver todos</a></div>
-
-      <div class="fm-inactive-label">Não atendem hoje</div>
-      <div class="fm-inactive-name">Dr. Pedro L.</div>
-      <div class="fm-inactive-name">Dr. João L.</div>
-      <div class="fm-inactive-name">Dra. Ana L.</div>
+  <!-- MAIN -->
+  <div class="fm-main">
+    <div class="fm-header">
+      <div class="fm-datenav"><span class="chev">‹</span> Quarta-feira, 28 de maio de 2025 <span class="chev">›</span></div>
+      <button class="fm-hbtn">Hoje</button>
+      <button class="fm-hbtn on">Dia</button>
+      <button class="fm-hbtn">Semana</button>
+      <button class="fm-hbtn">Mês</button>
+      <button class="fm-hbtn filter" id="openFilterModal">▾ Filtros <span class="fm-new" style="margin-left:4px">NOVO</span><span class="fm-badge-count" id="filterBadge" style="display:none">0</span></button>
+      <button class="fm-hbtn dark">+ Novo Agendamento</button>
     </div>
 
-    <!-- MAIN -->
-    <div class="fm-main">
-      <div class="fm-header">
-        <div class="fm-datenav"><span class="chev">‹</span> Quarta-feira, 28 de maio de 2025 <span class="chev">›</span></div>
-        <button class="fm-hbtn">Hoje</button>
-        <button class="fm-hbtn on">Dia</button>
-        <button class="fm-hbtn">Semana</button>
-        <button class="fm-hbtn">Mês</button>
-        <button class="fm-hbtn filter" id="openFilterModal">▾ Filtros <span class="fm-new" style="margin-left:4px">NOVO</span><span class="fm-badge-count" id="filterBadge" style="display:none">0</span></button>
-        <button class="fm-hbtn dark">+ Novo Agendamento</button>
+    <div class="fm-cols">
+      <div></div>
+      <div class="fm-colhead" data-dentist="marcos">
+        <div class="dn">Dr. Marcos Silva</div>
+        <span class="tag" style="background:#dbeafe;color:#1e40af;border-color:#bfdbfe">Ortodontia</span><span class="hrs">08:00 – 18:00</span>
       </div>
-
-      <div class="fm-cols">
-        <div></div>
-        <div class="fm-colhead" data-dentist="marcos">
-          <div class="dn">Dr. Marcos Silva</div>
-          <span class="tag" style="background:#dbeafe;color:#1e40af;border-color:#bfdbfe">Ortodontia</span><span class="hrs">08:00 – 18:00</span>
-        </div>
-        <div class="fm-colhead" data-dentist="ana">
-          <div class="dn">Dra. Ana Costa</div>
-          <span class="tag" style="background:#dcfce7;color:#166534;border-color:#bbf7d0">Implantodontia</span><span class="hrs">08:30 – 17:30</span>
-        </div>
-        <div class="fm-colhead" data-dentist="julia">
-          <div class="dn">Dra. Julia Reis</div>
-          <span class="tag" style="background:#ede9fe;color:#5b21b6;border-color:#ddd6fe">Ortodontia</span><span class="hrs">08:00 – 18:00</span>
-        </div>
+      <div class="fm-colhead" data-dentist="ana">
+        <div class="dn">Dra. Ana Costa</div>
+        <span class="tag" style="background:#dcfce7;color:#166534;border-color:#bbf7d0">Implantodontia</span><span class="hrs">08:30 – 17:30</span>
       </div>
+      <div class="fm-colhead" data-dentist="julia">
+        <div class="dn">Dra. Julia Reis</div>
+        <span class="tag" style="background:#ede9fe;color:#5b21b6;border-color:#ddd6fe">Ortodontia</span><span class="hrs">08:00 – 18:00</span>
+      </div>
+    </div>
 
-      <div class="fm-gridscroll">
-        <div class="fm-grid">
-          <div class="fm-timecell">8:00</div>
-          <div class="fm-slotcol" data-dentist="marcos" style="height:130px">
-            <div class="fm-appt" data-patient="Kauê V. Gatti" data-status="Confirmado" data-type="Consulta" style="height:118px">
-              <div class="pname">Kauê V. Gatti</div>
-              <div class="ptime">08:00 – 09:30 · Consulta</div>
-              <span class="pbadge badge-blue">Confirmado</span>
-            </div>
+    <div class="fm-gridscroll">
+      <div class="fm-grid">
+        <div class="fm-timecell">8:00</div>
+        <div class="fm-slotcol" data-dentist="marcos" style="height:130px">
+          <div class="fm-appt" data-patient="Kauê V. Gatti" data-status="Confirmado" data-type="Consulta" style="height:118px">
+            <div class="pname">Kauê V. Gatti</div>
+            <div class="ptime">08:00 – 09:30 · Consulta</div>
+            <span class="pbadge badge-blue">Confirmado</span>
           </div>
-          <div class="fm-slotcol" data-dentist="ana" style="height:130px">
-            <div class="fm-appt" data-patient="Fernanda R. Souza" data-status="Confirmado" data-type="Implante" style="top:40px;height:78px">
-              <div class="pname">Fernanda R. Souza</div>
-              <div class="ptime">08:30 – 10:00 · Implante</div>
-              <span class="pbadge badge-blue">Confirmado</span>
-            </div>
-          </div>
-          <div class="fm-slotcol" data-dentist="julia" style="height:130px">
-            <div class="fm-appt status-done" data-patient="Maria S. Pereira" data-status="Realizado" data-type="Manutenção" style="top:54px;height:62px">
-              <div class="pname">Maria S. Pereira</div>
-              <div class="ptime">09:00 – 10:00 · Manutenção</div>
-              <span class="pbadge badge-green">Realizado</span>
-            </div>
-          </div>
-
-          <div class="fm-hourline"></div>
-          <div class="fm-timecell" style="margin-top:6px">9:00</div>
-          <div class="fm-slotcol" data-dentist="marcos" style="height:60px"></div>
-          <div class="fm-slotcol" data-dentist="ana" style="height:60px"></div>
-          <div class="fm-slotcol" data-dentist="julia" style="height:60px"></div>
-
-          <div class="fm-hourline"></div>
-          <div class="fm-timecell" style="margin-top:6px">10:00</div>
-          <div class="fm-slotcol" data-dentist="marcos" style="height:80px"></div>
-          <div class="fm-slotcol" data-dentist="ana" style="height:80px"></div>
-          <div class="fm-slotcol" data-dentist="julia" style="height:80px"></div>
-
-          <div class="fm-hourline"></div>
-          <div class="fm-timecell" style="margin-top:6px">11:00</div>
-          <div class="fm-slotcol" data-dentist="marcos" style="height:60px"></div>
-          <div class="fm-slotcol" data-dentist="ana" style="height:60px"></div>
-          <div class="fm-slotcol" data-dentist="julia" style="height:60px"></div>
         </div>
+        <div class="fm-slotcol" data-dentist="ana" style="height:130px">
+          <div class="fm-appt" data-patient="Fernanda R. Souza" data-status="Confirmado" data-type="Implante" style="top:40px;height:78px">
+            <div class="pname">Fernanda R. Souza</div>
+            <div class="ptime">08:30 – 10:00 · Implante</div>
+            <span class="pbadge badge-blue">Confirmado</span>
+          </div>
+        </div>
+        <div class="fm-slotcol" data-dentist="julia" style="height:130px">
+          <div class="fm-appt status-done" data-patient="Maria S. Pereira" data-status="Realizado" data-type="Manutenção" style="top:54px;height:62px">
+            <div class="pname">Maria S. Pereira</div>
+            <div class="ptime">09:00 – 10:00 · Manutenção</div>
+            <span class="pbadge badge-green">Realizado</span>
+          </div>
+        </div>
+
+        <div class="fm-hourline"></div>
+        <div class="fm-timecell" style="margin-top:6px">9:00</div>
+        <div class="fm-slotcol" data-dentist="marcos" style="height:60px"></div>
+        <div class="fm-slotcol" data-dentist="ana" style="height:60px"></div>
+        <div class="fm-slotcol" data-dentist="julia" style="height:60px"></div>
+
+        <div class="fm-hourline"></div>
+        <div class="fm-timecell" style="margin-top:6px">10:00</div>
+        <div class="fm-slotcol" data-dentist="marcos" style="height:80px"></div>
+        <div class="fm-slotcol" data-dentist="ana" style="height:80px"></div>
+        <div class="fm-slotcol" data-dentist="julia" style="height:80px"></div>
+
+        <div class="fm-hourline"></div>
+        <div class="fm-timecell" style="margin-top:6px">11:00</div>
+        <div class="fm-slotcol" data-dentist="marcos" style="height:60px"></div>
+        <div class="fm-slotcol" data-dentist="ana" style="height:60px"></div>
+        <div class="fm-slotcol" data-dentist="julia" style="height:60px"></div>
       </div>
     </div>
   </div>
-</div>
 
 <!-- ADVANCED FILTER MODAL -->
 <div class="fm-overlay" id="filterOverlay">
@@ -331,7 +354,7 @@
   var ALL_PATIENTS = ["Kauê V. Gatti","Fernanda R. Souza","Maria S. Pereira","Ana Lucia M.","Roberto C. Lima","Carla Mendes","Bruno Tavares"];
   var DENTISTS = [
     {id:"marcos", name:"Dr. Marcos S.", spec:"Ortodontia", color:"#4F7EF7", active:true},
-    {id:"ana", name:"Dra. Ana Costa", spec:"Implantodontia", color:"#3f9d5d", active:true},
+    {id:"ana", name:"Dra. Ana Costa", spec:"Implantodontia", color:"#16a34a", active:true},
     {id:"julia", name:"Dra. Julia R.", spec:"Ortodontia", color:"#8b6fd6", active:true}
   ];
 
@@ -553,3 +576,5 @@
   updateBadge();
 })();
 </script>
+</body>
+</html>

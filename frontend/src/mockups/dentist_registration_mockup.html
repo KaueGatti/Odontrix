@@ -1,254 +1,675 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro de Dentista — OdontoSys</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+    <link rel="stylesheet" href="design-tokens.css">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0
+        }
 
-<style>
-*{box-sizing:border-box;margin:0;padding:0}
-.wrap{display:flex;min-height:600px;font-family:var(--font-sans);font-size:13px;background:var(--color-background-tertiary);border-radius:var(--border-radius-lg);overflow:hidden;border:0.5px solid var(--color-border-tertiary)}
-.sidebar{width:148px;background:#1a1a1a;padding:16px 0;flex-shrink:0;display:flex;flex-direction:column}
-.logo{padding:0 14px 20px;display:flex;align-items:center;gap:8px}
-.logo-sq{width:20px;height:20px;background:#4F7EF7;border-radius:4px}
-.nav-item{padding:7px 14px;color:#888;cursor:pointer;display:flex;align-items:center;gap:7px;font-size:12px;border-left:2px solid transparent}
-.nav-item i{font-size:15px}
-.nav-item.active{color:#fff;border-left-color:#4F7EF7;background:rgba(255,255,255,0.04)}
-.nav-item.sub{padding-left:34px;font-size:11px;color:#666}
-.nav-item.sub.active{color:#aaa;border-left-color:transparent;background:transparent}
-.nav-section{padding:10px 14px 4px;font-size:10px;color:#444;letter-spacing:.05em}
-.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
-.topbar{background:var(--color-background-primary);border-bottom:0.5px solid var(--color-border-tertiary);padding:12px 24px;display:flex;align-items:center;gap:12px}
-.avatar{width:38px;height:38px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-weight:500;font-size:13px;color:#1d4ed8;flex-shrink:0}
-.topbar-info{flex:1}
-.topbar-info .name{font-weight:500;font-size:14px;color:var(--color-text-primary)}
-.topbar-info .sub{font-size:12px;color:var(--color-text-secondary)}
-.content{flex:1;padding:20px 24px;overflow:auto}
-.page-title{font-size:18px;font-weight:500;color:var(--color-text-primary);margin-bottom:20px;text-align:center}
+        .wrap {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+            font-family: var(--font-sans);
+            font-size: 13px;
+            background: var(--color-background-tertiary);
+            overflow: hidden;
+        }
 
-.stepper{display:flex;align-items:flex-start;justify-content:center;margin-bottom:24px;position:relative}
-.stepper::before{content:'';position:absolute;top:14px;left:calc(50% - 220px);right:calc(50% - 220px);height:1px;background:var(--color-border-tertiary);z-index:0}
-.step{display:flex;flex-direction:column;align-items:center;gap:6px;z-index:1;min-width:80px}
-.step-circle{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;border:1.5px solid var(--color-border-tertiary);background:var(--color-background-primary);color:var(--color-text-secondary)}
-.step.done .step-circle{background:#1a1a1a;border-color:#1a1a1a;color:#fff}
-.step.active .step-circle{background:#4F7EF7;border-color:#4F7EF7;color:#fff}
-.step-label{font-size:11px;color:var(--color-text-secondary);text-align:center;white-space:nowrap}
-.step.active .step-label{color:#4F7EF7;font-weight:500}
-.step.done .step-label{color:var(--color-text-primary)}
-.step-line{flex:1;height:1px;background:var(--color-border-tertiary);margin-top:14px}
-.step-line.done{background:#1a1a1a}
+        .nav-item {
+            padding: 9px 10px;
+            color: rgba(255, 255, 255, 0.55);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 12.5px;
+            font-weight: 500;
+            border-radius: 8px;
+            margin-bottom: 2px;
+            transition: background .15s, color .15s
+        }
 
-.card{background:var(--color-background-primary);border-radius:var(--border-radius-lg);border:0.5px solid var(--color-border-tertiary);padding:20px}
-.section-label{font-size:11px;font-weight:500;color:var(--color-text-secondary);letter-spacing:.06em;text-transform:uppercase;margin-bottom:12px;padding-bottom:8px;border-bottom:0.5px solid var(--color-border-tertiary)}
-.form-grid{display:grid;gap:12px;margin-bottom:16px}
-.g2{grid-template-columns:1fr 1fr}
-.g3{grid-template-columns:1fr 1fr 1fr}
-.g4{grid-template-columns:1fr 1fr 1fr 1fr}
-.g12{grid-template-columns:1fr 2fr}
-.g21{grid-template-columns:2fr 1fr}
-.field label{display:block;font-size:11px;color:var(--color-text-secondary);margin-bottom:4px}
-.field label span.req{color:#e24b4a}
-.field .inp{width:100%;height:30px;border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:0 10px;font-size:12px;color:var(--color-text-tertiary);background:var(--color-background-secondary);display:flex;align-items:center}
-.field .inp.placeholder{color:var(--color-text-tertiary)}
+        .nav-item i {
+            font-size: 16px;
+            width: 16px;
+            text-align: center
+        }
 
-.radio-group{display:flex;gap:8px}
-.radio-opt{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--color-text-secondary);cursor:pointer;padding:5px 10px;border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);background:var(--color-background-secondary)}
-.radio-opt.sel{border-color:#4F7EF7;color:#4F7EF7;background:rgba(79,126,247,0.06)}
-.radio-dot{width:12px;height:12px;border-radius:50%;border:1.5px solid currentColor;display:flex;align-items:center;justify-content:center}
-.radio-opt.sel .radio-dot::after{content:'';width:6px;height:6px;border-radius:50%;background:#4F7EF7}
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.06);
+            color: rgba(255, 255, 255, 0.85)
+        }
 
-.schedule-grid{display:grid;grid-template-columns:1fr 1fr 1fr 1fr 80px;gap:10px;align-items:center;margin-bottom:8px}
-.day-toggle{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
-.day-chip{padding:4px 10px;border-radius:20px;border:0.5px solid var(--color-border-tertiary);font-size:11px;color:var(--color-text-secondary);cursor:pointer;background:var(--color-background-secondary)}
-.day-chip.on{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
+        .nav-item.active {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.1);
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1)
+        }
 
-.footer{display:flex;justify-content:space-between;align-items:center;margin-top:20px;padding-top:16px;border-top:0.5px solid var(--color-border-tertiary)}
-.btn{height:32px;padding:0 16px;border-radius:var(--border-radius-md);font-size:12px;cursor:pointer;font-weight:500;display:inline-flex;align-items:center;gap:6px;border:0.5px solid var(--color-border-tertiary);background:var(--color-background-primary);color:var(--color-text-primary)}
-.btn-primary{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
-.btn-ghost{border-color:transparent;color:var(--color-text-secondary);background:transparent}
+        .nav-item.sub {
+            padding-left: 32px;
+            font-size: 11.5px
+        }
 
-.tab-row{display:flex;gap:2px;margin-bottom:16px}
-.tab{padding:6px 12px;font-size:12px;border-radius:var(--border-radius-md);cursor:pointer;color:var(--color-text-secondary);border:0.5px solid transparent}
-.tab.active{background:var(--color-background-secondary);border-color:var(--color-border-tertiary);color:var(--color-text-primary);font-weight:500}
+        .nav-item.sub.active {
+            color: rgba(255, 255, 255, 0.85);
+            background: transparent;
+            box-shadow: none
+        }
 
-.step-panel{display:none}
-.step-panel.show{display:block}
+        .nav-section {
+            padding: 16px 10px 6px;
+            font-size: 9.5px;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            color: rgba(255, 255, 255, 0.3)
+        }
 
-.info-banner{background:rgba(79,126,247,0.07);border:0.5px solid rgba(79,126,247,0.2);border-radius:var(--border-radius-md);padding:8px 12px;font-size:11px;color:#4F7EF7;display:flex;align-items:center;gap:6px;margin-bottom:14px}
-</style>
+        .main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden
+        }
+
+        .topbar {
+            background: var(--color-background-primary);
+            border-bottom: 1px solid var(--color-border-tertiary);
+            box-shadow: 0 4px 24px rgba(15, 32, 80, 0.04);
+            padding: 14px 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px
+        }
+
+        .avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: #dbeafe;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 13px;
+            color: #1d4ed8;
+            flex-shrink: 0
+        }
+
+        .topbar-info {
+            flex: 1
+        }
+
+        .topbar-info .name {
+            font-weight: 700;
+            font-size: 14px;
+            color: var(--color-text-primary)
+        }
+
+        .topbar-info .sub {
+            font-size: 12px;
+            color: var(--color-text-secondary)
+        }
+
+        .content {
+            flex: 1;
+            padding: 20px 24px;
+            overflow: auto
+        }
+
+        .stepper {
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            margin-bottom: 24px;
+            position: relative
+        }
+
+        .stepper::before {
+            content: '';
+            position: absolute;
+            top: 14px;
+            left: calc(50% - 220px);
+            right: calc(50% - 220px);
+            height: 1px;
+            background: var(--color-border-tertiary);
+            z-index: 0
+        }
+
+        .step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            z-index: 1;
+            min-width: 80px
+        }
+
+        .step-circle {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+            border: 1.5px solid var(--color-border-tertiary);
+            background: var(--color-background-primary);
+            color: var(--color-text-secondary)
+        }
+
+        .step.done .step-circle {
+            background: var(--blue);
+            border-color: var(--blue);
+            color: #fff
+        }
+
+        .step.active .step-circle {
+            background: var(--blue);
+            border-color: var(--blue);
+            color: #fff;
+            box-shadow: 0 0 0 4px rgba(79, 126, 247, 0.15)
+        }
+
+        .step-label {
+            font-size: 11px;
+            color: var(--color-text-secondary);
+            text-align: center;
+            white-space: nowrap
+        }
+
+        .step.active .step-label {
+            color: var(--blue);
+            font-weight: 600
+        }
+
+        .step.done .step-label {
+            color: var(--color-text-primary)
+        }
+
+        .step-line {
+            flex: 1;
+            height: 1px;
+            background: var(--color-border-tertiary);
+            margin-top: 14px
+        }
+
+        .step-line.done {
+            background: var(--blue)
+        }
+
+        .card {
+            background: var(--color-background-primary);
+            border-radius: var(--border-radius-lg);
+            border: 1px solid var(--color-border-tertiary);
+            padding: 22px;
+            box-shadow: 0 4px 24px rgba(15, 32, 80, 0.05)
+        }
+
+        .section-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--color-text-secondary);
+            letter-spacing: .06em;
+            text-transform: uppercase;
+            margin-bottom: 14px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--color-border-tertiary)
+        }
+
+        .form-grid {
+            display: grid;
+            gap: 14px;
+            margin-bottom: 16px
+        }
+
+        .g2 {
+            grid-template-columns:1fr 1fr
+        }
+
+        .g3 {
+            grid-template-columns:1fr 1fr 1fr
+        }
+
+        .g4 {
+            grid-template-columns:1fr 1fr 1fr 1fr
+        }
+
+        .g12 {
+            grid-template-columns:1fr 2fr
+        }
+
+        .g21 {
+            grid-template-columns:2fr 1fr
+        }
+
+        .field label {
+            display: block;
+            font-size: 11px;
+            color: var(--color-text-secondary);
+            margin-bottom: 5px;
+            font-weight: 500
+        }
+
+        .field label span.req {
+            color: var(--red)
+        }
+
+        .field .inp {
+            width: 100%;
+            height: 32px;
+            border: 1.5px solid var(--color-border-tertiary);
+            border-radius: var(--border-radius-md);
+            padding: 0 10px;
+            font-size: 12px;
+            color: var(--color-text-tertiary);
+            background: var(--color-background-secondary);
+            display: flex;
+            align-items: center
+        }
+
+        .field .inp.placeholder {
+            color: var(--color-text-tertiary)
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 8px
+        }
+
+        .radio-opt {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 12px;
+            color: var(--color-text-secondary);
+            cursor: pointer;
+            padding: 6px 12px;
+            border: 1.5px solid var(--color-border-tertiary);
+            border-radius: var(--border-radius-md);
+            background: var(--color-background-secondary)
+        }
+
+        .radio-opt.sel {
+            border-color: var(--blue);
+            color: var(--blue);
+            background: rgba(79, 126, 247, 0.06)
+        }
+
+        .radio-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 1.5px solid currentColor;
+            display: flex;
+            align-items: center;
+            justify-content: center
+        }
+
+        .radio-opt.sel .radio-dot::after {
+            content: '';
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--blue)
+        }
+
+        .day-toggle {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 14px
+        }
+
+        .day-chip {
+            padding: 5px 12px;
+            border-radius: 20px;
+            border: 1.5px solid var(--color-border-tertiary);
+            font-size: 11px;
+            color: var(--color-text-secondary);
+            cursor: pointer;
+            background: var(--color-background-secondary)
+        }
+
+        .day-chip.on {
+            background: var(--blue);
+            color: #fff;
+            border-color: var(--blue)
+        }
+
+        .footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px solid var(--color-border-tertiary)
+        }
+
+        .btn {
+            height: 34px;
+            padding: 0 16px;
+            border-radius: var(--border-radius-md);
+            font-size: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            border: 1.5px solid var(--color-border-tertiary);
+            background: var(--color-background-primary);
+            color: var(--color-text-primary);
+            font-family: var(--font-sans);
+            transition: all .15s
+        }
+
+        .btn:hover {
+            border-color: var(--gray-300)
+        }
+
+        .btn-primary {
+            background: var(--blue);
+            color: #fff;
+            border-color: var(--blue);
+            box-shadow: 0 6px 16px rgba(79, 126, 247, 0.3)
+        }
+
+        .btn-primary:hover {
+            background: #3a6af3
+        }
+
+        .btn-ghost {
+            border-color: transparent;
+            color: var(--color-text-secondary);
+            background: transparent
+        }
+
+        .info-banner {
+            background: rgba(79, 126, 247, 0.07);
+            border: 1px solid rgba(79, 126, 247, 0.2);
+            border-radius: var(--border-radius-md);
+            padding: 9px 12px;
+            font-size: 11px;
+            color: var(--blue);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 14px
+        }
+
+        .step-panel {
+            display: none
+        }
+
+        .step-panel.show {
+            display: block
+        }
+    </style>
+</head>
+<body>
 
 <div class="wrap">
-  <div class="sidebar">
-    <div class="logo"><div class="logo-sq"></div></div>
-    <div class="nav-item active"><i class="ti ti-users" aria-hidden="true"></i>Pacientes</div>
-    <div class="nav-item" style="color:#aaa;border-left-color:#555;background:rgba(255,255,255,0.06)"><i class="ti ti-stethoscope" aria-hidden="true"></i>Dentistas</div>
-    <div class="nav-item"><i class="ti ti-user-check" aria-hidden="true"></i>Recepcionistas</div>
-    <div class="nav-item"><i class="ti ti-calendar" aria-hidden="true"></i>Agenda</div>
-    <div class="nav-section">FINANCEIRO</div>
-    <div class="nav-item sub"><i class="ti ti-circle" aria-hidden="true"></i>Contas</div>
-    <div class="nav-item sub"><i class="ti ti-circle" aria-hidden="true"></i>A receber</div>
-    <div class="nav-item sub"><i class="ti ti-circle" aria-hidden="true"></i>A pagar</div>
-    <div class="nav-item sub"><i class="ti ti-circle" aria-hidden="true"></i>Métodos</div>
-    <div class="nav-item"><i class="ti ti-file-text" aria-hidden="true"></i>Contratos</div>
-    <div class="nav-item"><i class="ti ti-heart-rate-monitor" aria-hidden="true"></i>Planos</div>
-    <div style="flex:1"></div>
-    <div class="nav-item"><i class="ti ti-settings" aria-hidden="true"></i>Configurações</div>
-  </div>
-
-  <div class="main">
-    <div class="topbar">
-      <div class="avatar">JR</div>
-      <div class="topbar-info">
-        <div class="name">Cadastro de Dentista</div>
-        <div class="sub">Novo registro · Preencha todos os campos obrigatórios</div>
-      </div>
-      <span style="font-size:11px;padding:3px 10px;border-radius:20px;background:rgba(79,126,247,0.1);color:#4F7EF7;border:0.5px solid rgba(79,126,247,0.25)">Rascunho</span>
+    <div class="sidebar">
+        <div class="logo">
+            <div class="logo-sq"></div>
+            <div class="logo-name">OdontoSys<span>Gestão de Clínicas</span></div>
+        </div>
+        <div class="nav-item"><i class="ti ti-users" aria-hidden="true"></i>Pacientes</div>
+        <div class="nav-item active"><i class="ti ti-stethoscope" aria-hidden="true"></i>Dentistas</div>
+        <div class="nav-item"><i class="ti ti-user-check" aria-hidden="true"></i>Recepcionistas</div>
+        <div class="nav-item"><i class="ti ti-calendar" aria-hidden="true"></i>Agenda</div>
+        <div class="nav-section">FINANCEIRO</div>
+        <div class="nav-item sub"><i class="ti ti-report-money" aria-hidden="true"></i>Contas</div>
+        <div class="nav-item sub"><i class="ti ti-arrow-down-left" aria-hidden="true"></i>A receber</div>
+        <div class="nav-item sub"><i class="ti ti-arrow-up-right" aria-hidden="true"></i>A pagar</div>
+        <div class="nav-item"><i class="ti ti-file-text" aria-hidden="true"></i>Contratos</div>
+        <div class="nav-item"><i class="ti ti-heart-rate-monitor" aria-hidden="true"></i>Planos</div>
+        <div style="flex:1"></div>
+        <div class="nav-item"><i class="ti ti-settings" aria-hidden="true"></i>Configurações</div>
     </div>
 
-    <div class="content">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
-        <span style="font-size:16px;font-weight:500;color:var(--color-text-primary)">Cadastro de Dentista</span>
-        <span style="font-size:11px;color:var(--color-text-tertiary)">* Campos obrigatórios</span>
-      </div>
-
-      <div class="stepper">
-        <div class="step done" onclick="goStep(0)">
-          <div class="step-circle"><i class="ti ti-check" style="font-size:13px"></i></div>
-          <div class="step-label">Identificação</div>
-        </div>
-        <div class="step-line done"></div>
-        <div class="step active" onclick="goStep(1)">
-          <div class="step-circle" id="c1">2</div>
-          <div class="step-label">Documentos & CRO</div>
-        </div>
-        <div class="step-line" id="l2"></div>
-        <div class="step" id="s2" onclick="goStep(2)">
-          <div class="step-circle" id="c2">3</div>
-          <div class="step-label">Contato</div>
-        </div>
-        <div class="step-line" id="l3"></div>
-        <div class="step" id="s3" onclick="goStep(3)">
-          <div class="step-circle" id="c3">4</div>
-          <div class="step-label">Horários</div>
-        </div>
-        <div class="step-line" id="l4"></div>
-        <div class="step" id="s4" onclick="goStep(4)">
-          <div class="step-circle" id="c4">5</div>
-          <div class="step-label">Acesso</div>
-        </div>
-      </div>
-
-      <div class="card">
-
-        <div class="step-panel" id="panel0">
-          <div class="section-label">Identificação</div>
-          <div class="form-grid g21">
-            <div class="field"><label>Nome completo <span class="req">*</span></label><div class="inp placeholder">Enter text...</div></div>
-            <div class="field"><label>Data de nascimento</label><div class="inp placeholder">DD/MM/AAAA</div></div>
-          </div>
-          <div class="form-grid" style="grid-template-columns:1fr">
-            <div class="field">
-              <label>Tipo de pessoa <span class="req">*</span></label>
-              <div class="radio-group" style="margin-top:4px">
-                <div class="radio-opt sel"><div class="radio-dot"></div>Pessoa física</div>
-                <div class="radio-opt"><div class="radio-dot"></div>Pessoa jurídica</div>
-              </div>
+    <div class="main">
+        <div class="topbar">
+            <div class="avatar">JR</div>
+            <div class="topbar-info">
+                <div class="name">Cadastro de Dentista</div>
+                <div class="sub">Novo registro · Preencha todos os campos obrigatórios</div>
             </div>
-          </div>
+            <span style="font-size:11px;padding:3px 10px;border-radius:20px;background:rgba(79,126,247,0.1);color:var(--blue);border:1px solid rgba(79,126,247,0.25);font-weight:600">Rascunho</span>
         </div>
 
-        <div class="step-panel show" id="panel1">
-          <div class="info-banner"><i class="ti ti-info-circle" style="font-size:14px"></i>Preencha pelo menos um documento de identificação (CPF, RG ou CNPJ)</div>
-          <div class="section-label">Documentos</div>
-          <div class="form-grid g3">
-            <div class="field"><label>CPF</label><div class="inp placeholder">000.000.000-00</div></div>
-            <div class="field"><label>RG</label><div class="inp placeholder">Enter text...</div></div>
-            <div class="field"><label>CNPJ <span style="color:var(--color-text-tertiary);font-weight:400">(PJ)</span></label><div class="inp placeholder">00.000.000/0000-00</div></div>
-          </div>
-          <div class="section-label" style="margin-top:16px">Registro CRO</div>
-          <div class="form-grid g12">
-            <div class="field"><label>UF do CRO <span class="req">*</span></label><div class="inp placeholder">SP</div></div>
-            <div class="field"><label>Número do CRO <span class="req">*</span></label><div class="inp placeholder">Enter text...</div></div>
-          </div>
-          <div class="section-label" style="margin-top:16px">Valores</div>
-          <div class="form-grid g2">
-            <div class="field"><label>Preço por consulta</label><div class="inp placeholder">R$ 0,00</div></div>
-            <div class="field"><label>Comissão (%)</label><div class="inp placeholder">0,00%</div></div>
-          </div>
-        </div>
+        <div class="content">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+                <span style="font-size:16px;font-weight:700;color:var(--color-text-primary)">Cadastro de Dentista</span>
+                <span style="font-size:11px;color:var(--color-text-tertiary)">* Campos obrigatórios</span>
+            </div>
 
-        <div class="step-panel" id="panel2">
-          <div class="section-label">Contato</div>
-          <div class="form-grid g2">
-            <div class="field"><label>Telefone <span class="req">*</span></label><div class="inp placeholder">(00) 00000-0000</div></div>
-            <div class="field"><label>E-mail</label><div class="inp placeholder">Enter text...</div></div>
-          </div>
-        </div>
+            <div class="stepper">
+                <div class="step done" onclick="goStep(0)">
+                    <div class="step-circle"><i class="ti ti-check" style="font-size:13px"></i></div>
+                    <div class="step-label">Identificação</div>
+                </div>
+                <div class="step-line done"></div>
+                <div class="step active" onclick="goStep(1)">
+                    <div class="step-circle" id="c1">2</div>
+                    <div class="step-label">Documentos & CRO</div>
+                </div>
+                <div class="step-line" id="l2"></div>
+                <div class="step" id="s2" onclick="goStep(2)">
+                    <div class="step-circle" id="c2">3</div>
+                    <div class="step-label">Contato</div>
+                </div>
+                <div class="step-line" id="l3"></div>
+                <div class="step" id="s3" onclick="goStep(3)">
+                    <div class="step-circle" id="c3">4</div>
+                    <div class="step-label">Horários</div>
+                </div>
+                <div class="step-line" id="l4"></div>
+                <div class="step" id="s4" onclick="goStep(4)">
+                    <div class="step-circle" id="c4">5</div>
+                    <div class="step-label">Acesso</div>
+                </div>
+            </div>
 
-        <div class="step-panel" id="panel3">
-          <div class="section-label">Dias de atendimento</div>
-          <div class="day-toggle">
-            <div class="day-chip on">Seg</div>
-            <div class="day-chip on">Ter</div>
-            <div class="day-chip on">Qua</div>
-            <div class="day-chip on">Qui</div>
-            <div class="day-chip on">Sex</div>
-            <div class="day-chip">Sáb</div>
-            <div class="day-chip">Dom</div>
-          </div>
-          <div class="section-label">Horário padrão</div>
-          <div style="display:grid;grid-template-columns:120px 20px 120px 40px 120px 20px 120px;align-items:center;gap:8px;margin-bottom:16px">
-            <div class="field" style="margin:0"><label>Início</label><div class="inp placeholder">08:00</div></div>
-            <span style="font-size:11px;color:var(--color-text-tertiary);margin-top:14px">até</span>
-            <div class="field" style="margin:0"><label>Término</label><div class="inp placeholder">18:00</div></div>
-            <span style="margin-top:14px"></span>
-            <div class="field" style="margin:0"><label>Início intervalo</label><div class="inp placeholder">12:00</div></div>
-            <span style="font-size:11px;color:var(--color-text-tertiary);margin-top:14px">até</span>
-            <div class="field" style="margin:0"><label>Fim intervalo</label><div class="inp placeholder">13:00</div></div>
-          </div>
-          <div style="font-size:11px;color:var(--color-text-tertiary)"><i class="ti ti-info-circle" style="font-size:13px;vertical-align:-2px"></i> Exceções por data podem ser configuradas após o cadastro</div>
-        </div>
+            <div class="card">
 
-        <div class="step-panel" id="panel4">
-          <div class="info-banner"><i class="ti ti-info-circle" style="font-size:14px"></i>Será criado um usuário de acesso vinculado a este dentista</div>
-          <div class="section-label">Credenciais de acesso</div>
-          <div class="form-grid g2">
-            <div class="field"><label>E-mail de login <span class="req">*</span></label><div class="inp placeholder">Enter text...</div></div>
-            <div class="field"><label>Senha provisória <span class="req">*</span></label><div class="inp placeholder">••••••••</div></div>
-          </div>
-          <div class="form-grid" style="grid-template-columns:1fr">
-            <div class="field"><label>Confirmar senha <span class="req">*</span></label><div class="inp placeholder">••••••••</div></div>
-          </div>
-        </div>
+                <div class="step-panel" id="panel0">
+                    <div class="section-label">Identificação</div>
+                    <div class="form-grid g21">
+                        <div class="field"><label>Nome completo <span class="req">*</span></label>
+                            <div class="inp placeholder">Enter text...</div>
+                        </div>
+                        <div class="field"><label>Data de nascimento</label>
+                            <div class="inp placeholder">DD/MM/AAAA</div>
+                        </div>
+                    </div>
+                    <div class="form-grid" style="grid-template-columns:1fr">
+                        <div class="field">
+                            <label>Tipo de pessoa <span class="req">*</span></label>
+                            <div class="radio-group" style="margin-top:4px">
+                                <div class="radio-opt sel">
+                                    <div class="radio-dot"></div>
+                                    Pessoa física
+                                </div>
+                                <div class="radio-opt">
+                                    <div class="radio-dot"></div>
+                                    Pessoa jurídica
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-        <div class="footer">
-          <button class="btn btn-ghost" id="btnBack" onclick="nav(-1)"><i class="ti ti-arrow-left" style="font-size:14px"></i>Voltar</button>
-          <div style="display:flex;gap:8px">
-            <button class="btn">Cancelar</button>
-            <button class="btn btn-primary" id="btnNext" onclick="nav(1)">Próximo <i class="ti ti-arrow-right" style="font-size:14px"></i></button>
-          </div>
+                <div class="step-panel show" id="panel1">
+                    <div class="info-banner"><i class="ti ti-info-circle" style="font-size:14px"></i>Preencha pelo menos
+                        um documento de identificação (CPF, RG ou CNPJ)
+                    </div>
+                    <div class="section-label">Documentos</div>
+                    <div class="form-grid g3">
+                        <div class="field"><label>CPF</label>
+                            <div class="inp placeholder">000.000.000-00</div>
+                        </div>
+                        <div class="field"><label>RG</label>
+                            <div class="inp placeholder">Enter text...</div>
+                        </div>
+                        <div class="field"><label>CNPJ <span style="color:var(--color-text-tertiary);font-weight:400">(PJ)</span></label>
+                            <div class="inp placeholder">00.000.000/0000-00</div>
+                        </div>
+                    </div>
+                    <div class="section-label" style="margin-top:16px">Registro CRO</div>
+                    <div class="form-grid g12">
+                        <div class="field"><label>UF do CRO <span class="req">*</span></label>
+                            <div class="inp placeholder">SP</div>
+                        </div>
+                        <div class="field"><label>Número do CRO <span class="req">*</span></label>
+                            <div class="inp placeholder">Enter text...</div>
+                        </div>
+                    </div>
+                    <div class="section-label" style="margin-top:16px">Valores</div>
+                    <div class="form-grid g2">
+                        <div class="field"><label>Preço por consulta</label>
+                            <div class="inp placeholder">R$ 0,00</div>
+                        </div>
+                        <div class="field"><label>Comissão (%)</label>
+                            <div class="inp placeholder">0,00%</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-panel" id="panel2">
+                    <div class="section-label">Contato</div>
+                    <div class="form-grid g2">
+                        <div class="field"><label>Telefone <span class="req">*</span></label>
+                            <div class="inp placeholder">(00) 00000-0000</div>
+                        </div>
+                        <div class="field"><label>E-mail</label>
+                            <div class="inp placeholder">Enter text...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-panel" id="panel3">
+                    <div class="section-label">Dias de atendimento</div>
+                    <div class="day-toggle">
+                        <div class="day-chip on">Seg</div>
+                        <div class="day-chip on">Ter</div>
+                        <div class="day-chip on">Qua</div>
+                        <div class="day-chip on">Qui</div>
+                        <div class="day-chip on">Sex</div>
+                        <div class="day-chip">Sáb</div>
+                        <div class="day-chip">Dom</div>
+                    </div>
+                    <div class="section-label">Horário padrão</div>
+                    <div style="display:grid;grid-template-columns:120px 20px 120px 40px 120px 20px 120px;align-items:center;gap:8px;margin-bottom:16px">
+                        <div class="field" style="margin:0"><label>Início</label>
+                            <div class="inp placeholder">08:00</div>
+                        </div>
+                        <span style="font-size:11px;color:var(--color-text-tertiary);margin-top:14px">até</span>
+                        <div class="field" style="margin:0"><label>Término</label>
+                            <div class="inp placeholder">18:00</div>
+                        </div>
+                        <span style="margin-top:14px"></span>
+                        <div class="field" style="margin:0"><label>Início intervalo</label>
+                            <div class="inp placeholder">12:00</div>
+                        </div>
+                        <span style="font-size:11px;color:var(--color-text-tertiary);margin-top:14px">até</span>
+                        <div class="field" style="margin:0"><label>Fim intervalo</label>
+                            <div class="inp placeholder">13:00</div>
+                        </div>
+                    </div>
+                    <div style="font-size:11px;color:var(--color-text-tertiary)"><i class="ti ti-info-circle"
+                                                                                    style="font-size:13px;vertical-align:-2px"></i>
+                        Exceções por data podem ser configuradas após o cadastro
+                    </div>
+                </div>
+
+                <div class="step-panel" id="panel4">
+                    <div class="info-banner"><i class="ti ti-info-circle" style="font-size:14px"></i>Será criado um
+                        usuário de acesso vinculado a este dentista
+                    </div>
+                    <div class="section-label">Credenciais de acesso</div>
+                    <div class="form-grid g2">
+                        <div class="field"><label>E-mail de login <span class="req">*</span></label>
+                            <div class="inp placeholder">Enter text...</div>
+                        </div>
+                        <div class="field"><label>Senha provisória <span class="req">*</span></label>
+                            <div class="inp placeholder">••••••••</div>
+                        </div>
+                    </div>
+                    <div class="form-grid" style="grid-template-columns:1fr">
+                        <div class="field"><label>Confirmar senha <span class="req">*</span></label>
+                            <div class="inp placeholder">••••••••</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="footer">
+                    <button class="btn btn-ghost" id="btnBack" onclick="nav(-1)"><i class="ti ti-arrow-left"
+                                                                                    style="font-size:14px"></i>Voltar
+                    </button>
+                    <div style="display:flex;gap:8px">
+                        <button class="btn">Cancelar</button>
+                        <button class="btn btn-primary" id="btnNext" onclick="nav(1)">Próximo <i
+                                class="ti ti-arrow-right" style="font-size:14px"></i></button>
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
     </div>
-  </div>
 </div>
 
 <script>
-var cur=1;var total=5;
-function goStep(n){cur=n;render()}
-function nav(d){cur=Math.max(0,Math.min(total-1,cur+d));render()}
-function render(){
-  for(var i=0;i<total;i++){
-    var p=document.getElementById('panel'+i);
-    if(p)p.className='step-panel'+(i===cur?' show':'');
-  }
-  var steps=document.querySelectorAll('.step');
-  steps.forEach(function(s,i){
-    s.className='step'+(i<cur?' done':i===cur?' active':'');
-    var c=s.querySelector('.step-circle');
-    if(i<cur){c.innerHTML='<i class="ti ti-check" style="font-size:13px"></i>';}
-    else{c.textContent=i+1;}
-  });
-  var lines=document.querySelectorAll('.step-line');
-  lines.forEach(function(l,i){l.className='step-line'+(i<cur?' done':'');});
-  document.getElementById('btnBack').style.visibility=cur===0?'hidden':'visible';
-  var nb=document.getElementById('btnNext');
-  if(cur===total-1){nb.innerHTML='Cadastrar <i class="ti ti-check" style="font-size:14px"></i>';}
-  else{nb.innerHTML='Próximo <i class="ti ti-arrow-right" style="font-size:14px"></i>';}
-}
-render();
+    var cur = 1;
+    var total = 5;
+
+    function goStep(n) {
+        cur = n;
+        render()
+    }
+
+    function nav(d) {
+        cur = Math.max(0, Math.min(total - 1, cur + d));
+        render()
+    }
+
+    function render() {
+        for (var i = 0; i < total; i++) {
+            var p = document.getElementById('panel' + i);
+            if (p) p.className = 'step-panel' + (i === cur ? ' show' : '');
+        }
+        var steps = document.querySelectorAll('.step');
+        steps.forEach(function (s, i) {
+            s.className = 'step' + (i < cur ? ' done' : i === cur ? ' active' : '');
+            var c = s.querySelector('.step-circle');
+            if (i < cur) {
+                c.innerHTML = '<i class="ti ti-check" style="font-size:13px"></i>';
+            } else {
+                c.textContent = i + 1;
+            }
+        });
+        var lines = document.querySelectorAll('.step-line');
+        lines.forEach(function (l, i) {
+            l.className = 'step-line' + (i < cur ? ' done' : '');
+        });
+        document.getElementById('btnBack').style.visibility = cur === 0 ? 'hidden' : 'visible';
+        var nb = document.getElementById('btnNext');
+        if (cur === total - 1) {
+            nb.innerHTML = 'Cadastrar <i class="ti ti-check" style="font-size:14px"></i>';
+        } else {
+            nb.innerHTML = 'Próximo <i class="ti ti-arrow-right" style="font-size:14px"></i>';
+        }
+    }
+
+    render();
 </script>
+</body>
+</html>

@@ -9,7 +9,7 @@ EXTENSION IF NOT EXISTS btree_gist;
 
 -- Enums
 CREATE TYPE user_profile AS ENUM ('manager', 'receptionist', 'dentist');
-CREATE TYPE appointment_status AS ENUM ('scheduled', 'confirmed', 'completed', 'cancelled');
+CREATE TYPE appointment_status AS ENUM ('scheduled', 'confirmed', 'completed', 'cancelled', 'no-show');
 CREATE TYPE day_of_week AS ENUM ('monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday');
 CREATE TYPE payment_type AS ENUM ('income', 'expense');
 CREATE TYPE audit_action AS ENUM ('create', 'update', 'deactivate');
@@ -17,7 +17,7 @@ CREATE TYPE person_type AS ENUM ('legal_entity', 'natural_person');
 CREATE TYPE quote_status AS ENUM ('draft', 'sent', 'approved', 'rejected', 'expired');
 CREATE TYPE contract_status AS ENUM ('generated', 'awaiting_signature', 'signed', 'cancelled');
 CREATE TYPE discount_type AS ENUM ('percent', 'number');
-CREATE TYPE boleto_status AS ENUM ('issued', 'registred', 'paid', 'cancelled', 'overdue');
+CREATE TYPE boleto_status AS ENUM ('issued', 'registered', 'paid', 'cancelled');
 
 -- ------------------------------------------------------------
 -- PAYMENT METHOD
@@ -86,7 +86,6 @@ CREATE TABLE clinic
 CREATE TABLE clinic_bank_account
 (
     id           SERIAL PRIMARY KEY,
-    clinic_id    INT UNIQUE   NOT NULL REFERENCES clinic (id),
     bank_name    VARCHAR(100) NOT NULL,
     agency       VARCHAR(20)  NOT NULL,
     account      VARCHAR(20)  NOT NULL,
@@ -98,7 +97,6 @@ CREATE TABLE clinic_bank_account
 CREATE TABLE clinic_settings
 (
     id                              SERIAL PRIMARY KEY,
-    clinic_id                       INT UNIQUE    NOT NULL REFERENCES clinic (id),
 
     -- Financeiro: regras de cobrança para parcelas em atraso
     late_interest_percent           NUMERIC(5, 2) NOT NULL DEFAULT 1.00,
@@ -113,11 +111,11 @@ CREATE TABLE clinic_settings
 
     updated_at                      TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
 
-    CONSTRAINT chk_late_interest_percent CHECK (late_interest_percent >= 0),
-    CONSTRAINT chk_late_fee_percent CHECK (late_fee_percent >= 0),
-    CONSTRAINT chk_default_due_days CHECK (default_due_days > 0),
-    CONSTRAINT chk_reminder_lead_hours CHECK (appointment_reminder_lead_hours > 0),
-    CONSTRAINT chk_session_timeout CHECK (session_timeout_minutes > 0)
+    CONSTRAINT late_interest_percent_check CHECK (late_interest_percent >= 0),
+    CONSTRAINT late_fee_percent_check CHECK (late_fee_percent >= 0),
+    CONSTRAINT default_due_days_check CHECK (default_due_days > 0),
+    CONSTRAINT reminder_lead_hours_check CHECK (appointment_reminder_lead_hours > 0),
+    CONSTRAINT session_timeout_check CHECK (session_timeout_minutes > 0)
 );
 
 -- ------------------------------------------------------------
@@ -126,7 +124,7 @@ CREATE TABLE clinic_settings
 CREATE TABLE users
 (
     id            SERIAL PRIMARY KEY,
-    name          VARCHAR(150) UNIQUE NOT NULL,
+    user          VARCHAR(150) UNIQUE NOT NULL,
     email         VARCHAR(150) UNIQUE NOT NULL,
     password_hash TEXT                NOT NULL,
     profile       user_profile        NOT NULL,
@@ -191,9 +189,12 @@ CREATE TABLE patient
     active             BOOLEAN      NOT NULL DEFAULT TRUE,
     responsible_id     INT REFERENCES responsible (id),
     plan_id            INT REFERENCES dental_plan (id),
+    plan_started_at    DATE,
     created_at         TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
 
-    CONSTRAINT patient_document_check CHECK (cpf IS NOT NULL OR rg IS NOT NULL)
+    CONSTRAINT patient_document_check CHECK (cpf IS NOT NULL OR rg IS NOT NULL),
+    CONSTRAINT plan_started_at_check
+        CHECK (plan_id IS NULL OR plan_started_at IS NOT NULL)
 );
 
 -- ------------------------------------------------------------
@@ -386,10 +387,23 @@ CREATE TABLE appointment
 
     created_at                   TIMESTAMPTZ        NOT NULL DEFAULT NOW(),
 
+    -- Coluna gerada: intervalo [início, fim) calculado a partir de scheduled_date_time + duração
+    time_range                   TSTZRANGE GENERATED ALWAYS AS (
+        tstzrange(scheduled_date_time, scheduled_date_time + (estimated_duration_min || ' minutes')::interval, '[)')
+        ) STORED,
+
     CONSTRAINT cancellation_reason_check
         CHECK (status != 'cancelled' OR cancellation_reason_id IS NOT NULL
-)
-    );
+) ,
+
+    CONSTRAINT chk_duration_positive
+        CHECK (estimated_duration_min > 0),
+
+    -- Impede dois agendamentos ativos com o mesmo dentista em horários que se sobrepõem
+    CONSTRAINT no_overlapping_dentist_appointment
+        EXCLUDE USING GIST (dentist_id WITH =, time_range WITH &&)
+        WHERE (status != 'cancelled')
+);
 
 -- ------------------------------------------------------------
 -- APPOINTMENT × PROCEDURE (N:N)
@@ -496,7 +510,6 @@ CREATE TABLE installment
 (
     id                      SERIAL PRIMARY KEY,
     billing_id              INT            NOT NULL REFERENCES billing (id),
-    our_number              TEXT           NOT NULL,
     amount                  NUMERIC(10, 2) NOT NULL,
     paid_amount             NUMERIC(10, 2) NOT NULL DEFAULT 0,
     due_date                DATE           NOT NULL,
@@ -518,7 +531,7 @@ CREATE TABLE boleto
     bar_code       TEXT,
     digitable_line TEXT,
     registered_at  TIMESTAMPTZ,
-    status         boleto_status  NOT NULL DEFAULT 'generated',
+    status         boleto_status  NOT NULL DEFAULT 'issued',
     cancelled_at   TIMESTAMPTZ,
     paid_at        TIMESTAMPTZ,
     bank_payload   JSONB
@@ -805,8 +818,6 @@ CREATE INDEX idx_dentist_work_schedule_day ON dentist_work_schedule (day_of_week
 CREATE INDEX idx_dentist_work_schedule_valid ON dentist_work_schedule (valid_from, valid_to);
 CREATE INDEX idx_dentist_schedule_exception_dentist ON dentist_schedule_exception (dentist_id);
 CREATE INDEX idx_dentist_schedule_exception_date ON dentist_schedule_exception (exception_date);
-CREATE INDEX idx_clinic_bank_account_clinic ON clinic_bank_account (clinic_id);
-CREATE INDEX idx_clinic_settings_clinic ON clinic_settings (clinic_id);
 CREATE INDEX idx_expense_cost_center ON expense (cost_center_id);
 CREATE INDEX idx_expense_due_date ON expense (due_date);
 CREATE INDEX idx_expense_created_by ON expense (created_by);
