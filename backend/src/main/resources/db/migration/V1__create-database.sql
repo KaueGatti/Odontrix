@@ -9,7 +9,7 @@ EXTENSION IF NOT EXISTS btree_gist;
 
 -- Enums
 CREATE TYPE user_profile AS ENUM ('manager', 'receptionist', 'dentist');
-CREATE TYPE appointment_status AS ENUM ('scheduled', 'confirmed', 'completed', 'cancelled', 'no-show');
+CREATE TYPE appointment_status AS ENUM ('scheduled', 'confirmed', 'checked_in', 'in_progress', 'completed', 'cancelled', 'no_show');
 CREATE TYPE day_of_week AS ENUM ('monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday');
 CREATE TYPE payment_type AS ENUM ('income', 'expense');
 CREATE TYPE audit_action AS ENUM ('create', 'update', 'deactivate');
