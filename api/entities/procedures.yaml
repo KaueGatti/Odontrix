@@ -1,0 +1,180 @@
+tags:
+  - name: Procedures
+    description: Catálogo de procedimentos odontológicos e preços de referência
+
+paths:
+
+  # ============================================================
+  # DENTAL PROCEDURES
+  # ============================================================
+
+  /procedures:
+    get:
+      tags: [Procedures]
+      summary: Lista procedimentos com filtros e paginação
+      x-required-roles: [manager, receptionist, dentist]
+      description: >
+        Leitura liberada a todos os perfis — usado como catálogo na finalização
+        de consultas (pelo dentista) e na montagem de orçamentos (pela recepção).
+      parameters:
+        - $ref: '../common.yaml#/components/parameters/PageParam'
+        - $ref: '../common.yaml#/components/parameters/LimitParam'
+        - name: filter
+          in: query
+          required: false
+          style: deepObject
+          explode: true
+          description: Ex. filter[active]=true&filter[name]=canal
+          schema:
+            $ref: '#/components/schemas/ProcedureFilter'
+      responses:
+        '200':
+          description: Lista de procedimentos
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Procedure'
+                  meta:
+                    $ref: '../common.yaml#/components/schemas/PaginationMeta'
+        '400':
+          $ref: '../common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: '../common.yaml#/components/responses/Unauthorized'
+
+    post:
+      tags: [Procedures]
+      summary: Cria um novo procedimento no catálogo
+      x-required-roles: [manager, receptionist]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProcedureInput'
+      responses:
+        '201':
+          description: Procedimento criado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Procedure'
+        '422':
+          $ref: '../common.yaml#/components/responses/ValidationError'
+        '401':
+          $ref: '../common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+
+  /procedures/{id}:
+    parameters:
+      - $ref: '#/components/parameters/ProcedureId'
+
+    get:
+      tags: [Procedures]
+      summary: Busca um procedimento pelo ID
+      x-required-roles: [manager, receptionist, dentist]
+      responses:
+        '200':
+          description: Procedimento encontrado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Procedure'
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+
+    patch:
+      tags: [Procedures]
+      summary: Edita ou inativa um procedimento
+      x-required-roles: [manager, receptionist]
+      description: >
+        Não há exclusão — apenas inativação via "active:false". Alterar
+        "referencePrice" aqui não afeta o "unitPrice" já registrado em
+        appointment_procedure ou quote_procedure — esses são snapshots
+        congelados no momento em que o procedimento foi usado.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProcedureInput'
+      responses:
+        '200':
+          description: Procedimento atualizado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Procedure'
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+        '422':
+          $ref: '../common.yaml#/components/responses/ValidationError'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+
+components:
+
+  parameters:
+    ProcedureId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+
+  schemas:
+
+    Procedure:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        referencePrice:
+          type: number
+          format: decimal
+        active:
+          type: boolean
+
+    ProcedureInput:
+      type: object
+      required: [name, referencePrice]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        referencePrice:
+          type: number
+          format: decimal
+          minimum: 0
+        active:
+          type: boolean
+          default: true
+
+    ProcedureFilter:
+      type: object
+      properties:
+        active:
+          type: boolean
+        name:
+          type: string

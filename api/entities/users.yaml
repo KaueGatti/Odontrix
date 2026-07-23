@@ -1,0 +1,391 @@
+tags:
+  - name: Users
+    description: >
+      Contas de acesso ao sistema. Dentist e Receptionist são criados de forma
+      conjunta (ver POST /dentists e POST /receptionists) — este domínio cobre
+      apenas a criação de contas Manager (único perfil sem tabela própria),
+      o diretório geral de usuários e a gestão de senha.
+  - name: Auth
+    description: Autenticação, sessão e troca de senha
+
+paths:
+
+  # ============================================================
+  # USERS
+  # ============================================================
+
+  /users:
+    get:
+      tags: [Users]
+      summary: Lista todas as contas de usuário (diretório geral, cruzando os 3 perfis)
+      x-required-roles: [manager]
+      parameters:
+        - $ref: '../common.yaml#/components/parameters/PageParam'
+        - $ref: '../common.yaml#/components/parameters/LimitParam'
+        - name: filter
+          in: query
+          required: false
+          style: deepObject
+          explode: true
+          description: Ex. filter[profile]=dentist&filter[active]=true
+          schema:
+            $ref: '#/components/schemas/UserFilter'
+      responses:
+        '200':
+          description: Lista de usuários
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/User'
+                  meta:
+                    $ref: '../common.yaml#/components/schemas/PaginationMeta'
+        '401':
+          $ref: '../common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+
+    post:
+      tags: [Users]
+      summary: Cria uma nova conta com perfil Manager
+      x-required-roles: [manager]
+      description: >
+        Este endpoint cria apenas contas "manager" — o único perfil sem tabela
+        própria vinculada. Contas "dentist" e "receptionist" são sempre criadas
+        via POST /dentists e POST /receptionists (criação conjunta). "username"
+        é definido no formulário de cadastro e deve ser único no sistema.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserInput'
+      responses:
+        '201':
+          description: Usuário Manager criado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/User'
+        '422':
+          $ref: '../common.yaml#/components/responses/ValidationError'
+        '401':
+          $ref: '../common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+
+  /users/{id}:
+    parameters:
+      - $ref: '#/components/parameters/UserId'
+
+    get:
+      tags: [Users]
+      summary: Busca uma conta de usuário pelo ID
+      x-required-roles: [manager]
+      responses:
+        '200':
+          description: Usuário encontrado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/User'
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+
+    patch:
+      tags: [Users]
+      summary: Edita e-mail/username ou inativa uma conta de usuário
+      x-required-roles: [manager]
+      description: >
+        Não altera o campo "profile" — perfil de acesso é imutável após a
+        criação (evita reclassificar um dentist em manager, por exemplo; se
+        necessário, inativar a conta e criar uma nova com o perfil correto).
+        Um usuário não pode alterar/inativar a própria conta através deste
+        endpoint — retorna 403 Forbidden nesse caso. Inativar aqui não
+        inativa automaticamente o registro de Dentist/Receptionist vinculado
+        — isso deve ser feito separadamente em cada domínio, se aplicável.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserPatch'
+      responses:
+        '200':
+          description: Usuário atualizado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/User'
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+        '422':
+          $ref: '../common.yaml#/components/responses/ValidationError'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+
+  /users/{id}/reset-password:
+    parameters:
+      - $ref: '#/components/parameters/UserId'
+    post:
+      tags: [Users]
+      summary: Redefine a senha de um usuário (ação administrativa)
+      x-required-roles: [manager]
+      description: >
+        Usado quando um usuário perde acesso à própria conta. Define uma nova
+        senha provisória; o usuário é obrigado a trocá-la no próximo login
+        (forcePasswordChange sempre true no resultado, independente do input).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminResetPasswordInput'
+      responses:
+        '200':
+          description: Senha redefinida
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      forcePasswordChange:
+                        type: boolean
+                        example: true
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+        '422':
+          $ref: '../common.yaml#/components/responses/ValidationError'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+
+  # ============================================================
+  # AUTH
+  # ============================================================
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Autentica com e-mail e senha
+      x-required-roles: public
+      description: Endpoint público — não requer autenticação prévia.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginInput'
+      responses:
+        '200':
+          description: Autenticado com sucesso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/LoginResult'
+        '401':
+          description: E-mail ou senha inválidos
+          content:
+            application/problem+json:
+              schema:
+                $ref: '../common.yaml#/components/schemas/Problem'
+        '403':
+          description: Conta inativa
+          content:
+            application/problem+json:
+              schema:
+                $ref: '../common.yaml#/components/schemas/Problem'
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: Encerra a sessão atual
+      x-required-roles: [manager, receptionist, dentist]
+      description: >
+        Sessão também é encerrada automaticamente após o período de inatividade
+        configurado em clinic_settings.session_timeout_minutes.
+      responses:
+        '204':
+          description: Sessão encerrada
+        '401':
+          $ref: '../common.yaml#/components/responses/Unauthorized'
+
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: Retorna os dados do usuário autenticado
+      x-required-roles: [manager, receptionist, dentist]
+      responses:
+        '200':
+          description: Usuário autenticado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/User'
+        '401':
+          $ref: '../common.yaml#/components/responses/Unauthorized'
+
+  /auth/change-password:
+    post:
+      tags: [Auth]
+      summary: Troca a própria senha (self-service)
+      x-required-roles: [manager, receptionist, dentist]
+      description: Requer a senha atual — diferente de /users/{id}/reset-password, que é ação administrativa sem essa exigência.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangePasswordInput'
+      responses:
+        '204':
+          description: Senha alterada
+        '401':
+          description: Senha atual incorreta, ou sessão expirada
+          content:
+            application/problem+json:
+              schema:
+                $ref: '../common.yaml#/components/schemas/Problem'
+        '422':
+          $ref: '../common.yaml#/components/responses/ValidationError'
+
+components:
+
+  parameters:
+    UserId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+
+  schemas:
+
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        username:
+          type: string
+        email:
+          type: string
+          format: email
+        profile:
+          type: string
+          enum: [manager, receptionist, dentist]
+          readOnly: true
+          description: Imutável após a criação
+        active:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
+
+    UserInput:
+      type: object
+      required: [username, email, password]
+      description: Cria sempre com profile fixo "manager" — ver descrição do endpoint.
+      properties:
+        username:
+          type: string
+          description: Nome de usuário de login, definido no formulário de cadastro
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+          minLength: 8
+
+    UserPatch:
+      type: object
+      description: Não permite alterar "profile". Ver regra de auto-edição na descrição do endpoint.
+      properties:
+        username:
+          type: string
+        email:
+          type: string
+          format: email
+        active:
+          type: boolean
+
+    UserFilter:
+      type: object
+      properties:
+        profile:
+          type: string
+          enum: [manager, receptionist, dentist]
+        active:
+          type: boolean
+
+    AdminResetPasswordInput:
+      type: object
+      required: [newPassword]
+      properties:
+        newPassword:
+          type: string
+          format: password
+          minLength: 8
+
+    LoginInput:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+
+    LoginResult:
+      type: object
+      properties:
+        token:
+          type: string
+          description: Token de sessão (JWT ou equivalente)
+        expiresAt:
+          type: string
+          format: date-time
+        forcePasswordChange:
+          type: boolean
+          description: true quando a senha atual ainda é provisória (definida via cadastro ou reset administrativo)
+        user:
+          $ref: '#/components/schemas/User'
+
+    ChangePasswordInput:
+      type: object
+      required: [currentPassword, newPassword]
+      properties:
+        currentPassword:
+          type: string
+          format: password
+        newPassword:
+          type: string
+          format: password
+          minLength: 8

@@ -1,0 +1,766 @@
+tags:
+  - name: Billing
+    description: >
+      Cobrança gerada automaticamente quando uma consulta é finalizada
+      (status completed). Não é criada manualmente via API.
+  - name: Installments
+    description: Parcelas de uma cobrança
+  - name: Payments
+    description: >
+      Recebimentos aplicados a parcelas. Reutilizado também pelo domínio de
+      Despesas (a pagar) — ver expenses.yaml — através do mesmo schema Payment,
+      diferenciado pelo campo "type".
+  - name: Payment Methods
+    description: Formas de pagamento aceitas (tabela de apoio)
+  - name: Cost Centers
+    description: Centros de custo, usados tanto em Billing (receita) quanto em Expense (despesa)
+
+paths:
+
+  # ============================================================
+  # BILLING (somente leitura — criado automaticamente pelo sistema)
+  # ============================================================
+
+  /billings:
+    get:
+      tags: [Billing]
+      summary: Lista cobranças com filtros e paginação
+      x-required-roles: [manager, receptionist]
+      description: >
+        Não existe POST — uma Billing é criada automaticamente pelo servidor
+        quando uma Appointment muda para status "completed", com totalAmount
+        calculado a partir dos appointment_procedure vinculados.
+      parameters:
+        - $ref: '../common.yaml#/components/parameters/PageParam'
+        - $ref: '../common.yaml#/components/parameters/LimitParam'
+        - name: filter
+          in: query
+          required: false
+          style: deepObject
+          explode: true
+          description: Ex. filter[patientId]=7&filter[createdAt][gte]=2026-07-01
+          schema:
+            $ref: '#/components/schemas/BillingFilter'
+      responses:
+        '200':
+          description: Lista de cobranças
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Billing'
+                  meta:
+                    $ref: '../common.yaml#/components/schemas/PaginationMeta'
+        '400':
+          $ref: '../common.yaml#/components/responses/BadRequest'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+
+  /billings/{id}:
+    parameters:
+      - $ref: '#/components/parameters/BillingId'
+    get:
+      tags: [Billing]
+      summary: Busca uma cobrança pelo ID
+      x-required-roles: [manager, receptionist]
+      responses:
+        '200':
+          description: Cobrança encontrada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Billing'
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+
+  # ============================================================
+  # INSTALLMENTS (plano de parcelamento é gerado uma vez por Billing)
+  # ============================================================
+
+  /billings/{billingId}/installments:
+    parameters:
+      - $ref: '#/components/parameters/BillingIdPath'
+
+    get:
+      tags: [Installments]
+      summary: Lista as parcelas de uma cobrança
+      x-required-roles: [manager, receptionist]
+      responses:
+        '200':
+          description: Lista de parcelas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Installment'
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+
+    post:
+      tags: [Installments]
+      summary: Gera o plano de parcelas para a cobrança
+      x-required-roles: [manager, receptionist]
+      description: >
+        Só pode ser chamado uma vez por Billing (retorna 409 se já existir
+        plano gerado — para reparcelar seria necessário estornar as parcelas
+        existentes primeiro, funcionalidade não coberta neste endpoint).
+        "installmentCount" maior que 1 só é aceito quando intendedPaymentMethod
+        corresponde a Cartão de Crédito ou Boleto (validado contra Payment Methods).
+        As datas de vencimento de cada parcela são geradas automaticamente pelo
+        servidor a partir de "firstDueDate", com intervalo mensal.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InstallmentPlanInput'
+      responses:
+        '201':
+          description: Plano de parcelas criado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Installment'
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+        '422':
+          description: >
+            Erro de validação — inclui o caso de installmentCount > 1 com
+            forma de pagamento que não permite parcelamento
+          content:
+            application/problem+json:
+              schema:
+                $ref: '../common.yaml#/components/schemas/ProblemValidation'
+        '409':
+          description: Plano de parcelas já existe para esta cobrança
+          content:
+            application/problem+json:
+              schema:
+                $ref: '../common.yaml#/components/schemas/Problem'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+
+  /installments:
+    get:
+      tags: [Installments]
+      summary: Lista todas as parcelas do sistema (visão consolidada de contas a receber)
+      x-required-roles: [manager, receptionist]
+      description: >
+        Base das telas "Pagamentos a cobrar" (Recepcionista) e "Inadimplência
+        total" (Gerente). "status" é calculado dinamicamente pelo servidor a
+        partir de paidAmount/dueDate — não é uma coluna armazenada.
+      parameters:
+        - $ref: '../common.yaml#/components/parameters/PageParam'
+        - $ref: '../common.yaml#/components/parameters/LimitParam'
+        - name: filter
+          in: query
+          required: false
+          style: deepObject
+          explode: true
+          description: Ex. filter[status]=overdue&filter[dueDate][lte]=2026-07-31
+          schema:
+            $ref: '#/components/schemas/InstallmentFilter'
+      responses:
+        '200':
+          description: Lista de parcelas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Installment'
+                  meta:
+                    $ref: '../common.yaml#/components/schemas/PaginationMeta'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+
+  /installments/{id}:
+    parameters:
+      - $ref: '#/components/parameters/InstallmentId'
+    get:
+      tags: [Installments]
+      summary: Busca uma parcela pelo ID
+      x-required-roles: [manager, receptionist]
+      responses:
+        '200':
+          description: Parcela encontrada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Installment'
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+
+  # ============================================================
+  # PAYMENTS (recebimentos aplicados a parcelas)
+  # ============================================================
+
+  /installments/{installmentId}/payments:
+    parameters:
+      - $ref: '#/components/parameters/InstallmentIdPath'
+
+    post:
+      tags: [Payments]
+      summary: Registra um recebimento (total ou parcial) para a parcela
+      x-required-roles: [manager, receptionist]
+      description: >
+        Cria um Payment (type=income) vinculado à parcela via payment_installment.
+        Se "amount" totalizar o valor restante da parcela, o servidor marca
+        paymentDate automaticamente. Pagamentos não podem ser excluídos — apenas
+        estornados via POST /payments/{id}/reverse.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentInput'
+      responses:
+        '201':
+          description: Recebimento registrado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Payment'
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+        '422':
+          description: Erro de validação — inclui o caso de amount exceder o saldo restante da parcela
+          content:
+            application/problem+json:
+              schema:
+                $ref: '../common.yaml#/components/schemas/ProblemValidation'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+
+  /payments/{id}:
+    parameters:
+      - $ref: '#/components/parameters/PaymentId'
+    get:
+      tags: [Payments]
+      summary: Busca um recebimento pelo ID
+      x-required-roles: [manager, receptionist]
+      responses:
+        '200':
+          description: Recebimento encontrado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Payment'
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+
+  /payments/{id}/reverse:
+    parameters:
+      - $ref: '#/components/parameters/PaymentId'
+    post:
+      tags: [Payments]
+      summary: Estorna um recebimento
+      x-required-roles: [manager]
+      description: >
+        Restrito a manager — ação financeira sensível. Não apaga o pagamento
+        original; cria um novo Payment de estorno com "refundRefId" apontando
+        para o original, e reverte o paidAmount da(s) parcela(s) afetada(s).
+      responses:
+        '201':
+          description: Estorno registrado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Payment'
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+        '409':
+          description: Pagamento já estornado anteriormente
+          content:
+            application/problem+json:
+              schema:
+                $ref: '../common.yaml#/components/schemas/Problem'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+
+  # ============================================================
+  # PAYMENT METHODS (tabela de apoio)
+  # ============================================================
+
+  /payment-methods:
+    get:
+      tags: [Payment Methods]
+      summary: Lista formas de pagamento
+      x-required-roles: [manager, receptionist, dentist]
+      responses:
+        '200':
+          description: Lista de formas de pagamento
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PaymentMethod'
+
+    post:
+      tags: [Payment Methods]
+      summary: Cria uma nova forma de pagamento
+      x-required-roles: [manager]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentMethodInput'
+      responses:
+        '201':
+          description: Forma de pagamento criada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/PaymentMethod'
+        '422':
+          $ref: '../common.yaml#/components/responses/ValidationError'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+
+  /payment-methods/{id}:
+    parameters:
+      - $ref: '#/components/parameters/PaymentMethodId'
+    get:
+      tags: [Payment Methods]
+      summary: Busca uma forma de pagamento pelo ID
+      x-required-roles: [manager, receptionist, dentist]
+      responses:
+        '200':
+          description: Forma de pagamento encontrada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/PaymentMethod'
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+
+    patch:
+      tags: [Payment Methods]
+      summary: Edita uma forma de pagamento
+      x-required-roles: [manager]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentMethodInput'
+      responses:
+        '200':
+          description: Forma de pagamento atualizada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/PaymentMethod'
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+
+  # ============================================================
+  # COST CENTERS (tabela de apoio, compartilhada com Expenses)
+  # ============================================================
+
+  /cost-centers:
+    get:
+      tags: [Cost Centers]
+      summary: Lista centros de custo
+      x-required-roles: [manager, receptionist]
+      parameters:
+        - name: filter
+          in: query
+          required: false
+          style: deepObject
+          explode: true
+          description: Ex. filter[type]=income&filter[active]=true
+          schema:
+            $ref: '#/components/schemas/CostCenterFilter'
+      responses:
+        '200':
+          description: Lista de centros de custo
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CostCenter'
+
+    post:
+      tags: [Cost Centers]
+      summary: Cria um novo centro de custo
+      x-required-roles: [manager]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CostCenterInput'
+      responses:
+        '201':
+          description: Centro de custo criado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/CostCenter'
+        '422':
+          $ref: '../common.yaml#/components/responses/ValidationError'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+
+  /cost-centers/{id}:
+    parameters:
+      - $ref: '#/components/parameters/CostCenterId'
+    get:
+      tags: [Cost Centers]
+      summary: Busca um centro de custo pelo ID
+      x-required-roles: [manager, receptionist]
+      responses:
+        '200':
+          description: Centro de custo encontrado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/CostCenter'
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+
+    patch:
+      tags: [Cost Centers]
+      summary: Edita ou inativa um centro de custo
+      x-required-roles: [manager]
+      description: Não há exclusão — apenas inativação via "active:false".
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CostCenterInput'
+      responses:
+        '200':
+          description: Centro de custo atualizado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/CostCenter'
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+        '422':
+          $ref: '../common.yaml#/components/responses/ValidationError'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+
+components:
+
+  parameters:
+    BillingId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+
+    BillingIdPath:
+      name: billingId
+      in: path
+      required: true
+      schema:
+        type: integer
+
+    InstallmentId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+
+    InstallmentIdPath:
+      name: installmentId
+      in: path
+      required: true
+      schema:
+        type: integer
+
+    PaymentId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+
+    PaymentMethodId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+
+    CostCenterId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+
+  schemas:
+
+    Billing:
+      type: object
+      properties:
+        id:
+          type: integer
+        appointmentId:
+          type: integer
+          nullable: true
+        patientId:
+          type: integer
+        costCenterId:
+          type: integer
+          nullable: true
+        totalAmount:
+          type: number
+          format: decimal
+        discount:
+          type: number
+          format: decimal
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
+
+    BillingFilter:
+      type: object
+      properties:
+        patientId:
+          type: integer
+        appointmentId:
+          type: integer
+        createdAt:
+          type: object
+          properties:
+            gte:
+              type: string
+              format: date
+            lte:
+              type: string
+              format: date
+
+    Installment:
+      type: object
+      properties:
+        id:
+          type: integer
+        billingId:
+          type: integer
+        amount:
+          type: number
+          format: decimal
+        paidAmount:
+          type: number
+          format: decimal
+        dueDate:
+          type: string
+          format: date
+        paymentDate:
+          type: string
+          format: date
+          nullable: true
+        intendedPaymentMethod:
+          type: integer
+        status:
+          type: string
+          enum: [pending, paid, overdue]
+          readOnly: true
+          description: >
+            Calculado dinamicamente: paid quando paymentDate preenchido;
+            overdue quando dueDate < hoje e ainda não pago; pending caso contrário.
+
+    InstallmentPlanInput:
+      type: object
+      required: [intendedPaymentMethod, installmentCount, firstDueDate]
+      properties:
+        intendedPaymentMethod:
+          type: integer
+          description: ID de Payment Method — apenas Cartão de Crédito e Boleto aceitam installmentCount > 1
+        installmentCount:
+          type: integer
+          minimum: 1
+        firstDueDate:
+          type: string
+          format: date
+
+    InstallmentFilter:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [pending, paid, overdue]
+        patientId:
+          type: integer
+        dueDate:
+          type: object
+          properties:
+            gte:
+              type: string
+              format: date
+            lte:
+              type: string
+              format: date
+
+    Payment:
+      type: object
+      description: >
+        Representa tanto recebimentos (type=income, usados aqui em Billing)
+        quanto pagamentos de despesas (type=expense, usados em expenses.yaml).
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+          readOnly: true
+          description: Usuário autenticado que registrou o pagamento
+        type:
+          type: string
+          enum: [income, expense]
+        notes:
+          type: string
+          nullable: true
+        amount:
+          type: number
+          format: decimal
+        paymentMethod:
+          type: integer
+        dateTime:
+          type: string
+          format: date-time
+          readOnly: true
+        refundRefId:
+          type: integer
+          nullable: true
+          readOnly: true
+          description: Preenchido apenas em registros de estorno, apontando para o Payment original
+
+    PaymentInput:
+      type: object
+      required: [amount, paymentMethod]
+      properties:
+        amount:
+          type: number
+          format: decimal
+          minimum: 0.01
+        paymentMethod:
+          type: integer
+        notes:
+          type: string
+          nullable: true
+
+    PaymentMethod:
+      type: object
+      properties:
+        id:
+          type: integer
+        description:
+          type: string
+
+    PaymentMethodInput:
+      type: object
+      required: [description]
+      properties:
+        description:
+          type: string
+
+    CostCenter:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        type:
+          type: string
+          enum: [income, expense]
+        active:
+          type: boolean
+
+    CostCenterInput:
+      type: object
+      required: [name, type]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        type:
+          type: string
+          enum: [income, expense]
+        active:
+          type: boolean
+          default: true
+
+    CostCenterFilter:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [income, expense]
+        active:
+          type: boolean

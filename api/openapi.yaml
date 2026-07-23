@@ -1,0 +1,304 @@
+openapi: 3.0.3
+
+info:
+  title: MINI-WORLD API
+  version: 1.0.0
+  description: >
+    API do template de sistema para clínicas odontológicas.
+    Convenções adotadas:
+      - Resposta envelopada: { data, meta }
+      - Paginação offset-based: ?page=&limit=
+      - Filtros estruturados: ?filter[campo]=valor (style: deepObject)
+      - Ações não-CRUD como sub-recursos: POST /appointments/{id}/confirm
+      - Erros no padrão RFC 7807 (application/problem+json)
+      - Extensão x-required-roles em cada operação, espelhando a matriz de permissões
+      - Tabelas de apoio seguem soft-delete (PATCH active:false) — exceto Attachment
+        (único recurso com DELETE físico) e o próprio Audit Log (somente leitura)
+
+servers:
+  - url: https://api.miniworld.com/v1
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: Appointments
+    description: Ciclo de vida completo da consulta odontológica
+  - name: Appointment Types
+    description: Tipos de consulta (tabela de apoio)
+  - name: Cancellation Reasons
+    description: Motivos de cancelamento (tabela de apoio)
+  - name: Patients
+    description: Cadastro de pacientes
+  - name: Anamnesis
+    description: Histórico de anamnese do paciente (evolutivo)
+  - name: Attachments
+    description: Radiografias e fotos vinculadas ao paciente ou a uma consulta
+  - name: Responsibles
+    description: Responsável financeiro/legal (obrigatório para pacientes menores de idade)
+  - name: Referral Sources
+    description: Origem do paciente (tabela de apoio)
+  - name: Attachment Types
+    description: Tipos de anexo (tabela de apoio)
+  - name: Dentists
+    description: Cadastro de dentistas
+  - name: Dentist Work Schedule
+    description: Horário padrão semanal do dentista (versionado)
+  - name: Dentist Schedule Exceptions
+    description: Substituições pontuais do horário padrão para uma data específica
+  - name: Dentist Unavailabilities
+    description: Períodos de indisponibilidade (férias, licença etc.)
+  - name: Dentist Specialties
+    description: Associação entre dentista e especialidades
+  - name: Specialties
+    description: Especialidades odontológicas (tabela de apoio)
+  - name: Dental Plans
+    description: Planos odontológicos
+  - name: Quotes
+    description: Orçamentos de tratamento
+  - name: Quote Procedures
+    description: Procedimentos incluídos em um orçamento
+  - name: Procedures
+    description: Catálogo de procedimentos odontológicos e seus preços
+  - name: Billing
+    description: Cobranças geradas (vinculadas ou não a uma consulta)
+  - name: Installments
+    description: Parcelas de uma cobrança
+  - name: Payments
+    description: Pagamentos recebidos ou realizados pela clínica
+  - name: Payment Methods
+    description: Formas de pagamento aceitas (tabela de apoio)
+  - name: Cost Centers
+    description: Centros de custo para classificação de gastos
+  - name: Boletos
+    description: Emissão e acompanhamento de boletos bancários
+  - name: Users
+    description: Contas de usuário e controle de acesso
+  - name: Auth
+    description: Autenticação e sessão
+  - name: Receptionists
+    description: Cadastro de recepcionistas
+  - name: Clinic
+    description: Dados cadastrais da clínica (recurso singleton)
+  - name: Clinic Bank Accounts
+    description: Contas bancárias usadas na emissão de boletos
+  - name: Clinic Settings
+    description: Parâmetros administrativos da clínica (juros, multa, lembretes, sessão)
+  - name: Audit Log
+    description: Registro somente leitura de toda criação, edição e inativação no sistema
+
+paths:
+
+  # ============================================================
+  # APPOINTMENTS
+  # ============================================================
+  /appointments:
+    $ref: './entities/appointments.yaml#/paths/~1appointments'
+  /appointments/{id}:
+    $ref: './entities/appointments.yaml#/paths/~1appointments~1{id}'
+  /appointments/{id}/confirm:
+    $ref: './entities/appointments.yaml#/paths/~1appointments~1{id}~1confirm'
+  /appointments/{id}/check-in:
+    $ref: './entities/appointments.yaml#/paths/~1appointments~1{id}~1check-in'
+  /appointments/{id}/start:
+    $ref: './entities/appointments.yaml#/paths/~1appointments~1{id}~1start'
+  /appointments/{id}/complete:
+    $ref: './entities/appointments.yaml#/paths/~1appointments~1{id}~1complete'
+  /appointments/{id}/cancel:
+    $ref: './entities/appointments.yaml#/paths/~1appointments~1{id}~1cancel'
+  /appointments/{id}/no-show:
+    $ref: './entities/appointments.yaml#/paths/~1appointments~1{id}~1no-show'
+  /appointments/{id}/reactivate:
+    $ref: './entities/appointments.yaml#/paths/~1appointments~1{id}~1reactivate'
+  /appointment-types:
+    $ref: './entities/appointments.yaml#/paths/~1appointment-types'
+  /appointment-types/{id}:
+    $ref: './entities/appointments.yaml#/paths/~1appointment-types~1{id}'
+  /cancellation-reasons:
+    $ref: './entities/appointments.yaml#/paths/~1cancellation-reasons'
+  /cancellation-reasons/{id}:
+    $ref: './entities/appointments.yaml#/paths/~1cancellation-reasons~1{id}'
+
+  # ============================================================
+  # PATIENTS
+  # ============================================================
+  /patients:
+    $ref: './entities/patients.yaml#/paths/~1patients'
+  /patients/{id}:
+    $ref: './entities/patients.yaml#/paths/~1patients~1{id}'
+  /patients/{patientId}/anamnesis:
+    $ref: './entities/patients.yaml#/paths/~1patients~1{patientId}~1anamnesis'
+  /patients/{patientId}/attachments:
+    $ref: './entities/patients.yaml#/paths/~1patients~1{patientId}~1attachments'
+  /patients/{patientId}/attachments/{id}:
+    $ref: './entities/patients.yaml#/paths/~1patients~1{patientId}~1attachments~1{id}'
+  /responsibles:
+    $ref: './entities/patients.yaml#/paths/~1responsibles'
+  /responsibles/{id}:
+    $ref: './entities/patients.yaml#/paths/~1responsibles~1{id}'
+  /referral-sources:
+    $ref: './entities/patients.yaml#/paths/~1referral-sources'
+  /referral-sources/{id}:
+    $ref: './entities/patients.yaml#/paths/~1referral-sources~1{id}'
+  /attachment-types:
+    $ref: './entities/patients.yaml#/paths/~1attachment-types'
+  /attachment-types/{id}:
+    $ref: './entities/patients.yaml#/paths/~1attachment-types~1{id}'
+
+  # ============================================================
+  # DENTISTS
+  # ============================================================
+  /dentists:
+    $ref: './entities/dentists.yaml#/paths/~1dentists'
+  /dentists/{id}:
+    $ref: './entities/dentists.yaml#/paths/~1dentists~1{id}'
+  /dentists/{dentistId}/schedule:
+    $ref: './entities/dentists.yaml#/paths/~1dentists~1{dentistId}~1schedule'
+  /dentists/{dentistId}/schedule-exceptions:
+    $ref: './entities/dentists.yaml#/paths/~1dentists~1{dentistId}~1schedule-exceptions'
+  /dentists/{dentistId}/schedule-exceptions/{id}:
+    $ref: './entities/dentists.yaml#/paths/~1dentists~1{dentistId}~1schedule-exceptions~1{id}'
+  /dentists/{dentistId}/unavailabilities:
+    $ref: './entities/dentists.yaml#/paths/~1dentists~1{dentistId}~1unavailabilities'
+  /dentists/{dentistId}/unavailabilities/{id}:
+    $ref: './entities/dentists.yaml#/paths/~1dentists~1{dentistId}~1unavailabilities~1{id}'
+  /dentists/{dentistId}/specialties:
+    $ref: './entities/dentists.yaml#/paths/~1dentists~1{dentistId}~1specialties'
+  /dentists/{dentistId}/specialties/{specialtyId}:
+    $ref: './entities/dentists.yaml#/paths/~1dentists~1{dentistId}~1specialties~1{specialtyId}'
+  /specialties:
+    $ref: './entities/dentists.yaml#/paths/~1specialties'
+  /specialties/{id}:
+    $ref: './entities/dentists.yaml#/paths/~1specialties~1{id}'
+
+  # ============================================================
+  # DENTAL PLANS
+  # ============================================================
+  /dental-plans:
+    $ref: './entities/dental-plans.yaml#/paths/~1dental-plans'
+  /dental-plans/{id}:
+    $ref: './entities/dental-plans.yaml#/paths/~1dental-plans~1{id}'
+
+  # ============================================================
+  # QUOTES
+  # ============================================================
+  /quotes:
+    $ref: './entities/quotes.yaml#/paths/~1quotes'
+  /quotes/{id}:
+    $ref: './entities/quotes.yaml#/paths/~1quotes~1{id}'
+  /quotes/{id}/send:
+    $ref: './entities/quotes.yaml#/paths/~1quotes~1{id}~1send'
+  /quotes/{id}/approve:
+    $ref: './entities/quotes.yaml#/paths/~1quotes~1{id}~1approve'
+  /quotes/{id}/reject:
+    $ref: './entities/quotes.yaml#/paths/~1quotes~1{id}~1reject'
+  /quotes/{quoteId}/procedures:
+    $ref: './entities/quotes.yaml#/paths/~1quotes~1{quoteId}~1procedures'
+  /quotes/{quoteId}/procedures/{id}:
+    $ref: './entities/quotes.yaml#/paths/~1quotes~1{quoteId}~1procedures~1{id}'
+
+  # ============================================================
+  # PROCEDURES
+  # ============================================================
+  /procedures:
+    $ref: './entities/procedures.yaml#/paths/~1procedures'
+  /procedures/{id}:
+    $ref: './entities/procedures.yaml#/paths/~1procedures~1{id}'
+
+  # ============================================================
+  # BILLING
+  # ============================================================
+  /billings:
+    $ref: './entities/billing.yaml#/paths/~1billings'
+  /billings/{id}:
+    $ref: './entities/billing.yaml#/paths/~1billings~1{id}'
+  /billings/{billingId}/installments:
+    $ref: './entities/billing.yaml#/paths/~1billings~1{billingId}~1installments'
+  /installments:
+    $ref: './entities/billing.yaml#/paths/~1installments'
+  /installments/{id}:
+    $ref: './entities/billing.yaml#/paths/~1installments~1{id}'
+  /installments/{installmentId}/payments:
+    $ref: './entities/billing.yaml#/paths/~1installments~1{installmentId}~1payments'
+  /payments/{id}:
+    $ref: './entities/billing.yaml#/paths/~1payments~1{id}'
+  /payments/{id}/reverse:
+    $ref: './entities/billing.yaml#/paths/~1payments~1{id}~1reverse'
+  /payment-methods:
+    $ref: './entities/billing.yaml#/paths/~1payment-methods'
+  /payment-methods/{id}:
+    $ref: './entities/billing.yaml#/paths/~1payment-methods~1{id}'
+  /cost-centers:
+    $ref: './entities/billing.yaml#/paths/~1cost-centers'
+  /cost-centers/{id}:
+    $ref: './entities/billing.yaml#/paths/~1cost-centers~1{id}'
+
+  # ============================================================
+  # BOLETOS
+  # ============================================================
+  /installments/{installmentId}/boletos:
+    $ref: './entities/boletos.yaml#/paths/~1installments~1{installmentId}~1boletos'
+  /boletos/{id}:
+    $ref: './entities/boletos.yaml#/paths/~1boletos~1{id}'
+  /boletos/{id}/register:
+    $ref: './entities/boletos.yaml#/paths/~1boletos~1{id}~1register'
+  /boletos/{id}/confirm-payment:
+    $ref: './entities/boletos.yaml#/paths/~1boletos~1{id}~1confirm-payment'
+  /boletos/{id}/cancel:
+    $ref: './entities/boletos.yaml#/paths/~1boletos~1{id}~1cancel'
+
+  # ============================================================
+  # USERS & AUTH
+  # ============================================================
+  /users:
+    $ref: './entities/users.yaml#/paths/~1users'
+  /users/{id}:
+    $ref: './entities/users.yaml#/paths/~1users~1{id}'
+  /users/{id}/reset-password:
+    $ref: './entities/users.yaml#/paths/~1users~1{id}~1reset-password'
+  /auth/login:
+    $ref: './entities/users.yaml#/paths/~1auth~1login'
+  /auth/logout:
+    $ref: './entities/users.yaml#/paths/~1auth~1logout'
+  /auth/me:
+    $ref: './entities/users.yaml#/paths/~1auth~1me'
+  /auth/change-password:
+    $ref: './entities/users.yaml#/paths/~1auth~1change-password'
+
+  # ============================================================
+  # RECEPTIONISTS
+  # ============================================================
+  /receptionists:
+    $ref: './entities/receptionists.yaml#/paths/~1receptionists'
+  /receptionists/{id}:
+    $ref: './entities/receptionists.yaml#/paths/~1receptionists~1{id}'
+
+  # ============================================================
+  # CLINIC
+  # ============================================================
+  /clinic:
+    $ref: './entities/clinic.yaml#/paths/~1clinic'
+  /clinic/bank-accounts:
+    $ref: './entities/clinic.yaml#/paths/~1clinic~1bank-accounts'
+  /clinic/bank-accounts/{id}:
+    $ref: './entities/clinic.yaml#/paths/~1clinic~1bank-accounts~1{id}'
+  /clinic-settings:
+    $ref: './entities/clinic.yaml#/paths/~1clinic-settings'
+
+  # ============================================================
+  # AUDIT LOG
+  # ============================================================
+  /audit-logs:
+    $ref: './entities/audit.yaml#/paths/~1audit-logs'
+  /audit-logs/{id}:
+    $ref: './entities/audit.yaml#/paths/~1audit-logs~1{id}'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: >
+        Token JWT obtido via POST /auth/login. O endpoint de login em si deve
+        sobrescrever este requisito com "security: []" na definição de users.yaml.

@@ -1,0 +1,191 @@
+tags:
+  - name: Dental Plans
+    description: Planos odontológicos oferecidos pela clínica
+
+paths:
+
+  # ============================================================
+  # DENTAL PLANS
+  # ============================================================
+
+  /dental-plans:
+    get:
+      tags: [Dental Plans]
+      summary: Lista planos odontológicos com filtros e paginação
+      x-required-roles: [manager, receptionist, dentist]
+      description: >
+        Leitura liberada a todos os perfis — usado como dropdown no cadastro
+        de paciente e nas telas de agenda/financeiro.
+      parameters:
+        - $ref: '../common.yaml#/components/parameters/PageParam'
+        - $ref: '../common.yaml#/components/parameters/LimitParam'
+        - name: filter
+          in: query
+          required: false
+          style: deepObject
+          explode: true
+          description: Ex. filter[active]=true
+          schema:
+            $ref: '#/components/schemas/DentalPlanFilter'
+      responses:
+        '200':
+          description: Lista de planos odontológicos
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DentalPlan'
+                  meta:
+                    $ref: '../common.yaml#/components/schemas/PaginationMeta'
+        '400':
+          $ref: '../common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: '../common.yaml#/components/responses/Unauthorized'
+
+    post:
+      tags: [Dental Plans]
+      summary: Cria um novo plano odontológico
+      x-required-roles: [manager, receptionist]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DentalPlanInput'
+      responses:
+        '201':
+          description: Plano odontológico criado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/DentalPlan'
+        '422':
+          $ref: '../common.yaml#/components/responses/ValidationError'
+        '401':
+          $ref: '../common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+
+  /dental-plans/{id}:
+    parameters:
+      - $ref: '#/components/parameters/DentalPlanId'
+
+    get:
+      tags: [Dental Plans]
+      summary: Busca um plano odontológico pelo ID
+      x-required-roles: [manager, receptionist, dentist]
+      responses:
+        '200':
+          description: Plano odontológico encontrado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/DentalPlan'
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+
+    patch:
+      tags: [Dental Plans]
+      summary: Edita ou inativa um plano odontológico
+      x-required-roles: [manager, receptionist]
+      description: >
+        Um plano com pacientes vinculados não pode ser excluído — apenas
+        inativado via "active:false". Inativar não afeta pacientes que já
+        possuem o plano atribuído; apenas impede que novos pacientes o
+        selecionem. O controle de validade (validityDays) é usado pelo backend
+        para calcular, a partir de "planStartedAt" de cada paciente, se o plano
+        do paciente está vencido — este endpoint não expõe esse cálculo
+        diretamente, apenas define a regra do plano em si.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DentalPlanInput'
+      responses:
+        '200':
+          description: Plano odontológico atualizado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/DentalPlan'
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+        '422':
+          $ref: '../common.yaml#/components/responses/ValidationError'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+
+components:
+
+  parameters:
+    DentalPlanId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+
+  schemas:
+
+    DentalPlan:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        validityDays:
+          type: integer
+          description: Validade do plano em dias, contados a partir de "planStartedAt" de cada paciente
+        price:
+          type: number
+          format: decimal
+        active:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
+
+    DentalPlanInput:
+      type: object
+      required: [name, validityDays, price]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        validityDays:
+          type: integer
+          minimum: 1
+        price:
+          type: number
+          format: decimal
+          minimum: 0
+        active:
+          type: boolean
+          default: true
+
+    DentalPlanFilter:
+      type: object
+      properties:
+        active:
+          type: boolean

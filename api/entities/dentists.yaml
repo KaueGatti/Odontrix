@@ -1,0 +1,997 @@
+tags:
+  - name: Dentists
+    description: Cadastro de dentistas
+  - name: Dentist Work Schedule
+    description: Horário padrão semanal do dentista (versionado)
+  - name: Dentist Schedule Exceptions
+    description: Substituições pontuais do horário padrão para uma data específica
+  - name: Dentist Unavailabilities
+    description: Períodos de indisponibilidade (férias, licença etc.)
+  - name: Dentist Specialties
+    description: Associação entre dentista e especialidades
+  - name: Specialties
+    description: Especialidades odontológicas (tabela de apoio)
+
+paths:
+
+  # ============================================================
+  # DENTISTS
+  # ============================================================
+
+  /dentists:
+    get:
+      tags: [Dentists]
+      summary: Lista dentistas com filtros e paginação
+      x-required-roles: [manager, receptionist, dentist]
+      description: Dentista tem acesso de leitura à lista completa (necessário para visão de agenda/encaminhamentos).
+      parameters:
+        - $ref: '../common.yaml#/components/parameters/PageParam'
+        - $ref: '../common.yaml#/components/parameters/LimitParam'
+        - name: filter
+          in: query
+          required: false
+          style: deepObject
+          explode: true
+          description: >
+            Filtros estruturados. Ex: filter[active]=true&filter[specialtyId]=2&filter[name]=joana
+          schema:
+            $ref: '#/components/schemas/DentistFilter'
+      responses:
+        '200':
+          description: Lista de dentistas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Dentist'
+                  meta:
+                    $ref: '../common.yaml#/components/schemas/PaginationMeta'
+        '400':
+          $ref: '../common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: '../common.yaml#/components/responses/Unauthorized'
+
+    post:
+      tags: [Dentists]
+      summary: Cadastra um novo dentista
+      x-required-roles: [manager, receptionist]
+      description: >
+        Criação conjunta: o servidor cria por baixo dos panos um registro em
+        Users (perfil "dentist") a partir de email/provisionalPassword, e em
+        seguida o registro de Dentist vinculado a esse userId — tudo em uma
+        única transação. Ao menos um entre cpf, cnpj e rg é obrigatório.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DentistInput'
+      responses:
+        '201':
+          description: Dentista criado (e usuário de acesso vinculado)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Dentist'
+        '422':
+          $ref: '../common.yaml#/components/responses/ValidationError'
+        '401':
+          $ref: '../common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+
+  /dentists/{id}:
+    parameters:
+      - $ref: '#/components/parameters/DentistId'
+
+    get:
+      tags: [Dentists]
+      summary: Busca um dentista pelo ID
+      x-required-roles: [manager, receptionist, dentist]
+      responses:
+        '200':
+          description: Dentista encontrado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Dentist'
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+
+    patch:
+      tags: [Dentists]
+      summary: Edita ou inativa um dentista
+      x-required-roles: [manager, receptionist]
+      description: >
+        Não há exclusão — apenas inativação via "active:false". Um dentista
+        inativo não pode receber novos agendamentos. O próprio dentista não
+        pode editar seu cadastro nem seus horários — apenas Recepcionista/Gerente.
+        Alteração de email/senha é feita em Users, não neste endpoint.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DentistPatch'
+      responses:
+        '200':
+          description: Dentista atualizado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Dentist'
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+        '422':
+          $ref: '../common.yaml#/components/responses/ValidationError'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+
+  # ============================================================
+  # DENTIST WORK SCHEDULE (sub-recurso, versionado — nunca edita, sempre insere)
+  # ============================================================
+
+  /dentists/{dentistId}/schedule:
+    parameters:
+      - $ref: '#/components/parameters/DentistIdPath'
+
+    get:
+      tags: [Dentist Work Schedule]
+      summary: Lista o horário semanal vigente do dentista
+      x-required-roles: [manager, receptionist, dentist]
+      parameters:
+        - name: includeHistory
+          in: query
+          required: false
+          description: Se true, inclui também entradas encerradas (validTo preenchido)
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: Horário semanal
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DentistWorkSchedule'
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+
+    post:
+      tags: [Dentist Work Schedule]
+      summary: Adiciona uma nova entrada de horário para um dia da semana
+      x-required-roles: [manager, receptionist]
+      description: >
+        Nunca atualiza um registro vigente — se já existir uma entrada ativa
+        para o mesmo dentistId + dayOfWeek com sobreposição, o servidor fecha
+        automaticamente essa entrada (define validTo) e insere a nova.
+        Horários internos não podem se sobrepor (validado no banco via EXCLUDE constraint).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DentistWorkScheduleInput'
+      responses:
+        '201':
+          description: Entrada de horário criada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/DentistWorkSchedule'
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+        '422':
+          $ref: '../common.yaml#/components/responses/ValidationError'
+        '409':
+          description: Conflito de horário interno para o mesmo dia da semana
+          content:
+            application/problem+json:
+              schema:
+                $ref: '../common.yaml#/components/schemas/Problem'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+
+  # ============================================================
+  # DENTIST SCHEDULE EXCEPTIONS (sub-recurso)
+  # ============================================================
+
+  /dentists/{dentistId}/schedule-exceptions:
+    parameters:
+      - $ref: '#/components/parameters/DentistIdPath'
+
+    get:
+      tags: [Dentist Schedule Exceptions]
+      summary: Lista as exceções de horário do dentista
+      x-required-roles: [manager, receptionist, dentist]
+      parameters:
+        - $ref: '../common.yaml#/components/parameters/PageParam'
+        - $ref: '../common.yaml#/components/parameters/LimitParam'
+      responses:
+        '200':
+          description: Lista de exceções
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DentistScheduleException'
+                  meta:
+                    $ref: '../common.yaml#/components/schemas/PaginationMeta'
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+
+    post:
+      tags: [Dentist Schedule Exceptions]
+      summary: Cria uma exceção de horário para uma data específica
+      x-required-roles: [manager, receptionist]
+      description: Apenas uma exceção por data é permitida para o mesmo dentista.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DentistScheduleExceptionInput'
+      responses:
+        '201':
+          description: Exceção criada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/DentistScheduleException'
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+        '422':
+          $ref: '../common.yaml#/components/responses/ValidationError'
+        '409':
+          description: Já existe uma exceção cadastrada para essa data
+          content:
+            application/problem+json:
+              schema:
+                $ref: '../common.yaml#/components/schemas/Problem'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+
+  /dentists/{dentistId}/schedule-exceptions/{id}:
+    parameters:
+      - $ref: '#/components/parameters/DentistIdPath'
+      - $ref: '#/components/parameters/ScheduleExceptionId'
+
+    get:
+      tags: [Dentist Schedule Exceptions]
+      summary: Busca uma exceção pelo ID
+      x-required-roles: [manager, receptionist, dentist]
+      responses:
+        '200':
+          description: Exceção encontrada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/DentistScheduleException'
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+
+    patch:
+      tags: [Dentist Schedule Exceptions]
+      summary: Edita uma exceção existente
+      x-required-roles: [manager, receptionist]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DentistScheduleExceptionInput'
+      responses:
+        '200':
+          description: Exceção atualizada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/DentistScheduleException'
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+        '422':
+          $ref: '../common.yaml#/components/responses/ValidationError'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+
+    delete:
+      tags: [Dentist Schedule Exceptions]
+      summary: Remove uma exceção
+      x-required-roles: [manager, receptionist]
+      responses:
+        '204':
+          description: Exceção removida
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+
+  # ============================================================
+  # DENTIST UNAVAILABILITIES (sub-recurso)
+  # ============================================================
+
+  /dentists/{dentistId}/unavailabilities:
+    parameters:
+      - $ref: '#/components/parameters/DentistIdPath'
+
+    get:
+      tags: [Dentist Unavailabilities]
+      summary: Lista os períodos de indisponibilidade do dentista
+      x-required-roles: [manager, receptionist, dentist]
+      parameters:
+        - $ref: '../common.yaml#/components/parameters/PageParam'
+        - $ref: '../common.yaml#/components/parameters/LimitParam'
+      responses:
+        '200':
+          description: Lista de indisponibilidades
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Unavailability'
+                  meta:
+                    $ref: '../common.yaml#/components/schemas/PaginationMeta'
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+
+    post:
+      tags: [Dentist Unavailabilities]
+      summary: Cria um período de indisponibilidade
+      x-required-roles: [manager, receptionist]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UnavailabilityInput'
+      responses:
+        '201':
+          description: Indisponibilidade criada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Unavailability'
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+        '422':
+          $ref: '../common.yaml#/components/responses/ValidationError'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+
+  /dentists/{dentistId}/unavailabilities/{id}:
+    parameters:
+      - $ref: '#/components/parameters/DentistIdPath'
+      - $ref: '#/components/parameters/UnavailabilityId'
+
+    patch:
+      tags: [Dentist Unavailabilities]
+      summary: Edita um período de indisponibilidade
+      x-required-roles: [manager, receptionist]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UnavailabilityInput'
+      responses:
+        '200':
+          description: Indisponibilidade atualizada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Unavailability'
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+        '422':
+          $ref: '../common.yaml#/components/responses/ValidationError'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+
+    delete:
+      tags: [Dentist Unavailabilities]
+      summary: Remove um período de indisponibilidade
+      x-required-roles: [manager, receptionist]
+      responses:
+        '204':
+          description: Indisponibilidade removida
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+
+  # ============================================================
+  # DENTIST SPECIALTIES (associação N:N, sub-recurso)
+  # ============================================================
+
+  /dentists/{dentistId}/specialties:
+    parameters:
+      - $ref: '#/components/parameters/DentistIdPath'
+
+    get:
+      tags: [Dentist Specialties]
+      summary: Lista as especialidades do dentista
+      x-required-roles: [manager, receptionist, dentist]
+      responses:
+        '200':
+          description: Lista de especialidades associadas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Specialty'
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+
+    post:
+      tags: [Dentist Specialties]
+      summary: Associa uma especialidade ao dentista
+      x-required-roles: [manager, receptionist]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [specialtyId]
+              properties:
+                specialtyId:
+                  type: integer
+      responses:
+        '201':
+          description: Especialidade associada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Specialty'
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+        '409':
+          description: Especialidade já associada a este dentista
+          content:
+            application/problem+json:
+              schema:
+                $ref: '../common.yaml#/components/schemas/Problem'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+
+  /dentists/{dentistId}/specialties/{specialtyId}:
+    parameters:
+      - $ref: '#/components/parameters/DentistIdPath'
+      - name: specialtyId
+        in: path
+        required: true
+        schema:
+          type: integer
+
+    delete:
+      tags: [Dentist Specialties]
+      summary: Remove a associação entre o dentista e a especialidade
+      x-required-roles: [manager, receptionist]
+      responses:
+        '204':
+          description: Associação removida
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+
+  # ============================================================
+  # SPECIALTIES (tabela de apoio)
+  # ============================================================
+
+  /specialties:
+    get:
+      tags: [Specialties]
+      summary: Lista especialidades odontológicas
+      x-required-roles: [manager, receptionist, dentist]
+      parameters:
+        - $ref: '../common.yaml#/components/parameters/PageParam'
+        - $ref: '../common.yaml#/components/parameters/LimitParam'
+      responses:
+        '200':
+          description: Lista de especialidades
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Specialty'
+                  meta:
+                    $ref: '../common.yaml#/components/schemas/PaginationMeta'
+        '401':
+          $ref: '../common.yaml#/components/responses/Unauthorized'
+
+    post:
+      tags: [Specialties]
+      summary: Cria uma nova especialidade
+      x-required-roles: [manager, receptionist]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SpecialtyInput'
+      responses:
+        '201':
+          description: Especialidade criada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Specialty'
+        '422':
+          $ref: '../common.yaml#/components/responses/ValidationError'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+
+  /specialties/{id}:
+    parameters:
+      - $ref: '#/components/parameters/SpecialtyId'
+    get:
+      tags: [Specialties]
+      summary: Busca uma especialidade pelo ID
+      x-required-roles: [manager, receptionist, dentist]
+      responses:
+        '200':
+          description: Especialidade encontrada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Specialty'
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+
+    patch:
+      tags: [Specialties]
+      summary: Edita ou inativa uma especialidade
+      x-required-roles: [manager, receptionist]
+      description: Não há exclusão — apenas inativação via "active:false".
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SpecialtyInput'
+      responses:
+        '200':
+          description: Especialidade atualizada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Specialty'
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+        '422':
+          $ref: '../common.yaml#/components/responses/ValidationError'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+
+components:
+
+  parameters:
+    DentistId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+
+    DentistIdPath:
+      name: dentistId
+      in: path
+      required: true
+      schema:
+        type: integer
+
+    ScheduleExceptionId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+
+    UnavailabilityId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+
+    SpecialtyId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+
+  schemas:
+
+    Dentist:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+          readOnly: true
+          description: Criado automaticamente pelo servidor na criação conjunta do dentista
+        fullName:
+          type: string
+        cpf:
+          type: string
+          nullable: true
+        rg:
+          type: string
+          nullable: true
+        cnpj:
+          type: string
+          nullable: true
+        croNumber:
+          type: string
+          nullable: true
+        croState:
+          type: string
+          example: "SP"
+        phone:
+          type: string
+        email:
+          type: string
+          nullable: true
+        birthDate:
+          type: string
+          format: date
+          nullable: true
+        appointmentPrice:
+          type: number
+          format: double
+          nullable: true
+        commissionPercent:
+          type: number
+          format: double
+          nullable: true
+        personType:
+          type: string
+          enum: [legal_entity, natural_person]
+        active:
+          type: boolean
+        specialtyIds:
+          type: array
+          readOnly: true
+          items:
+            type: integer
+          description: Atalho somente-leitura — gerenciado via /dentists/{id}/specialties
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
+
+    DentistInput:
+      type: object
+      required: [username, email, provisionalPassword, fullName, croState, phone, personType]
+      description: >
+        username/email/provisionalPassword criam o User (perfil dentist) por
+        baixo dos panos, na mesma transação de criação do Dentist. username
+        deve ser único no sistema (constraint users.user).
+      properties:
+        username:
+          type: string
+          description: Nome de usuário de login, definido no formulário de cadastro
+        email:
+          type: string
+          format: email
+          description: E-mail de login da conta de acesso a ser criada
+        provisionalPassword:
+          type: string
+          format: password
+          minLength: 8
+          description: Senha provisória — usuário deve trocá-la no primeiro login
+        fullName:
+          type: string
+        cpf:
+          type: string
+          nullable: true
+        rg:
+          type: string
+          nullable: true
+        cnpj:
+          type: string
+          nullable: true
+        croNumber:
+          type: string
+          nullable: true
+        croState:
+          type: string
+        phone:
+          type: string
+        birthDate:
+          type: string
+          format: date
+          nullable: true
+        appointmentPrice:
+          type: number
+          format: double
+          nullable: true
+        commissionPercent:
+          type: number
+          format: double
+          nullable: true
+        personType:
+          type: string
+          enum: [legal_entity, natural_person]
+
+    DentistPatch:
+      type: object
+      properties:
+        fullName:
+          type: string
+        cpf:
+          type: string
+          nullable: true
+        rg:
+          type: string
+          nullable: true
+        cnpj:
+          type: string
+          nullable: true
+        croNumber:
+          type: string
+          nullable: true
+        croState:
+          type: string
+        phone:
+          type: string
+        birthDate:
+          type: string
+          format: date
+          nullable: true
+        appointmentPrice:
+          type: number
+          format: double
+          nullable: true
+        commissionPercent:
+          type: number
+          format: double
+          nullable: true
+        active:
+          type: boolean
+
+    DentistFilter:
+      type: object
+      properties:
+        active:
+          type: boolean
+        specialtyId:
+          type: integer
+        name:
+          type: string
+        croState:
+          type: string
+
+    DentistWorkSchedule:
+      type: object
+      properties:
+        id:
+          type: integer
+        dentistId:
+          type: integer
+        dayOfWeek:
+          type: string
+          enum: [monday, tuesday, wednesday, thursday, friday, saturday, sunday]
+        startTime:
+          type: string
+          example: "08:00"
+        endTime:
+          type: string
+          example: "18:00"
+        startBreak:
+          type: string
+          nullable: true
+          example: "12:00"
+        endBreak:
+          type: string
+          nullable: true
+          example: "13:00"
+        active:
+          type: boolean
+          description: false = não trabalha nesse dia
+        validFrom:
+          type: string
+          format: date
+          readOnly: true
+        validTo:
+          type: string
+          format: date
+          nullable: true
+          readOnly: true
+          description: null = entrada vigente
+
+    DentistWorkScheduleInput:
+      type: object
+      required: [dayOfWeek, startTime, endTime]
+      properties:
+        dayOfWeek:
+          type: string
+          enum: [monday, tuesday, wednesday, thursday, friday, saturday, sunday]
+        startTime:
+          type: string
+        endTime:
+          type: string
+        startBreak:
+          type: string
+          nullable: true
+        endBreak:
+          type: string
+          nullable: true
+        active:
+          type: boolean
+          default: true
+        validFrom:
+          type: string
+          format: date
+          description: Default é a data atual, se omitido
+
+    DentistScheduleException:
+      type: object
+      properties:
+        id:
+          type: integer
+        dentistId:
+          type: integer
+        exceptionDate:
+          type: string
+          format: date
+        isDayOff:
+          type: boolean
+        startTime:
+          type: string
+          nullable: true
+        endTime:
+          type: string
+          nullable: true
+        startBreak:
+          type: string
+          nullable: true
+        endBreak:
+          type: string
+          nullable: true
+        reason:
+          type: string
+          nullable: true
+
+    DentistScheduleExceptionInput:
+      type: object
+      required: [exceptionDate]
+      description: startTime e endTime são obrigatórios quando isDayOff for false
+      properties:
+        exceptionDate:
+          type: string
+          format: date
+        isDayOff:
+          type: boolean
+          default: false
+        startTime:
+          type: string
+          nullable: true
+        endTime:
+          type: string
+          nullable: true
+        startBreak:
+          type: string
+          nullable: true
+        endBreak:
+          type: string
+          nullable: true
+        reason:
+          type: string
+          nullable: true
+
+    Unavailability:
+      type: object
+      properties:
+        id:
+          type: integer
+        dentistId:
+          type: integer
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        description:
+          type: string
+
+    UnavailabilityInput:
+      type: object
+      required: [startDate, endDate, description]
+      properties:
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        description:
+          type: string
+
+    Specialty:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        active:
+          type: boolean
+
+    SpecialtyInput:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        active:
+          type: boolean
+          default: true

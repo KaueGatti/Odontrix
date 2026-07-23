@@ -34,7 +34,8 @@ CREATE TABLE payment_method
 CREATE TABLE referral_source
 (
     id          SERIAL PRIMARY KEY,
-    description VARCHAR(50) NOT NULL
+    description VARCHAR(50) NOT NULL,
+    active      BOOLEAN     NOT NULL DEFAULT TRUE
 );
 
 -- ------------------------------------------------------------
@@ -43,7 +44,8 @@ CREATE TABLE referral_source
 CREATE TABLE attachment_type
 (
     id          SERIAL PRIMARY KEY,
-    description VARCHAR(50) NOT NULL
+    description VARCHAR(50) NOT NULL,
+    active      BOOLEAN     NOT NULL DEFAULT TRUE
 );
 
 -- ------------------------------------------------------------
@@ -124,7 +126,7 @@ CREATE TABLE clinic_settings
 CREATE TABLE users
 (
     id            SERIAL PRIMARY KEY,
-    user          VARCHAR(150) UNIQUE NOT NULL,
+    username      VARCHAR(150) UNIQUE NOT NULL,
     email         VARCHAR(150) UNIQUE NOT NULL,
     password_hash TEXT                NOT NULL,
     profile       user_profile        NOT NULL,
@@ -387,10 +389,11 @@ CREATE TABLE appointment
 
     created_at                   TIMESTAMPTZ        NOT NULL DEFAULT NOW(),
 
-    -- Coluna gerada: intervalo [início, fim) calculado a partir de scheduled_date_time + duração
-    time_range                   TSTZRANGE GENERATED ALWAYS AS (
-        tstzrange(scheduled_date_time, scheduled_date_time + (estimated_duration_min || ' minutes')::interval, '[)')
-        ) STORED,
+    -- Intervalo [início, fim) calculado a partir de scheduled_date_time + duração.
+    -- Não pode ser GENERATED ALWAYS ... STORED: aritmética com TIMESTAMPTZ depende
+    -- do fuso horário da sessão (STABLE, não IMMUTABLE), o que o Postgres proíbe em
+    -- colunas geradas. Populada via trigger logo após a criação da tabela.
+    time_range                   TSTZRANGE,
 
     CONSTRAINT cancellation_reason_check
         CHECK (status != 'cancelled' OR cancellation_reason_id IS NOT NULL
@@ -404,6 +407,26 @@ CREATE TABLE appointment
         EXCLUDE USING GIST (dentist_id WITH =, time_range WITH &&)
         WHERE (status != 'cancelled')
 );
+
+-- Popula time_range antes de cada insert/update — substitui a coluna
+-- gerada que o Postgres não permite com aritmética de TIMESTAMPTZ.
+CREATE OR REPLACE FUNCTION set_appointment_time_range() RETURNS TRIGGER AS
+$$
+BEGIN
+    NEW.time_range := tstzrange(
+        NEW.scheduled_date_time,
+        NEW.scheduled_date_time + (NEW.estimated_duration_min || ' minutes')::interval,
+        '[)'
+    );
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_set_appointment_time_range
+    BEFORE INSERT OR UPDATE
+    ON appointment
+    FOR EACH ROW
+EXECUTE FUNCTION set_appointment_time_range();
 
 -- ------------------------------------------------------------
 -- APPOINTMENT × PROCEDURE (N:N)

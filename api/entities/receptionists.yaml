@@ -1,0 +1,254 @@
+tags:
+  - name: Receptionists
+    description: Cadastro de recepcionistas
+
+paths:
+
+  # ============================================================
+  # RECEPTIONISTS
+  # ============================================================
+
+  /receptionists:
+    get:
+      tags: [Receptionists]
+      summary: Lista recepcionistas com filtros e paginação
+      x-required-roles: [manager, receptionist]
+      description: >
+        Dentista não tem acesso a este recurso — recepcionistas só precisam
+        aparecer no contexto de "quem agendou" dentro de Appointment.
+      parameters:
+        - $ref: '../common.yaml#/components/parameters/PageParam'
+        - $ref: '../common.yaml#/components/parameters/LimitParam'
+        - name: filter
+          in: query
+          required: false
+          style: deepObject
+          explode: true
+          description: Ex. filter[active]=true&filter[name]=joana
+          schema:
+            $ref: '#/components/schemas/ReceptionistFilter'
+      responses:
+        '200':
+          description: Lista de recepcionistas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Receptionist'
+                  meta:
+                    $ref: '../common.yaml#/components/schemas/PaginationMeta'
+        '400':
+          $ref: '../common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: '../common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+
+    post:
+      tags: [Receptionists]
+      summary: Cadastra uma nova recepcionista
+      x-required-roles: [manager]
+      description: >
+        Restrito a manager — regra de negócio geral do sistema: apenas gerentes
+        podem criar, editar ou inativar outros usuários. Criação conjunta: o
+        servidor cria por baixo dos panos um registro em Users (perfil
+        "receptionist") a partir de email/provisionalPassword, e em seguida o
+        registro de Receptionist vinculado a esse userId — tudo em uma única
+        transação. Ao menos um entre cpf e rg é obrigatório.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReceptionistInput'
+      responses:
+        '201':
+          description: Recepcionista criada (e usuário de acesso vinculado)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Receptionist'
+        '422':
+          $ref: '../common.yaml#/components/responses/ValidationError'
+        '401':
+          $ref: '../common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+
+  /receptionists/{id}:
+    parameters:
+      - $ref: '#/components/parameters/ReceptionistId'
+
+    get:
+      tags: [Receptionists]
+      summary: Busca uma recepcionista pelo ID
+      x-required-roles: [manager, receptionist]
+      responses:
+        '200':
+          description: Recepcionista encontrada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Receptionist'
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+
+    patch:
+      tags: [Receptionists]
+      summary: Edita ou inativa uma recepcionista
+      x-required-roles: [manager]
+      description: >
+        Restrito a manager. Não há exclusão — apenas inativação via "active:false".
+        Um usuário não pode alterar seu próprio perfil de acesso — validação
+        aplicada a nível de Users, não neste endpoint. Alteração de email/senha
+        é feita em Users, não neste endpoint.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReceptionistPatch'
+      responses:
+        '200':
+          description: Recepcionista atualizada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Receptionist'
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+        '422':
+          $ref: '../common.yaml#/components/responses/ValidationError'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+
+components:
+
+  parameters:
+    ReceptionistId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+
+  schemas:
+
+    Receptionist:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+          readOnly: true
+          description: Criado automaticamente pelo servidor na criação conjunta da recepcionista
+        fullName:
+          type: string
+        cpf:
+          type: string
+          nullable: true
+        rg:
+          type: string
+          nullable: true
+        phone:
+          type: string
+        email:
+          type: string
+          nullable: true
+        birthDate:
+          type: string
+          format: date
+          nullable: true
+        hireDate:
+          type: string
+          format: date
+          readOnly: true
+        active:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
+
+    ReceptionistInput:
+      type: object
+      required: [username, email, provisionalPassword, fullName, phone]
+      description: >
+        username/email/provisionalPassword criam o User (perfil receptionist)
+        por baixo dos panos, na mesma transação de criação da Receptionist.
+        username deve ser único no sistema (constraint users.user).
+      properties:
+        username:
+          type: string
+          description: Nome de usuário de login, definido no formulário de cadastro
+        email:
+          type: string
+          format: email
+          description: E-mail de login da conta de acesso a ser criada
+        provisionalPassword:
+          type: string
+          format: password
+          minLength: 8
+          description: Senha provisória — usuário deve trocá-la no primeiro login
+        fullName:
+          type: string
+        cpf:
+          type: string
+          nullable: true
+        rg:
+          type: string
+          nullable: true
+        phone:
+          type: string
+        birthDate:
+          type: string
+          format: date
+          nullable: true
+        hireDate:
+          type: string
+          format: date
+          description: Default é a data atual, se omitido
+
+    ReceptionistPatch:
+      type: object
+      properties:
+        fullName:
+          type: string
+        cpf:
+          type: string
+          nullable: true
+        rg:
+          type: string
+          nullable: true
+        phone:
+          type: string
+        birthDate:
+          type: string
+          format: date
+          nullable: true
+        active:
+          type: boolean
+
+    ReceptionistFilter:
+      type: object
+      properties:
+        active:
+          type: boolean
+        name:
+          type: string

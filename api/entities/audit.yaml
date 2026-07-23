@@ -1,0 +1,139 @@
+tags:
+  - name: Audit Log
+    description: >
+      Registro de toda criação, edição e inativação em qualquer área do sistema.
+      Somente leitura — não existe endpoint de escrita: os registros são gerados
+      internamente pelo próprio backend a cada operação, nunca pela API pública.
+      Ninguém pode editar ou excluir um registro, nem mesmo Gerente.
+
+paths:
+
+  /audit-logs:
+    get:
+      tags: [Audit Log]
+      summary: Lista registros de auditoria com filtros e paginação
+      x-required-roles: [manager]
+      parameters:
+        - $ref: '../common.yaml#/components/parameters/PageParam'
+        - $ref: '../common.yaml#/components/parameters/LimitParam'
+        - name: filter
+          in: query
+          required: false
+          style: deepObject
+          explode: true
+          description: >
+            Filtros estruturados. Ex: filter[tableName]=appointment&filter[recordId]=42
+            &filter[action]=update&filter[occurredAt][gte]=2026-07-01&filter[occurredAt][lte]=2026-07-31
+          schema:
+            $ref: '#/components/schemas/AuditLogFilter'
+      responses:
+        '200':
+          description: Lista de registros de auditoria
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AuditLog'
+                  meta:
+                    $ref: '../common.yaml#/components/schemas/PaginationMeta'
+        '400':
+          $ref: '../common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: '../common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+
+  /audit-logs/{id}:
+    parameters:
+      - $ref: '#/components/parameters/AuditLogId'
+
+    get:
+      tags: [Audit Log]
+      summary: Busca um registro de auditoria pelo ID
+      x-required-roles: [manager]
+      responses:
+        '200':
+          description: Registro de auditoria encontrado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AuditLog'
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: '../common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+
+components:
+
+  parameters:
+    AuditLogId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+
+  schemas:
+
+    AuditLog:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+          description: Usuário responsável pela ação. Ações automáticas do sistema (ex. no_show por job agendado) usam um userId reservado para "sistema".
+        tableName:
+          type: string
+          description: Nome da tabela/entidade afetada
+          example: "appointment"
+        recordId:
+          type: integer
+          description: ID do registro afetado dentro de tableName
+        action:
+          type: string
+          enum: [create, update, deactivate]
+        previousData:
+          type: object
+          nullable: true
+          additionalProperties: true
+          description: Snapshot dos dados antes da alteração (null para action=create)
+        newData:
+          type: object
+          nullable: true
+          additionalProperties: true
+          description: Snapshot dos dados após a alteração
+        occurredAt:
+          type: string
+          format: date-time
+
+    AuditLogFilter:
+      type: object
+      properties:
+        userId:
+          type: integer
+        tableName:
+          type: string
+        recordId:
+          type: integer
+        action:
+          type: string
+          enum: [create, update, deactivate]
+        occurredAt:
+          type: object
+          properties:
+            gte:
+              type: string
+              format: date-time
+            lte:
+              type: string
+              format: date-time

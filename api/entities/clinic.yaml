@@ -1,0 +1,346 @@
+tags:
+  - name: Clinic
+    description: >
+      Dados cadastrais da clínica. Recurso singleton no MVP (piloto de clínica
+      única, sem clinic_id nas demais tabelas) — não existe lista, apenas
+      GET/PATCH de um registro implícito.
+  - name: Clinic Bank Accounts
+    description: Contas bancárias usadas na emissão de boletos (ex. Sicredi 748)
+  - name: Clinic Settings
+    description: Parâmetros administrativos da clínica (juros, multa, lembretes, sessão)
+
+paths:
+
+  # ============================================================
+  # CLINIC (singleton)
+  # ============================================================
+
+  /clinic:
+    get:
+      tags: [Clinic]
+      summary: Retorna os dados cadastrais da clínica
+      x-required-roles: [manager, receptionist, dentist]
+      description: >
+        Leitura liberada a todos os perfis — usado em cabeçalhos, documentos
+        gerados e telas com nome/logo/CNPJ/horário de funcionamento da clínica.
+      responses:
+        '200':
+          description: Dados da clínica
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Clinic'
+        '401':
+          $ref: '../common.yaml#/components/responses/Unauthorized'
+
+    patch:
+      tags: [Clinic]
+      summary: Edita os dados cadastrais da clínica
+      x-required-roles: [manager]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClinicPatch'
+      responses:
+        '200':
+          description: Clínica atualizada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Clinic'
+        '422':
+          $ref: '../common.yaml#/components/responses/ValidationError'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+
+  # ============================================================
+  # CLINIC BANK ACCOUNTS
+  # ============================================================
+
+  /clinic/bank-accounts:
+    get:
+      tags: [Clinic Bank Accounts]
+      summary: Lista as contas bancárias cadastradas
+      x-required-roles: [manager]
+      description: Usadas na emissão de boletos — ver boletos.yaml.
+      responses:
+        '200':
+          description: Lista de contas bancárias
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ClinicBankAccount'
+
+    post:
+      tags: [Clinic Bank Accounts]
+      summary: Cadastra uma nova conta bancária
+      x-required-roles: [manager]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClinicBankAccountInput'
+      responses:
+        '201':
+          description: Conta bancária criada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ClinicBankAccount'
+        '422':
+          $ref: '../common.yaml#/components/responses/ValidationError'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+
+  /clinic/bank-accounts/{id}:
+    parameters:
+      - $ref: '#/components/parameters/ClinicBankAccountId'
+
+    patch:
+      tags: [Clinic Bank Accounts]
+      summary: Edita ou inativa uma conta bancária
+      x-required-roles: [manager]
+      description: Não há exclusão — apenas inativação via "active:false".
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClinicBankAccountInput'
+      responses:
+        '200':
+          description: Conta bancária atualizada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ClinicBankAccount'
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+        '422':
+          $ref: '../common.yaml#/components/responses/ValidationError'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+
+  # ============================================================
+  # CLINIC SETTINGS (singleton)
+  # ============================================================
+
+  /clinic-settings:
+    get:
+      tags: [Clinic Settings]
+      summary: Retorna os parâmetros administrativos da clínica
+      x-required-roles: [manager]
+      responses:
+        '200':
+          description: Configurações da clínica
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ClinicSettings'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+
+    patch:
+      tags: [Clinic Settings]
+      summary: Edita os parâmetros administrativos da clínica
+      x-required-roles: [manager]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClinicSettingsPatch'
+      responses:
+        '200':
+          description: Configurações atualizadas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ClinicSettings'
+        '422':
+          $ref: '../common.yaml#/components/responses/ValidationError'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+
+components:
+
+  parameters:
+    ClinicBankAccountId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+
+  schemas:
+
+    Clinic:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+        cnpj:
+          type: string
+        logoUrl:
+          type: string
+          format: uri
+          nullable: true
+        phone:
+          type: string
+          nullable: true
+        contactEmail:
+          type: string
+          nullable: true
+        address:
+          $ref: '../common.yaml#/components/schemas/Address'
+        openingTime:
+          type: string
+          example: "08:00"
+        closingTime:
+          type: string
+          example: "18:00"
+        active:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
+
+    ClinicPatch:
+      type: object
+      properties:
+        name:
+          type: string
+        cnpj:
+          type: string
+        logoUrl:
+          type: string
+          format: uri
+          nullable: true
+        phone:
+          type: string
+          nullable: true
+        contactEmail:
+          type: string
+          nullable: true
+        address:
+          $ref: '../common.yaml#/components/schemas/Address'
+        openingTime:
+          type: string
+        closingTime:
+          type: string
+
+    ClinicBankAccount:
+      type: object
+      properties:
+        id:
+          type: integer
+        bankName:
+          type: string
+        agency:
+          type: string
+        account:
+          type: string
+        cedenteCode:
+          type: string
+          description: Código do cedente/convênio junto ao banco (ex. Sicredi 748)
+        active:
+          type: boolean
+        updatedAt:
+          type: string
+          format: date-time
+          readOnly: true
+
+    ClinicBankAccountInput:
+      type: object
+      required: [bankName, agency, account, cedenteCode]
+      properties:
+        bankName:
+          type: string
+        agency:
+          type: string
+        account:
+          type: string
+        cedenteCode:
+          type: string
+        active:
+          type: boolean
+          default: true
+
+    ClinicSettings:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        lateInterestPercent:
+          type: number
+          format: decimal
+          description: Juros de mora aplicado a parcelas em atraso
+        lateFeePercent:
+          type: number
+          format: decimal
+          description: Multa aplicada a parcelas em atraso
+        defaultDueDays:
+          type: integer
+          description: Prazo padrão de vencimento, em dias, usado quando não especificado explicitamente
+        appointmentReminderLeadHours:
+          type: integer
+          description: Antecedência (em horas) do lembrete automático de consulta
+        sessionTimeoutMinutes:
+          type: integer
+          description: Minutos de inatividade até o encerramento automático da sessão
+        updatedAt:
+          type: string
+          format: date-time
+          readOnly: true
+
+    ClinicSettingsPatch:
+      type: object
+      properties:
+        lateInterestPercent:
+          type: number
+          format: decimal
+          minimum: 0
+        lateFeePercent:
+          type: number
+          format: decimal
+          minimum: 0
+        defaultDueDays:
+          type: integer
+          minimum: 1
+        appointmentReminderLeadHours:
+          type: integer
+          minimum: 1
+        sessionTimeoutMinutes:
+          type: integer
+          minimum: 1

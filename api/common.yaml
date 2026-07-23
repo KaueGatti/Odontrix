@@ -1,0 +1,150 @@
+components:
+
+  parameters:
+    PageParam:
+      name: page
+      in: query
+      required: false
+      description: Número da página (default 1)
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+
+    LimitParam:
+      name: limit
+      in: query
+      required: false
+      description: Itens por página (default 20, máximo 100)
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+
+  schemas:
+
+    PaginationMeta:
+      type: object
+      properties:
+        total:
+          type: integer
+          example: 87
+        page:
+          type: integer
+          example: 1
+        perPage:
+          type: integer
+          example: 20
+        totalPages:
+          type: integer
+          example: 5
+
+    Address:
+      type: object
+      description: >
+        Endereço completo. Tratado como objeto embutido (value object) em Paciente,
+        Dentista e Clínica — não é exposto como recurso próprio da API.
+      required: [cep, street, number, neighborhood, city, state]
+      properties:
+        cep:
+          type: string
+          example: "13500-000"
+        street:
+          type: string
+          example: "Rua das Flores"
+        number:
+          type: string
+          example: "123"
+        complement:
+          type: string
+          nullable: true
+          example: "Apto 45"
+        neighborhood:
+          type: string
+          example: "Centro"
+        city:
+          type: string
+          example: "Rio Claro"
+        state:
+          type: string
+          example: "SP"
+        country:
+          type: string
+          default: "Brasil"
+
+    Problem:
+      type: object
+      description: RFC 7807 - Problem Details for HTTP APIs
+      properties:
+        type:
+          type: string
+          format: uri
+          example: "https://api.miniworld.com/errors/validation"
+        title:
+          type: string
+          example: "Erro de validação"
+        status:
+          type: integer
+          example: 422
+        detail:
+          type: string
+          example: "O campo 'scheduledAt' não pode ser uma data passada"
+        instance:
+          type: string
+          example: "/appointments"
+
+    ProblemValidation:
+      allOf:
+        - $ref: '#/components/schemas/Problem'
+        - type: object
+          properties:
+            fields:
+              type: object
+              additionalProperties:
+                type: string
+              example:
+                scheduledAt: "Data não pode ser no passado"
+
+  responses:
+    BadRequest:
+      description: Requisição malformada
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+
+    Unauthorized:
+      description: Não autenticado
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+
+    Forbidden:
+      description: Autenticado, mas sem permissão para essa ação (matriz de permissões)
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+
+    NotFound:
+      description: Recurso não encontrado
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+
+    ValidationError:
+      description: Erro de validação de campos
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemValidation'
+
+    Conflict:
+      description: Transição de estado inválida para o status atual do recurso
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'

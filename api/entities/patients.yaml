@@ -1,0 +1,980 @@
+tags:
+  - name: Patients
+    description: Cadastro de pacientes
+  - name: Anamnesis
+    description: Histórico de anamnese do paciente (evolutivo)
+  - name: Attachments
+    description: Radiografias e fotos vinculadas ao paciente ou a uma consulta
+  - name: Responsibles
+    description: Responsável financeiro/legal (obrigatório para pacientes menores de idade)
+  - name: Referral Sources
+    description: Origem do paciente (tabela de apoio)
+  - name: Attachment Types
+    description: Tipos de anexo (tabela de apoio)
+
+paths:
+
+  # ============================================================
+  # PATIENTS
+  # ============================================================
+
+  /patients:
+    get:
+      tags: [Patients]
+      summary: Lista pacientes com filtros e paginação
+      x-required-roles: [manager, receptionist]
+      description: >
+        Dentista não tem acesso a esta listagem geral — apenas aos pacientes
+        vinculados às suas próprias consultas (ver GET /appointments).
+      parameters:
+        - $ref: '../common.yaml#/components/parameters/PageParam'
+        - $ref: '../common.yaml#/components/parameters/LimitParam'
+        - name: filter
+          in: query
+          required: false
+          style: deepObject
+          explode: true
+          description: >
+            Filtros estruturados. Ex: filter[active]=true&filter[name]=maria
+            &filter[cpf]=12345678900&filter[hasOverdueBalance]=true
+          schema:
+            $ref: '#/components/schemas/PatientFilter'
+      responses:
+        '200':
+          description: Lista de pacientes
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Patient'
+                  meta:
+                    $ref: '../common.yaml#/components/schemas/PaginationMeta'
+        '400':
+          $ref: '../common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: '../common.yaml#/components/responses/Unauthorized'
+
+    post:
+      tags: [Patients]
+      summary: Cadastra um novo paciente
+      x-required-roles: [manager, receptionist]
+      description: >
+        Ao menos um entre cpf e rg é obrigatório. Se o paciente for menor de
+        idade (calculado a partir de birthDate), responsibleId é obrigatório.
+        Documento (cpf/rg) deve ser único no sistema.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatientInput'
+      responses:
+        '201':
+          description: Paciente criado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Patient'
+        '422':
+          description: >
+            Erro de validação — inclui os casos de documento duplicado,
+            nenhum documento informado, ou responsável ausente para menor de idade
+          content:
+            application/problem+json:
+              schema:
+                $ref: '../common.yaml#/components/schemas/ProblemValidation'
+        '401':
+          $ref: '../common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+
+  /patients/{id}:
+    parameters:
+      - $ref: '#/components/parameters/PatientId'
+
+    get:
+      tags: [Patients]
+      summary: Busca um paciente pelo ID
+      x-required-roles: [manager, receptionist, dentist]
+      responses:
+        '200':
+          description: Paciente encontrado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Patient'
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: '../common.yaml#/components/responses/Unauthorized'
+
+    patch:
+      tags: [Patients]
+      summary: Edita ou inativa um paciente
+      x-required-roles: [manager, receptionist]
+      description: >
+        Não há exclusão de pacientes — apenas inativação via "active:false".
+        Um paciente inativo não pode ter novas consultas agendadas.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatientPatch'
+      responses:
+        '200':
+          description: Paciente atualizado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Patient'
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+        '422':
+          $ref: '../common.yaml#/components/responses/ValidationError'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+
+  # ============================================================
+  # ANAMNESIS (sub-recurso de Patient)
+  # ============================================================
+
+  /patients/{patientId}/anamnesis:
+    parameters:
+      - $ref: '#/components/parameters/PatientIdPath'
+
+    get:
+      tags: [Anamnesis]
+      summary: Lista o histórico de anamnese do paciente (mais recente primeiro)
+      x-required-roles: [manager, receptionist, dentist]
+      parameters:
+        - $ref: '../common.yaml#/components/parameters/PageParam'
+        - $ref: '../common.yaml#/components/parameters/LimitParam'
+      responses:
+        '200':
+          description: Histórico de anamnese
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Anamnesis'
+                  meta:
+                    $ref: '../common.yaml#/components/schemas/PaginationMeta'
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+
+    post:
+      tags: [Anamnesis]
+      summary: Registra uma nova entrada de anamnese
+      x-required-roles: [dentist]
+      description: >
+        dentistId é preenchido automaticamente a partir do usuário autenticado.
+        Cada entrada é imutável — uma atualização no histórico do paciente
+        sempre gera um novo registro, nunca edita um existente.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnamnesisInput'
+      responses:
+        '201':
+          description: Entrada de anamnese registrada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Anamnesis'
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+        '422':
+          $ref: '../common.yaml#/components/responses/ValidationError'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+
+  # ============================================================
+  # ATTACHMENTS (sub-recurso de Patient)
+  # ============================================================
+
+  /patients/{patientId}/attachments:
+    parameters:
+      - $ref: '#/components/parameters/PatientIdPath'
+
+    get:
+      tags: [Attachments]
+      summary: Lista os anexos do paciente
+      x-required-roles: [manager, receptionist, dentist]
+      parameters:
+        - $ref: '../common.yaml#/components/parameters/PageParam'
+        - $ref: '../common.yaml#/components/parameters/LimitParam'
+        - name: appointmentId
+          in: query
+          required: false
+          description: Filtra apenas os anexos vinculados a uma consulta específica
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Lista de anexos
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Attachment'
+                  meta:
+                    $ref: '../common.yaml#/components/schemas/PaginationMeta'
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+
+    post:
+      tags: [Attachments]
+      summary: Registra um novo anexo (arquivo já enviado a um storage externo)
+      x-required-roles: [manager, receptionist, dentist]
+      description: >
+        fileUrl deve apontar para um arquivo já hospedado (S3 ou similar) —
+        este endpoint não recebe upload binário, apenas registra a referência.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AttachmentInput'
+      responses:
+        '201':
+          description: Anexo registrado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Attachment'
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+        '422':
+          $ref: '../common.yaml#/components/responses/ValidationError'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+
+  /patients/{patientId}/attachments/{id}:
+    parameters:
+      - $ref: '#/components/parameters/PatientIdPath'
+      - $ref: '#/components/parameters/AttachmentId'
+
+    get:
+      tags: [Attachments]
+      summary: Busca um anexo pelo ID
+      x-required-roles: [manager, receptionist, dentist]
+      responses:
+        '200':
+          description: Anexo encontrado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Attachment'
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+
+    delete:
+      tags: [Attachments]
+      summary: Remove um anexo
+      x-required-roles: [manager, receptionist]
+      description: >
+        Único recurso do sistema com exclusão física real — não há regra de
+        negócio que exija preservar um anexo enviado por engano.
+      responses:
+        '204':
+          description: Anexo removido
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+
+  # ============================================================
+  # RESPONSIBLES
+  # ============================================================
+
+  /responsibles:
+    get:
+      tags: [Responsibles]
+      summary: Lista responsáveis financeiros/legais cadastrados
+      x-required-roles: [manager, receptionist]
+      description: >
+        Útil para reaproveitar o mesmo responsável entre irmãos/dependentes —
+        buscar por CPF antes de cadastrar um novo.
+      parameters:
+        - $ref: '../common.yaml#/components/parameters/PageParam'
+        - $ref: '../common.yaml#/components/parameters/LimitParam'
+        - name: cpf
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Lista de responsáveis
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Responsible'
+                  meta:
+                    $ref: '../common.yaml#/components/schemas/PaginationMeta'
+        '401':
+          $ref: '../common.yaml#/components/responses/Unauthorized'
+
+    post:
+      tags: [Responsibles]
+      summary: Cadastra um novo responsável
+      x-required-roles: [manager, receptionist]
+      description: Ao menos um entre cpf e rg é obrigatório.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResponsibleInput'
+      responses:
+        '201':
+          description: Responsável criado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Responsible'
+        '422':
+          $ref: '../common.yaml#/components/responses/ValidationError'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+
+  /responsibles/{id}:
+    parameters:
+      - $ref: '#/components/parameters/ResponsibleId'
+    get:
+      tags: [Responsibles]
+      summary: Busca um responsável pelo ID
+      x-required-roles: [manager, receptionist]
+      responses:
+        '200':
+          description: Responsável encontrado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Responsible'
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+
+    patch:
+      tags: [Responsibles]
+      summary: Edita ou inativa um responsável
+      x-required-roles: [manager, receptionist]
+      description: Não há exclusão — apenas inativação via "active:false".
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResponsibleInput'
+      responses:
+        '200':
+          description: Responsável atualizado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Responsible'
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+        '422':
+          $ref: '../common.yaml#/components/responses/ValidationError'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+
+  # ============================================================
+  # REFERRAL SOURCES (tabela de apoio)
+  # ============================================================
+
+  /referral-sources:
+    get:
+      tags: [Referral Sources]
+      summary: Lista origens de paciente
+      x-required-roles: [manager, receptionist]
+      parameters:
+        - $ref: '../common.yaml#/components/parameters/PageParam'
+        - $ref: '../common.yaml#/components/parameters/LimitParam'
+      responses:
+        '200':
+          description: Lista de origens
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ReferralSource'
+                  meta:
+                    $ref: '../common.yaml#/components/schemas/PaginationMeta'
+        '401':
+          $ref: '../common.yaml#/components/responses/Unauthorized'
+
+    post:
+      tags: [Referral Sources]
+      summary: Cria uma nova origem de paciente
+      x-required-roles: [manager]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReferralSourceInput'
+      responses:
+        '201':
+          description: Origem criada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ReferralSource'
+        '422':
+          $ref: '../common.yaml#/components/responses/ValidationError'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+
+  /referral-sources/{id}:
+    parameters:
+      - $ref: '#/components/parameters/ReferralSourceId'
+    get:
+      tags: [Referral Sources]
+      summary: Busca uma origem pelo ID
+      x-required-roles: [manager, receptionist]
+      responses:
+        '200':
+          description: Origem encontrada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ReferralSource'
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+
+    patch:
+      tags: [Referral Sources]
+      summary: Edita ou inativa uma origem
+      x-required-roles: [manager]
+      description: Não há exclusão — apenas inativação via "active:false".
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReferralSourceInput'
+      responses:
+        '200':
+          description: Origem atualizada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ReferralSource'
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+        '422':
+          $ref: '../common.yaml#/components/responses/ValidationError'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+
+  # ============================================================
+  # ATTACHMENT TYPES (tabela de apoio)
+  # ============================================================
+
+  /attachment-types:
+    get:
+      tags: [Attachment Types]
+      summary: Lista tipos de anexo
+      x-required-roles: [manager, receptionist, dentist]
+      parameters:
+        - $ref: '../common.yaml#/components/parameters/PageParam'
+        - $ref: '../common.yaml#/components/parameters/LimitParam'
+      responses:
+        '200':
+          description: Lista de tipos de anexo
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AttachmentType'
+                  meta:
+                    $ref: '../common.yaml#/components/schemas/PaginationMeta'
+        '401':
+          $ref: '../common.yaml#/components/responses/Unauthorized'
+
+    post:
+      tags: [Attachment Types]
+      summary: Cria um novo tipo de anexo
+      x-required-roles: [manager]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AttachmentTypeInput'
+      responses:
+        '201':
+          description: Tipo de anexo criado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AttachmentType'
+        '422':
+          $ref: '../common.yaml#/components/responses/ValidationError'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+
+  /attachment-types/{id}:
+    parameters:
+      - $ref: '#/components/parameters/AttachmentTypeId'
+    get:
+      tags: [Attachment Types]
+      summary: Busca um tipo de anexo pelo ID
+      x-required-roles: [manager, receptionist, dentist]
+      responses:
+        '200':
+          description: Tipo de anexo encontrado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AttachmentType'
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+
+    patch:
+      tags: [Attachment Types]
+      summary: Edita ou inativa um tipo de anexo
+      x-required-roles: [manager]
+      description: Não há exclusão — apenas inativação via "active:false".
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AttachmentTypeInput'
+      responses:
+        '200':
+          description: Tipo de anexo atualizado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AttachmentType'
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+        '422':
+          $ref: '../common.yaml#/components/responses/ValidationError'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+
+components:
+
+  parameters:
+    PatientId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+
+    PatientIdPath:
+      name: patientId
+      in: path
+      required: true
+      schema:
+        type: integer
+
+    AttachmentId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+
+    ResponsibleId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+
+    ReferralSourceId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+
+    AttachmentTypeId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+
+  schemas:
+
+    Patient:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 7
+        fullName:
+          type: string
+          example: "Maria da Silva"
+        cpf:
+          type: string
+          nullable: true
+          example: "123.456.789-00"
+        rg:
+          type: string
+          nullable: true
+        landlinePhone:
+          type: string
+        cellPhone:
+          type: string
+        emergencyPhone:
+          type: string
+        email:
+          type: string
+          nullable: true
+        birthDate:
+          type: string
+          format: date
+        address:
+          $ref: '../common.yaml#/components/schemas/Address'
+        referralSourceId:
+          type: integer
+        active:
+          type: boolean
+        responsibleId:
+          type: integer
+          nullable: true
+          description: Obrigatório se o paciente for menor de idade
+        planId:
+          type: integer
+          nullable: true
+        planStartedAt:
+          type: string
+          format: date
+          nullable: true
+          readOnly: true
+          description: Preenchido automaticamente quando planId é definido
+        accountBalance:
+          type: number
+          format: double
+          readOnly: true
+          description: Total a pagar — calculado a partir das parcelas pendentes (domínio financeiro)
+        hasOverdueBalance:
+          type: boolean
+          readOnly: true
+          description: Indica inadimplência — bloqueia novos agendamentos quando true
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
+
+    PatientInput:
+      type: object
+      required: [fullName, landlinePhone, cellPhone, emergencyPhone, birthDate, address, referralSourceId]
+      properties:
+        fullName:
+          type: string
+        cpf:
+          type: string
+          nullable: true
+        rg:
+          type: string
+          nullable: true
+        landlinePhone:
+          type: string
+        cellPhone:
+          type: string
+        emergencyPhone:
+          type: string
+        email:
+          type: string
+          nullable: true
+        birthDate:
+          type: string
+          format: date
+        address:
+          $ref: '../common.yaml#/components/schemas/Address'
+        referralSourceId:
+          type: integer
+        responsibleId:
+          type: integer
+          nullable: true
+        planId:
+          type: integer
+          nullable: true
+
+    PatientPatch:
+      type: object
+      properties:
+        fullName:
+          type: string
+        cpf:
+          type: string
+          nullable: true
+        rg:
+          type: string
+          nullable: true
+        landlinePhone:
+          type: string
+        cellPhone:
+          type: string
+        emergencyPhone:
+          type: string
+        email:
+          type: string
+          nullable: true
+        address:
+          $ref: '../common.yaml#/components/schemas/Address'
+        referralSourceId:
+          type: integer
+        responsibleId:
+          type: integer
+          nullable: true
+        planId:
+          type: integer
+          nullable: true
+        active:
+          type: boolean
+
+    PatientFilter:
+      type: object
+      properties:
+        name:
+          type: string
+        cpf:
+          type: string
+        active:
+          type: boolean
+        planId:
+          type: integer
+        referralSourceId:
+          type: integer
+        hasOverdueBalance:
+          type: boolean
+
+    Anamnesis:
+      type: object
+      properties:
+        id:
+          type: integer
+        patientId:
+          type: integer
+        dentistId:
+          type: integer
+          readOnly: true
+        recordDate:
+          type: string
+          format: date-time
+          readOnly: true
+        allergies:
+          type: string
+          nullable: true
+        currentMedications:
+          type: string
+          nullable: true
+        preexistingConditions:
+          type: string
+          nullable: true
+        observations:
+          type: string
+          nullable: true
+
+    AnamnesisInput:
+      type: object
+      properties:
+        allergies:
+          type: string
+          nullable: true
+        currentMedications:
+          type: string
+          nullable: true
+        preexistingConditions:
+          type: string
+          nullable: true
+        observations:
+          type: string
+          nullable: true
+
+    Attachment:
+      type: object
+      properties:
+        id:
+          type: integer
+        patientId:
+          type: integer
+        appointmentId:
+          type: integer
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        fileUrl:
+          type: string
+          format: uri
+        type:
+          type: integer
+          description: attachmentTypeId
+        sentAt:
+          type: string
+          format: date-time
+          readOnly: true
+
+    AttachmentInput:
+      type: object
+      required: [fileUrl, type]
+      properties:
+        appointmentId:
+          type: integer
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        fileUrl:
+          type: string
+          format: uri
+        type:
+          type: integer
+          description: attachmentTypeId
+
+    Responsible:
+      type: object
+      properties:
+        id:
+          type: integer
+        fullName:
+          type: string
+        cpf:
+          type: string
+          nullable: true
+        rg:
+          type: string
+          nullable: true
+        active:
+          type: boolean
+
+    ResponsibleInput:
+      type: object
+      required: [fullName]
+      properties:
+        fullName:
+          type: string
+        cpf:
+          type: string
+          nullable: true
+        rg:
+          type: string
+          nullable: true
+        active:
+          type: boolean
+          default: true
+
+    ReferralSource:
+      type: object
+      properties:
+        id:
+          type: integer
+        description:
+          type: string
+        active:
+          type: boolean
+
+    ReferralSourceInput:
+      type: object
+      required: [description]
+      properties:
+        description:
+          type: string
+        active:
+          type: boolean
+          default: true
+
+    AttachmentType:
+      type: object
+      properties:
+        id:
+          type: integer
+        description:
+          type: string
+        active:
+          type: boolean
+
+    AttachmentTypeInput:
+      type: object
+      required: [description]
+      properties:
+        description:
+          type: string
+        active:
+          type: boolean
+          default: true

@@ -1,0 +1,903 @@
+tags:
+  - name: Appointments
+    description: Ciclo de vida completo da consulta odontológica
+  - name: Appointment Types
+    description: Tipos de consulta (tabela de apoio)
+  - name: Cancellation Reasons
+    description: Motivos de cancelamento (tabela de apoio)
+
+paths:
+
+  # ============================================================
+  # APPOINTMENTS
+  # ============================================================
+
+  /appointments:
+    get:
+      tags: [Appointments]
+      summary: Lista consultas com filtros e paginação
+      x-required-roles: [manager, receptionist, dentist]
+      description: >
+        Dentista vê apenas consultas em que é o profissional responsável
+        (dentistId é forçado ao próprio usuário autenticado quando o perfil é dentist).
+      parameters:
+        - $ref: '../common.yaml#/components/parameters/PageParam'
+        - $ref: '../common.yaml#/components/parameters/LimitParam'
+        - name: filter
+          in: query
+          required: false
+          style: deepObject
+          explode: true
+          description: >
+            Filtros estruturados. Ex: filter[status]=completed&filter[dentistId]=3
+            &filter[date][gte]=2026-07-01&filter[date][lte]=2026-07-31
+          schema:
+            $ref: '#/components/schemas/AppointmentFilter'
+      responses:
+        '200':
+          description: Lista de consultas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Appointment'
+                  meta:
+                    $ref: '../common.yaml#/components/schemas/PaginationMeta'
+        '400':
+          $ref: '../common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: '../common.yaml#/components/responses/Unauthorized'
+
+    post:
+      tags: [Appointments]
+      summary: Agenda uma nova consulta
+      x-required-roles: [manager, receptionist]
+      description: >
+        receptionistId é preenchido automaticamente a partir do usuário autenticado,
+        não é um campo de entrada.
+        Validações aplicadas: paciente sem débito/inadimplência, data não retroativa,
+        dentro do horário de funcionamento da clínica, sem conflito de horário
+        para o dentista.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AppointmentInput'
+      responses:
+        '201':
+          description: Consulta criada com status "scheduled"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Appointment'
+        '422':
+          $ref: '../common.yaml#/components/responses/ValidationError'
+        '401':
+          $ref: '../common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+        '409':
+          description: Conflito de horário para o dentista, ou paciente inadimplente
+          content:
+            application/problem+json:
+              schema:
+                $ref: '../common.yaml#/components/schemas/Problem'
+
+  /appointments/{id}:
+    parameters:
+      - $ref: '#/components/parameters/AppointmentId'
+
+    get:
+      tags: [Appointments]
+      summary: Busca uma consulta pelo ID
+      x-required-roles: [manager, receptionist, dentist]
+      responses:
+        '200':
+          description: Consulta encontrada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Appointment'
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: '../common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+
+    patch:
+      tags: [Appointments]
+      summary: Reagenda ou edita campos gerais da consulta
+      x-required-roles: [manager, receptionist]
+      description: >
+        Não é usado para mudança de status — apenas reagendamento e edição de
+        campos preenchidos no momento do agendamento.
+        Permitido apenas enquanto o status estiver em "scheduled" ou "confirmed"
+        (antes do check-in). Reagendar não reseta o status para "scheduled".
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AppointmentPatch'
+      responses:
+        '200':
+          description: Consulta atualizada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Appointment'
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+        '422':
+          $ref: '../common.yaml#/components/responses/ValidationError'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+        '409':
+          description: Consulta já passou do check-in — não pode mais ser reagendada
+          content:
+            application/problem+json:
+              schema:
+                $ref: '../common.yaml#/components/schemas/Problem'
+
+  # ------------------------------------------------------------
+  # Transições de estado — ver maquinas-de-estado.md
+  # ------------------------------------------------------------
+
+  /appointments/{id}/confirm:
+    parameters:
+      - $ref: '#/components/parameters/AppointmentId'
+    post:
+      tags: [Appointments]
+      summary: Confirma uma consulta (scheduled -> confirmed)
+      x-required-roles: [manager, receptionist]
+      description: Representa o contato prévio com o paciente (telefone/WhatsApp) antes do dia da consulta.
+      responses:
+        '200':
+          description: Consulta confirmada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Appointment'
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+        '409':
+          $ref: '../common.yaml#/components/responses/Conflict'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+
+  /appointments/{id}/check-in:
+    parameters:
+      - $ref: '#/components/parameters/AppointmentId'
+    post:
+      tags: [Appointments]
+      summary: Registra a chegada do paciente (scheduled|confirmed -> checked_in)
+      x-required-roles: [manager, receptionist]
+      description: >
+        Permitido a partir de "scheduled" (walk-in, sem confirmação prévia) ou de "confirmed".
+      responses:
+        '200':
+          description: Paciente em espera
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Appointment'
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+        '409':
+          $ref: '../common.yaml#/components/responses/Conflict'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+
+  /appointments/{id}/start:
+    parameters:
+      - $ref: '#/components/parameters/AppointmentId'
+    post:
+      tags: [Appointments]
+      summary: Inicia o atendimento (checked_in -> in_progress)
+      x-required-roles: [dentist]
+      description: Apenas o dentista responsável pela consulta pode chamar o paciente.
+      responses:
+        '200':
+          description: Atendimento iniciado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Appointment'
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+        '409':
+          $ref: '../common.yaml#/components/responses/Conflict'
+        '403':
+          description: Autenticado, mas não é o dentista responsável por esta consulta
+          content:
+            application/problem+json:
+              schema:
+                $ref: '../common.yaml#/components/schemas/Problem'
+
+  /appointments/{id}/complete:
+    parameters:
+      - $ref: '#/components/parameters/AppointmentId'
+    post:
+      tags: [Appointments]
+      summary: Finaliza a consulta com os dados pós-atendimento (in_progress -> completed)
+      x-required-roles: [dentist]
+      description: >
+        Apenas o dentista responsável. Estado final — não permite mais nenhuma
+        transição, inclusive cancelamento. "nextRecommendedAppointment" deve
+        gerar automaticamente uma sugestão de agendamento para a recepcionista.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AppointmentCompleteInput'
+      responses:
+        '200':
+          description: Consulta finalizada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Appointment'
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+        '422':
+          $ref: '../common.yaml#/components/responses/ValidationError'
+        '409':
+          $ref: '../common.yaml#/components/responses/Conflict'
+        '403':
+          description: Autenticado, mas não é o dentista responsável por esta consulta
+          content:
+            application/problem+json:
+              schema:
+                $ref: '../common.yaml#/components/schemas/Problem'
+
+  /appointments/{id}/cancel:
+    parameters:
+      - $ref: '#/components/parameters/AppointmentId'
+    post:
+      tags: [Appointments]
+      summary: Cancela a consulta (qualquer estado -> cancelled, exceto após completed)
+      x-required-roles: [manager, receptionist]
+      description: >
+        Permitido em qualquer estado anterior a "completed", inclusive durante
+        o atendimento (desistência do paciente em "in_progress"). Motivo obrigatório.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AppointmentCancelInput'
+      responses:
+        '200':
+          description: Consulta cancelada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Appointment'
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+        '422':
+          $ref: '../common.yaml#/components/responses/ValidationError'
+        '409':
+          description: Consulta já está com status "completed" e não pode ser cancelada
+          content:
+            application/problem+json:
+              schema:
+                $ref: '../common.yaml#/components/schemas/Problem'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+
+  /appointments/{id}/no-show:
+    parameters:
+      - $ref: '#/components/parameters/AppointmentId'
+    post:
+      tags: [Appointments]
+      summary: Marca não comparecimento (scheduled|confirmed -> no_show)
+      x-required-roles: [manager, receptionist]
+      description: >
+        Também acionado automaticamente pelo sistema 5 minutos após o horário
+        agendado, caso a consulta ainda esteja em "scheduled" ou "confirmed".
+        Marcação manual só é aceita a partir do horário agendado (nunca antes).
+      responses:
+        '200':
+          description: Consulta marcada como não comparecimento
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Appointment'
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+        '409':
+          description: >
+            Transição inválida — consulta não está em scheduled/confirmed,
+            ou o horário agendado ainda não chegou
+          content:
+            application/problem+json:
+              schema:
+                $ref: '../common.yaml#/components/schemas/Problem'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+
+  /appointments/{id}/reactivate:
+    parameters:
+      - $ref: '#/components/parameters/AppointmentId'
+    post:
+      tags: [Appointments]
+      summary: Reativa uma consulta de no_show para checked_in (paciente atrasado que será atendido)
+      x-required-roles: [manager, receptionist]
+      description: >
+        Única exceção à regra de não regressão de status. Permitido apenas no
+        mesmo dia da consulta original. Fica registrado apenas no audit_log padrão,
+        sem campo de aprovação específica do dentista.
+      responses:
+        '200':
+          description: Consulta reativada, paciente em espera novamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Appointment'
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+        '409':
+          description: >
+            Transição inválida — consulta não está em no_show, ou não é mais
+            o mesmo dia da consulta original
+          content:
+            application/problem+json:
+              schema:
+                $ref: '../common.yaml#/components/schemas/Problem'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+
+  # ============================================================
+  # APPOINTMENT TYPES (tabela de apoio)
+  # ============================================================
+
+  /appointment-types:
+    get:
+      tags: [Appointment Types]
+      summary: Lista tipos de consulta
+      x-required-roles: [manager, receptionist, dentist]
+      parameters:
+        - $ref: '../common.yaml#/components/parameters/PageParam'
+        - $ref: '../common.yaml#/components/parameters/LimitParam'
+      responses:
+        '200':
+          description: Lista de tipos de consulta
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AppointmentType'
+                  meta:
+                    $ref: '../common.yaml#/components/schemas/PaginationMeta'
+        '401':
+          $ref: '../common.yaml#/components/responses/Unauthorized'
+
+    post:
+      tags: [Appointment Types]
+      summary: Cria um novo tipo de consulta
+      x-required-roles: [manager, receptionist]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AppointmentTypeInput'
+      responses:
+        '201':
+          description: Tipo de consulta criado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AppointmentType'
+        '422':
+          $ref: '../common.yaml#/components/responses/ValidationError'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+
+  /appointment-types/{id}:
+    parameters:
+      - $ref: '#/components/parameters/AppointmentTypeId'
+    get:
+      tags: [Appointment Types]
+      summary: Busca um tipo de consulta pelo ID
+      x-required-roles: [manager, receptionist, dentist]
+      responses:
+        '200':
+          description: Tipo de consulta encontrado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AppointmentType'
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+
+    patch:
+      tags: [Appointment Types]
+      summary: Edita ou inativa um tipo de consulta
+      x-required-roles: [manager, receptionist]
+      description: Não há exclusão — apenas inativação via "active:false".
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AppointmentTypeInput'
+      responses:
+        '200':
+          description: Tipo de consulta atualizado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AppointmentType'
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+        '422':
+          $ref: '../common.yaml#/components/responses/ValidationError'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+
+  # ============================================================
+  # CANCELLATION REASONS (tabela de apoio)
+  # ============================================================
+
+  /cancellation-reasons:
+    get:
+      tags: [Cancellation Reasons]
+      summary: Lista motivos de cancelamento
+      x-required-roles: [manager, receptionist, dentist]
+      parameters:
+        - $ref: '../common.yaml#/components/parameters/PageParam'
+        - $ref: '../common.yaml#/components/parameters/LimitParam'
+      responses:
+        '200':
+          description: Lista de motivos de cancelamento
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CancellationReason'
+                  meta:
+                    $ref: '../common.yaml#/components/schemas/PaginationMeta'
+        '401':
+          $ref: '../common.yaml#/components/responses/Unauthorized'
+
+    post:
+      tags: [Cancellation Reasons]
+      summary: Cria um novo motivo de cancelamento
+      x-required-roles: [manager, receptionist]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CancellationReasonInput'
+      responses:
+        '201':
+          description: Motivo de cancelamento criado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/CancellationReason'
+        '422':
+          $ref: '../common.yaml#/components/responses/ValidationError'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+
+  /cancellation-reasons/{id}:
+    parameters:
+      - $ref: '#/components/parameters/CancellationReasonId'
+    get:
+      tags: [Cancellation Reasons]
+      summary: Busca um motivo de cancelamento pelo ID
+      x-required-roles: [manager, receptionist, dentist]
+      responses:
+        '200':
+          description: Motivo de cancelamento encontrado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/CancellationReason'
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+
+    patch:
+      tags: [Cancellation Reasons]
+      summary: Edita ou inativa um motivo de cancelamento
+      x-required-roles: [manager, receptionist]
+      description: Não há exclusão — apenas inativação via "active:false".
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CancellationReasonInput'
+      responses:
+        '200':
+          description: Motivo de cancelamento atualizado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/CancellationReason'
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+        '422':
+          $ref: '../common.yaml#/components/responses/ValidationError'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+
+components:
+
+  parameters:
+    AppointmentId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+
+    AppointmentTypeId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+
+    CancellationReasonId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+
+  schemas:
+
+    Appointment:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 42
+        patientId:
+          type: integer
+          example: 7
+        dentistId:
+          type: integer
+          example: 3
+        receptionistId:
+          type: integer
+          readOnly: true
+          description: Preenchido automaticamente a partir do usuário autenticado na criação
+          example: 1
+        appointmentTypeId:
+          type: integer
+          nullable: true
+          example: 2
+        scheduledDateTime:
+          type: string
+          format: date-time
+          example: "2026-07-20T14:00:00Z"
+        estimatedDurationMin:
+          type: integer
+          example: 30
+        status:
+          type: string
+          enum: [scheduled, confirmed, checked_in, in_progress, completed, cancelled, no_show]
+          example: confirmed
+        schedulingObservations:
+          type: string
+          nullable: true
+          example: "Paciente tem ansiedade"
+        price:
+          type: number
+          format: double
+          nullable: true
+        cancellationReasonId:
+          type: integer
+          nullable: true
+        cancellationNotes:
+          type: string
+          nullable: true
+        actualStartDateTime:
+          type: string
+          format: date-time
+          nullable: true
+        actualEndDateTime:
+          type: string
+          format: date-time
+          nullable: true
+        mainComplaint:
+          type: string
+          nullable: true
+        diagnosis:
+          type: string
+          nullable: true
+        treatmentPlan:
+          type: string
+          nullable: true
+        clinicalNotes:
+          type: string
+          nullable: true
+        nextRecommendedAppointment:
+          type: string
+          format: date
+          nullable: true
+        procedures:
+          type: array
+          items:
+            $ref: '#/components/schemas/AppointmentProcedure'
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
+
+    AppointmentProcedure:
+      type: object
+      properties:
+        id:
+          type: integer
+        procedureId:
+          type: integer
+        unitPrice:
+          type: number
+          format: double
+        discount:
+          type: number
+          format: double
+        finalPrice:
+          type: number
+          format: double
+        observation:
+          type: string
+          nullable: true
+        teeth:
+          type: array
+          description: Notação FDI (ex. 11, 36)
+          items:
+            type: integer
+          example: [11, 36]
+
+    AppointmentInput:
+      type: object
+      required: [patientId, dentistId, scheduledDateTime, estimatedDurationMin]
+      properties:
+        patientId:
+          type: integer
+        dentistId:
+          type: integer
+        appointmentTypeId:
+          type: integer
+          nullable: true
+        scheduledDateTime:
+          type: string
+          format: date-time
+        estimatedDurationMin:
+          type: integer
+        schedulingObservations:
+          type: string
+          nullable: true
+        price:
+          type: number
+          format: double
+          nullable: true
+
+    AppointmentPatch:
+      type: object
+      description: Campos editáveis fora do fluxo de status (ex. reagendamento)
+      properties:
+        scheduledDateTime:
+          type: string
+          format: date-time
+        dentistId:
+          type: integer
+        estimatedDurationMin:
+          type: integer
+        appointmentTypeId:
+          type: integer
+          nullable: true
+        schedulingObservations:
+          type: string
+          nullable: true
+        price:
+          type: number
+          format: double
+          nullable: true
+
+    AppointmentCancelInput:
+      type: object
+      required: [cancellationReasonId]
+      properties:
+        cancellationReasonId:
+          type: integer
+        cancellationNotes:
+          type: string
+          nullable: true
+
+    AppointmentCompleteInput:
+      type: object
+      properties:
+        actualStartDateTime:
+          type: string
+          format: date-time
+        actualEndDateTime:
+          type: string
+          format: date-time
+        mainComplaint:
+          type: string
+          nullable: true
+        diagnosis:
+          type: string
+          nullable: true
+        treatmentPlan:
+          type: string
+          nullable: true
+        clinicalNotes:
+          type: string
+          nullable: true
+        nextRecommendedAppointment:
+          type: string
+          format: date
+          nullable: true
+        procedures:
+          type: array
+          items:
+            $ref: '#/components/schemas/AppointmentProcedureInput'
+
+    AppointmentProcedureInput:
+      type: object
+      required: [procedureId, unitPrice, finalPrice, teeth]
+      properties:
+        procedureId:
+          type: integer
+        unitPrice:
+          type: number
+          format: double
+        discount:
+          type: number
+          format: double
+          default: 0
+        finalPrice:
+          type: number
+          format: double
+        observation:
+          type: string
+          nullable: true
+        teeth:
+          type: array
+          items:
+            type: integer
+          example: [11, 36]
+
+    AppointmentFilter:
+      type: object
+      description: >
+        Representa o objeto que a HandlerMethodArgumentResolver do Spring
+        monta a partir de filter[...] na query string.
+      properties:
+        status:
+          type: string
+          enum: [scheduled, confirmed, checked_in, in_progress, completed, cancelled, no_show]
+        dentistId:
+          type: integer
+        patientId:
+          type: integer
+        appointmentTypeId:
+          type: integer
+        date:
+          type: object
+          properties:
+            gte:
+              type: string
+              format: date
+            lte:
+              type: string
+              format: date
+
+    AppointmentType:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        active:
+          type: boolean
+
+    AppointmentTypeInput:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        active:
+          type: boolean
+          default: true
+
+    CancellationReason:
+      type: object
+      properties:
+        id:
+          type: integer
+        description:
+          type: string
+        active:
+          type: boolean
+
+    CancellationReasonInput:
+      type: object
+      required: [description]
+      properties:
+        description:
+          type: string
+        active:
+          type: boolean
+          default: true

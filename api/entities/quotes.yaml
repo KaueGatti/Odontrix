@@ -1,0 +1,532 @@
+tags:
+  - name: Quotes
+    description: Orçamentos apresentados ao paciente antes da execução de procedimentos
+  - name: Quote Procedures
+    description: Itens (procedimentos) que compõem um orçamento
+
+paths:
+
+  # ============================================================
+  # QUOTES
+  # ============================================================
+
+  /quotes:
+    get:
+      tags: [Quotes]
+      summary: Lista orçamentos com filtros e paginação
+      x-required-roles: [manager, receptionist, dentist]
+      parameters:
+        - $ref: '../common.yaml#/components/parameters/PageParam'
+        - $ref: '../common.yaml#/components/parameters/LimitParam'
+        - name: filter
+          in: query
+          required: false
+          style: deepObject
+          explode: true
+          description: Ex. filter[status]=sent&filter[patientId]=7
+          schema:
+            $ref: '#/components/schemas/QuoteFilter'
+      responses:
+        '200':
+          description: Lista de orçamentos
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Quote'
+                  meta:
+                    $ref: '../common.yaml#/components/schemas/PaginationMeta'
+        '400':
+          $ref: '../common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: '../common.yaml#/components/responses/Unauthorized'
+
+    post:
+      tags: [Quotes]
+      summary: Cria um novo orçamento em rascunho
+      x-required-roles: [manager, receptionist, dentist]
+      description: >
+        Criado sempre com status "draft" e totalAmount = 0. Itens são
+        adicionados depois via POST /quotes/{id}/procedures — o totalAmount
+        é recalculado pelo servidor a cada item adicionado/editado/removido.
+        createdBy é preenchido automaticamente a partir do usuário autenticado.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuoteInput'
+      responses:
+        '201':
+          description: Orçamento criado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Quote'
+        '422':
+          $ref: '../common.yaml#/components/responses/ValidationError'
+        '401':
+          $ref: '../common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+
+  /quotes/{id}:
+    parameters:
+      - $ref: '#/components/parameters/QuoteId'
+
+    get:
+      tags: [Quotes]
+      summary: Busca um orçamento pelo ID
+      x-required-roles: [manager, receptionist, dentist]
+      responses:
+        '200':
+          description: Orçamento encontrado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Quote'
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+
+    patch:
+      tags: [Quotes]
+      summary: Edita os dados gerais de um orçamento em rascunho
+      x-required-roles: [manager, receptionist, dentist]
+      description: >
+        Só é permitido enquanto status = "draft". Depois de enviado (sent),
+        o orçamento fica congelado — para uma nova proposta, crie um novo
+        Quote (sem versionamento de orçamento no MVP).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuotePatch'
+      responses:
+        '200':
+          description: Orçamento atualizado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Quote'
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+        '422':
+          $ref: '../common.yaml#/components/responses/ValidationError'
+        '409':
+          description: Orçamento não está em rascunho (status != draft)
+          content:
+            application/problem+json:
+              schema:
+                $ref: '../common.yaml#/components/schemas/Problem'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+
+  # ============================================================
+  # QUOTE STATE TRANSITIONS
+  # draft -> sent -> approved | rejected
+  # sent -> expired é automático (job agendado, análogo a Boleto vencido),
+  # não exposto como ação de usuário.
+  # ============================================================
+
+  /quotes/{id}/send:
+    parameters:
+      - $ref: '#/components/parameters/QuoteId'
+    post:
+      tags: [Quotes]
+      summary: Envia o orçamento ao paciente (draft -> sent)
+      x-required-roles: [manager, receptionist, dentist]
+      description: Exige ao menos um item (quote_procedure) cadastrado.
+      responses:
+        '200':
+          description: Orçamento enviado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Quote'
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+        '409':
+          description: Orçamento não está em draft, ou não possui itens
+          content:
+            application/problem+json:
+              schema:
+                $ref: '../common.yaml#/components/schemas/Problem'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+
+  /quotes/{id}/approve:
+    parameters:
+      - $ref: '#/components/parameters/QuoteId'
+    post:
+      tags: [Quotes]
+      summary: Registra a aprovação do orçamento pelo paciente (sent -> approved)
+      x-required-roles: [manager, receptionist]
+      responses:
+        '200':
+          description: Orçamento aprovado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Quote'
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+        '409':
+          description: Orçamento não está em status "sent"
+          content:
+            application/problem+json:
+              schema:
+                $ref: '../common.yaml#/components/schemas/Problem'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+
+  /quotes/{id}/reject:
+    parameters:
+      - $ref: '#/components/parameters/QuoteId'
+    post:
+      tags: [Quotes]
+      summary: Registra a recusa do orçamento pelo paciente (sent -> rejected)
+      x-required-roles: [manager, receptionist]
+      responses:
+        '200':
+          description: Orçamento recusado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Quote'
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+        '409':
+          description: Orçamento não está em status "sent"
+          content:
+            application/problem+json:
+              schema:
+                $ref: '../common.yaml#/components/schemas/Problem'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+
+  # ============================================================
+  # QUOTE PROCEDURES (sub-recurso, somente enquanto Quote está em draft)
+  # ============================================================
+
+  /quotes/{quoteId}/procedures:
+    parameters:
+      - $ref: '#/components/parameters/QuoteIdPath'
+
+    get:
+      tags: [Quote Procedures]
+      summary: Lista os itens do orçamento
+      x-required-roles: [manager, receptionist, dentist]
+      responses:
+        '200':
+          description: Lista de itens
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/QuoteProcedure'
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+
+    post:
+      tags: [Quote Procedures]
+      summary: Adiciona um procedimento ao orçamento
+      x-required-roles: [manager, receptionist, dentist]
+      description: >
+        unitPrice é copiado de Procedure.referencePrice no momento da inclusão
+        (snapshot — mudanças futuras no catálogo não afetam o item já
+        adicionado). Recalcula Quote.totalAmount automaticamente. Só permitido
+        enquanto Quote está em draft.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuoteProcedureInput'
+      responses:
+        '201':
+          description: Item adicionado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/QuoteProcedure'
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+        '422':
+          $ref: '../common.yaml#/components/responses/ValidationError'
+        '409':
+          description: Orçamento não está em draft
+          content:
+            application/problem+json:
+              schema:
+                $ref: '../common.yaml#/components/schemas/Problem'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+
+  /quotes/{quoteId}/procedures/{id}:
+    parameters:
+      - $ref: '#/components/parameters/QuoteIdPath'
+      - $ref: '#/components/parameters/QuoteProcedureId'
+
+    patch:
+      tags: [Quote Procedures]
+      summary: Edita um item do orçamento
+      x-required-roles: [manager, receptionist, dentist]
+      description: Só permitido enquanto Quote está em draft. Recalcula Quote.totalAmount.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuoteProcedureInput'
+      responses:
+        '200':
+          description: Item atualizado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/QuoteProcedure'
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+        '422':
+          $ref: '../common.yaml#/components/responses/ValidationError'
+        '409':
+          description: Orçamento não está em draft
+          content:
+            application/problem+json:
+              schema:
+                $ref: '../common.yaml#/components/schemas/Problem'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+
+    delete:
+      tags: [Quote Procedures]
+      summary: Remove um item do orçamento
+      x-required-roles: [manager, receptionist, dentist]
+      description: Só permitido enquanto Quote está em draft. Recalcula Quote.totalAmount.
+      responses:
+        '204':
+          description: Item removido
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+        '409':
+          description: Orçamento não está em draft
+          content:
+            application/problem+json:
+              schema:
+                $ref: '../common.yaml#/components/schemas/Problem'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+
+components:
+
+  parameters:
+    QuoteId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+
+    QuoteIdPath:
+      name: quoteId
+      in: path
+      required: true
+      schema:
+        type: integer
+
+    QuoteProcedureId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+
+  schemas:
+
+    Quote:
+      type: object
+      properties:
+        id:
+          type: integer
+        patientId:
+          type: integer
+        createdBy:
+          type: integer
+          readOnly: true
+        description:
+          type: string
+        status:
+          type: string
+          enum: [draft, sent, approved, rejected, expired]
+          readOnly: true
+        discount:
+          type: number
+          format: decimal
+        discountType:
+          type: string
+          enum: [percent, number]
+        totalAmount:
+          type: number
+          format: decimal
+          readOnly: true
+          description: Calculado pelo servidor a partir da soma dos itens, já aplicando o desconto do orçamento
+        validUntil:
+          type: string
+          format: date
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        paymentNotes:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
+
+    QuoteInput:
+      type: object
+      required: [patientId, description]
+      properties:
+        patientId:
+          type: integer
+        description:
+          type: string
+        discount:
+          type: number
+          format: decimal
+          default: 0
+        discountType:
+          type: string
+          enum: [percent, number]
+          default: percent
+        validUntil:
+          type: string
+          format: date
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        paymentNotes:
+          type: string
+          nullable: true
+
+    QuotePatch:
+      type: object
+      properties:
+        description:
+          type: string
+        discount:
+          type: number
+          format: decimal
+        discountType:
+          type: string
+          enum: [percent, number]
+        validUntil:
+          type: string
+          format: date
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        paymentNotes:
+          type: string
+          nullable: true
+
+    QuoteFilter:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [draft, sent, approved, rejected, expired]
+        patientId:
+          type: integer
+        createdBy:
+          type: integer
+
+    QuoteProcedure:
+      type: object
+      properties:
+        id:
+          type: integer
+        quoteId:
+          type: integer
+        procedureId:
+          type: integer
+        unitPrice:
+          type: number
+          format: decimal
+          readOnly: true
+          description: Snapshot de Procedure.referencePrice no momento da inclusão
+        discount:
+          type: number
+          format: decimal
+        discountType:
+          type: string
+          enum: [percent, number]
+        quantity:
+          type: integer
+        finalPrice:
+          type: number
+          format: decimal
+          readOnly: true
+          description: Calculado pelo servidor a partir de unitPrice, discount e quantity
+        notes:
+          type: string
+          nullable: true
+
+    QuoteProcedureInput:
+      type: object
+      required: [procedureId, quantity]
+      properties:
+        procedureId:
+          type: integer
+        discount:
+          type: number
+          format: decimal
+          default: 0
+        discountType:
+          type: string
+          enum: [percent, number]
+          default: percent
+        quantity:
+          type: integer
+          minimum: 1
+          default: 1
+        notes:
+          type: string
+          nullable: true

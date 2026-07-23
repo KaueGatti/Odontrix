@@ -1,0 +1,285 @@
+tags:
+  - name: Boletos
+    description: >
+      Boleto bancário vinculado a uma parcela com intendedPaymentMethod =
+      Boleto. O contrato abaixo é neutro em relação à decisão ainda pendente
+      de integração (sandbox de emissão real vs. simulação) — os mesmos
+      endpoints funcionam nos dois cenários, mudando apenas a implementação
+      interna de POST /boletos/{id}/register.
+
+paths:
+
+  # ============================================================
+  # BOLETOS
+  # ============================================================
+
+  /installments/{installmentId}/boletos:
+    parameters:
+      - $ref: './billing.yaml#/components/parameters/InstallmentIdPath'
+
+    get:
+      tags: [Boletos]
+      summary: Lista os boletos emitidos para a parcela
+      x-required-roles: [manager, receptionist]
+      description: >
+        Normalmente uma parcela tem um único boleto ativo, mas o histórico
+        pode conter mais de um caso um boleto anterior tenha sido cancelado
+        e reemitido.
+      responses:
+        '200':
+          description: Lista de boletos
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Boleto'
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+
+    post:
+      tags: [Boletos]
+      summary: Emite um novo boleto para a parcela
+      x-required-roles: [manager, receptionist]
+      description: >
+        Só é permitido quando installment.intendedPaymentMethod corresponde a
+        Boleto e não existe um boleto ativo (status issued ou registered) já
+        emitido para a mesma parcela. Cria o registro local com status
+        "issued" — ainda não registrado junto ao banco.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BoletoInput'
+      responses:
+        '201':
+          description: Boleto emitido (status issued)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Boleto'
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+        '422':
+          description: Erro de validação — inclui parcela com forma de pagamento diferente de Boleto
+          content:
+            application/problem+json:
+              schema:
+                $ref: '../common.yaml#/components/schemas/ProblemValidation'
+        '409':
+          description: Já existe um boleto ativo para esta parcela
+          content:
+            application/problem+json:
+              schema:
+                $ref: '../common.yaml#/components/schemas/Problem'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+
+  /boletos/{id}:
+    parameters:
+      - $ref: '#/components/parameters/BoletoId'
+    get:
+      tags: [Boletos]
+      summary: Busca um boleto pelo ID
+      x-required-roles: [manager, receptionist]
+      responses:
+        '200':
+          description: Boleto encontrado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Boleto'
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+
+  /boletos/{id}/register:
+    parameters:
+      - $ref: '#/components/parameters/BoletoId'
+    post:
+      tags: [Boletos]
+      summary: Registra o boleto junto ao banco (issued -> registered)
+      x-required-roles: [manager, receptionist]
+      description: >
+        Preenche ourNumber, barCode, digitableLine e bankPayload a partir do
+        retorno da integração bancária (real ou simulada — decisão de infra
+        ainda em aberto). Só é permitido a partir do status "issued".
+      responses:
+        '200':
+          description: Boleto registrado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Boleto'
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+        '409':
+          description: Boleto não está em status "issued"
+          content:
+            application/problem+json:
+              schema:
+                $ref: '../common.yaml#/components/schemas/Problem'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+
+  /boletos/{id}/confirm-payment:
+    parameters:
+      - $ref: '#/components/parameters/BoletoId'
+    post:
+      tags: [Boletos]
+      summary: Confirma a baixa do boleto (registered -> paid)
+      x-required-roles: [manager, receptionist]
+      description: >
+        Usado tanto para conciliação manual quanto como alvo de um futuro
+        webhook do banco (fora do escopo deste contrato, endpoint interno
+        sem perfil de usuário associado). Ao confirmar, o servidor também
+        registra um Payment (type=income, paymentMethod=Boleto) vinculado à
+        parcela, seguindo o mesmo fluxo de POST /installments/{id}/payments.
+        Só é permitido a partir do status "registered".
+      responses:
+        '200':
+          description: Boleto pago
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Boleto'
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+        '409':
+          description: Boleto não está em status "registered"
+          content:
+            application/problem+json:
+              schema:
+                $ref: '../common.yaml#/components/schemas/Problem'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+
+  /boletos/{id}/cancel:
+    parameters:
+      - $ref: '#/components/parameters/BoletoId'
+    post:
+      tags: [Boletos]
+      summary: Cancela o boleto
+      x-required-roles: [manager, receptionist]
+      description: >
+        Permitido a partir de "issued" ou "registered". Não é permitido
+        cancelar um boleto já pago — nesse caso, o caminho correto é estornar
+        o Payment vinculado (POST /payments/{id}/reverse em billing.yaml).
+      responses:
+        '200':
+          description: Boleto cancelado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Boleto'
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+        '409':
+          description: Boleto já pago — não pode ser cancelado
+          content:
+            application/problem+json:
+              schema:
+                $ref: '../common.yaml#/components/schemas/Problem'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+
+components:
+
+  parameters:
+    BoletoId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+
+  schemas:
+
+    Boleto:
+      type: object
+      properties:
+        id:
+          type: integer
+        installmentId:
+          type: integer
+        dueDate:
+          type: string
+          format: date
+        amount:
+          type: number
+          format: decimal
+        issuedAt:
+          type: string
+          format: date-time
+          readOnly: true
+        ourNumber:
+          type: string
+          nullable: true
+          readOnly: true
+        barCode:
+          type: string
+          nullable: true
+          readOnly: true
+        digitableLine:
+          type: string
+          nullable: true
+          readOnly: true
+        registeredAt:
+          type: string
+          format: date-time
+          nullable: true
+          readOnly: true
+        status:
+          type: string
+          enum: [issued, registered, paid, cancelled]
+          readOnly: true
+        isOverdue:
+          type: boolean
+          readOnly: true
+          description: >
+            Calculado dinamicamente (não é uma coluna do banco): true quando
+            status é "issued" ou "registered" e dueDate já passou.
+        cancelledAt:
+          type: string
+          format: date-time
+          nullable: true
+          readOnly: true
+        paidAt:
+          type: string
+          format: date-time
+          nullable: true
+          readOnly: true
+
+    BoletoInput:
+      type: object
+      required: [dueDate, amount]
+      description: >
+        dueDate e amount normalmente espelham os valores da parcela, mas são
+        informados explicitamente para permitir ajustes (ex. juros/multa)
+        antes da emissão.
+      properties:
+        dueDate:
+          type: string
+          format: date
+        amount:
+          type: number
+          format: decimal
+          minimum: 0.01
