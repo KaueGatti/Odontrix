@@ -1,0 +1,126 @@
+import type { ProximoVencimento, Recebivel, ContaPagar } from "./types";
+
+export const MOCK_PROXIMOS_VENCIMENTOS: ProximoVencimento[] = [
+  {
+    id: "1",
+    type: "receber",
+    descricao: "Kauê V. Gatti — parcela 2/3",
+    vencimento: "16/05/2025",
+    valor: "R$ 150,00",
+    status: "atrasado",
+  },
+  {
+    id: "2",
+    type: "pagar",
+    descricao: "Aluguel — maio",
+    vencimento: "18/05/2025",
+    valor: "R$ 3.200,00",
+    status: "pendente",
+  },
+  {
+    id: "3",
+    type: "receber",
+    descricao: "Roberto C. Lima — parcela 1/2",
+    vencimento: "20/05/2025",
+    valor: "R$ 620,00",
+    status: "pendente",
+  },
+  {
+    id: "4",
+    type: "pagar",
+    descricao: "Fornecedor de materiais",
+    vencimento: "22/05/2025",
+    valor: "R$ 890,00",
+    status: "pendente",
+  },
+  {
+    id: "5",
+    type: "receber",
+    descricao: "Ana Lucia M. — à vista",
+    vencimento: "25/05/2025",
+    valor: "R$ 250,00",
+    status: "a_vencer",
+  },
+];
+
+export const MOCK_RECEBER: Recebivel[] = [
+  {
+    id: "r1",
+    paciente: "Kauê V. Gatti",
+    consulta: "21/04/2025 — Consulta",
+    parcela: "2/3",
+    valor: "R$ 150,00",
+    vencimento: "16/05/2025",
+    status: "atrasado",
+  },
+  {
+    id: "r2",
+    paciente: "Roberto C. Lima",
+    consulta: "18/04/2025 — Procedimento",
+    parcela: "1/2",
+    valor: "R$ 620,00",
+    vencimento: "20/05/2025",
+    status: "pendente",
+  },
+  {
+    id: "r3",
+    paciente: "Ana Lucia M.",
+    consulta: "22/04/2025 — Retorno",
+    parcela: "Única",
+    valor: "R$ 250,00",
+    vencimento: "25/05/2025",
+    status: "a_vencer",
+  },
+  {
+    id: "r4",
+    paciente: "Marina T. Souza",
+    consulta: "05/04/2025 — Consulta",
+    parcela: "1/1",
+    valor: "R$ 180,00",
+    vencimento: "10/04/2025",
+    status: "pago",
+  },
+];
+
+export const MOCK_A_PAGAR: ContaPagar[] = [
+  {
+    id: "p1",
+    descricao: "Aluguel — maio",
+    centroCusto: "Aluguel",
+    valor: "R$ 3.200,00",
+    vencimento: "18/05/2025",
+    status: "pendente",
+  },
+  {
+    id: "p2",
+    descricao: "Fornecedor de materiais odontológicos",
+    centroCusto: "Materiais",
+    valor: "R$ 890,00",
+    vencimento: "22/05/2025",
+    status: "pendente",
+  },
+  {
+    id: "p3",
+    descricao: "Manutenção do compressor",
+    centroCusto: "Outros",
+    valor: "R$ 350,00",
+    vencimento: "05/05/2025",
+    status: "atrasado",
+  },
+  {
+    id: "p4",
+    descricao: "Salário — recepção (abril)",
+    centroCusto: "Salários",
+    valor: "R$ 2.100,00",
+    vencimento: "05/05/2025",
+    status: "pago",
+  },
+  {
+    id: "p5",
+    descricao: "Assinatura de software (cancelada)",
+    centroCusto: "Outros",
+    valor: "R$ 99,00",
+    vencimento: "10/05/2025",
+    status: "cancelado",
+  },
+];
