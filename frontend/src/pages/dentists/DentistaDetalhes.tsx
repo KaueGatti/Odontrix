@@ -9,6 +9,8 @@ import { TabPlaceholder } from "@/pages/patients/tabs/TabPlaceholder";
 import { DadosCadastraisTab } from "./tabs/DadosCadastraisTab";
 import { EspecialidadesTab } from "./tabs/EspecialidadesTab";
 import { HorariosTab } from "./tabs/HorariosTab";
+import { AgendamentosTab } from "./tabs/AgendamentosTab";
+import { FinanceiroTab } from "./tabs/FinanceiroTab";
 
 const TABS = [
   { id: "dados-cadastrais", label: "Dados Cadastrais" },
@@ -104,10 +106,10 @@ export default function DentistaDetalhesPage() {
             <HorariosTab dentistId={dentist.id} />
           </Tabs.Content>
           <Tabs.Content value="agendamentos">
-            <TabPlaceholder title="Agendamentos" />
+            <AgendamentosTab dentistId={dentist.id} />
           </Tabs.Content>
           <Tabs.Content value="financeiro">
-            <TabPlaceholder title="Financeiro" />
+            <FinanceiroTab dentistId={dentist.id} />
           </Tabs.Content>
         </div>
       </Tabs.Root>

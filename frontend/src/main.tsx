@@ -22,6 +22,7 @@ import DashboardPage from "@/pages/dashboard/DashboardPage.tsx";
 import ContasPage from "@/pages/financeiro/ContasPage.tsx";
 import AReceberPage from "@/pages/financeiro/AReceberPage.tsx";
 import APagarPage from "@/pages/financeiro/APagarPage.tsx";
+import AgendaPage from "@/pages/agenda/AgendaPage.tsx";
 
 const router = createBrowserRouter([
     {
@@ -46,7 +47,7 @@ const router = createBrowserRouter([
             },
             {
                 path: "agenda",
-                element: <></>,
+                element: <AgendaPage/>,
             },
             {
                 path: "pacientes",

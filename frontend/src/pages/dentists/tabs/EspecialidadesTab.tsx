@@ -35,7 +35,6 @@ export function EspecialidadesTab({ dentistId: _dentistId }: EspecialidadesTabPr
 
   const handleAdd = (id: number) => {
     setSelectedIds((prev) => [...prev, id]);
-    setShowAdder(false);
   };
 
   const handleRemove = (id: number) => {
@@ -46,13 +45,13 @@ export function EspecialidadesTab({ dentistId: _dentistId }: EspecialidadesTabPr
     <div className="flex flex-col gap-4 px-9 py-7">
       <Card>
         <div className="flex items-center justify-between border-b border-border px-5 py-4">
-          <p className="text-[11px] font-bold uppercase tracking-[0.06em] text-muted-foreground">
+          <p className="text-[12px] font-bold uppercase tracking-[0.06em] text-primary">
             Especialidades Vinculadas
           </p>
           <Button
             type="button"
-            variant="outline"
             size="sm"
+            className="gap-1.5"
             onClick={() => setShowAdder(true)}
             disabled={available.length === 0}
           >
@@ -95,7 +94,7 @@ export function EspecialidadesTab({ dentistId: _dentistId }: EspecialidadesTabPr
       {showAdder && available.length > 0 && (
         <Card>
           <div className="flex items-center justify-between border-b border-border px-5 py-4">
-            <p className="text-[11px] font-bold uppercase tracking-[0.06em] text-muted-foreground">
+            <p className="text-[12px] font-bold uppercase tracking-[0.06em] text-primary">
               Adicionar Especialidade
             </p>
             <Button

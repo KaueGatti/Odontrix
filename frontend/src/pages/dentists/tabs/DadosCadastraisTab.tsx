@@ -75,7 +75,7 @@ export function DadosCadastraisTab({ dentist }: DadosCadastraisTabProps) {
         </CardHeader>
         <CardContent className="flex flex-col gap-5">
           <section>
-            <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.06em] text-muted-foreground">
+            <p className="mb-3 text-[12px] font-bold uppercase tracking-[0.06em] text-primary">
               Identificação
             </p>
             <div className="grid grid-cols-2 gap-4">
@@ -138,7 +138,7 @@ export function DadosCadastraisTab({ dentist }: DadosCadastraisTabProps) {
           </section>
 
           <section>
-            <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.06em] text-muted-foreground">
+            <p className="mb-3 text-[12px] font-bold uppercase tracking-[0.06em] text-primary">
               Documentos
             </p>
             <div className="grid grid-cols-3 gap-4">
@@ -190,7 +190,7 @@ export function DadosCadastraisTab({ dentist }: DadosCadastraisTabProps) {
           </section>
 
           <section>
-            <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.06em] text-muted-foreground">
+            <p className="mb-3 text-[12px] font-bold uppercase tracking-[0.06em] text-primary">
               Registro Profissional
             </p>
             <div className="grid grid-cols-2 gap-4">
@@ -236,7 +236,7 @@ export function DadosCadastraisTab({ dentist }: DadosCadastraisTabProps) {
           </section>
 
           <section>
-            <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.06em] text-muted-foreground">
+            <p className="mb-3 text-[12px] font-bold uppercase tracking-[0.06em] text-primary">
               Contato
             </p>
             <div className="grid grid-cols-2 gap-4">
@@ -272,7 +272,7 @@ export function DadosCadastraisTab({ dentist }: DadosCadastraisTabProps) {
           </section>
 
           <section>
-            <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.06em] text-muted-foreground">
+            <p className="mb-3 text-[12px] font-bold uppercase tracking-[0.06em] text-primary">
               Valores
             </p>
             <div className="grid grid-cols-2 gap-4">
@@ -300,7 +300,7 @@ export function DadosCadastraisTab({ dentist }: DadosCadastraisTabProps) {
           </section>
 
           <section>
-            <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.06em] text-primary">
+            <p className="mb-3 text-[12px] font-bold uppercase tracking-[0.06em] text-primary">
               Dados de Acesso
             </p>
             <div className="grid grid-cols-2 gap-4">

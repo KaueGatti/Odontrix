@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perfil do Paciente — OdontoSys</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+    <style>
+        :root {
+            --blue: #4F7EF7;
+            --blue-dark: #0f2050;
+            --blue-mid: #1a3580;
+            --white: #ffffff;
+            --gray-50: #f8fafc;
+            --gray-100: #f1f5f9;
+            --gray-200: #e2e8f0;
+            --gray-300: #cbd5e1;
+            --gray-400: #94a3b8;
+            --gray-500: #64748b;
+            --gray-700: #334155;
+            --gray-900: #0f172a;
+            --green: #4ade80;
+            --amber: #f59e0b;
+            --red: #f87171;
+            --teal: #2dd4bf;
+            --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+
+            --color-background-primary: var(--white);
+            --color-background-secondary: var(--gray-50);
+            --color-background-tertiary: var(--gray-100);
+            --color-text-primary: var(--gray-900);
+            --color-text-secondary: var(--gray-500);
+            --color-text-tertiary: var(--gray-400);
+            --color-border-tertiary: var(--gray-200);
+            --border-radius-lg: 14px;
+            --border-radius-md: 10px;
+            --border-radius-sm: 8px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0 }
+
+        body { font-family: var(--font-sans); font-size: 13px; background: var(--color-background-tertiary) }
+
+        .wrap { display: flex; min-height: 100vh; overflow: hidden; position: relative }
+
+        /* ---- SIDEBAR (padrão OdontoSys) ---- */
+        .sidebar { width: 216px; background: linear-gradient(180deg, var(--blue-dark) 0%, var(--blue-mid) 100%); padding: 26px 16px; flex-shrink: 0; display: flex; flex-direction: column }
+        .logo-row { display: flex; align-items: center; gap: 10px; margin-bottom: 32px; padding: 0 6px }
+        .logo-sq { width: 28px; height: 28px; background: var(--blue); border-radius: 7px; flex-shrink: 0 }
+        .logo-name { font-size: 13px; font-weight: 600; color: var(--white) }
+        .logo-name span { display: block; font-size: 10px; color: rgba(255, 255, 255, 0.4); font-weight: 400; margin-top: 1px }
+        .nav { padding: 9px 10px; color: rgba(255, 255, 255, 0.55); display: flex; align-items: center; gap: 10px; font-size: 12.5px; font-weight: 500; border-radius: 8px; cursor: pointer; margin-bottom: 2px; transition: background .15s, color .15s }
+        .nav i { font-size: 16px; width: 16px; text-align: center }
+        .nav:hover { background: rgba(255, 255, 255, 0.06); color: rgba(255, 255, 255, 0.85) }
+        .nav.on { background: rgba(255, 255, 255, 0.1); color: #fff; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1) }
+        .nav-sec { padding: 16px 10px 6px; font-size: 9.5px; font-weight: 600; letter-spacing: 0.08em; color: rgba(255, 255, 255, 0.3) }
+        .nav.sub { padding-left: 32px; font-size: 11.5px }
+        .sidebar-spacer { flex: 1 }
+
+        .main { flex: 1; display: flex; flex-direction: column; background: var(--color-background-tertiary); overflow: hidden }
+
+        .header { background: var(--color-background-primary); border-bottom: 1px solid var(--color-border-tertiary); box-shadow: 0 4px 24px rgba(15, 32, 80, 0.04); padding: 16px 24px }
+        .hrow { display: flex; align-items: center; gap: 14px; margin-bottom: 14px }
+        .av { width: 52px; height: 52px; border-radius: 50%; background: #dbeafe; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 16px; color: #1d4ed8; flex-shrink: 0 }
+        .hname { font-size: 17px; font-weight: 700; color: var(--color-text-primary); letter-spacing: -0.3px }
+        .hmeta { font-size: 12px; color: var(--color-text-secondary); margin-top: 2px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap }
+        .dot { width: 3px; height: 3px; border-radius: 50%; background: var(--color-text-tertiary) }
+
+        .badge { font-size: 11px; padding: 2px 10px; border-radius: 20px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px }
+        .badge-green { background: rgba(74, 222, 128, 0.14); color: #16a34a; border: 1px solid rgba(74, 222, 128, 0.3) }
+        .badge-gray { background: var(--color-background-secondary); color: var(--color-text-secondary); border: 1px solid var(--color-border-tertiary) }
+        .badge-blue { background: rgba(79, 126, 247, 0.12); color: var(--blue); border: 1px solid rgba(79, 126, 247, 0.25) }
+        .badge-amber { background: rgba(245, 158, 11, 0.14); color: #b45309; border: 1px solid rgba(245, 158, 11, 0.3) }
+        .badge-red { background: rgba(248, 113, 113, 0.14); color: #dc2626; border: 1px solid rgba(248, 113, 113, 0.3) }
+        .badge-teal { background: rgba(45, 212, 191, 0.14); color: #0f766e; border: 1px solid rgba(45, 212, 191, 0.3) }
+        /* variante outline — usada para diferenciar status dentro da mesma família de cor
+           ex: Expirado (outline) vs Recusado (sólido); NaoCompareceu (outline) vs Cancelada (sólido) */
+        .badge-outline { background: transparent !important }
+
+        .tabs { display: flex; gap: 2px; flex-wrap: wrap }
+        .tab { padding: 8px 14px; font-size: 12px; border-radius: var(--border-radius-md); cursor: pointer; color: var(--color-text-secondary); border: 1px solid transparent; font-weight: 500; white-space: nowrap }
+        .tab.on { background: var(--color-background-secondary); border-color: var(--color-border-tertiary); color: var(--color-text-primary); font-weight: 600 }
+
+        .content { flex: 1; padding: 20px 24px; overflow: auto }
+        .panel { display: none }
+        .panel.on { display: block }
+
+        .card { background: var(--color-background-primary); border-radius: var(--border-radius-lg); border: 1px solid var(--color-border-tertiary); padding: 20px 22px; margin-bottom: 16px; box-shadow: 0 4px 24px rgba(15, 32, 80, 0.05) }
+        .sec-label { font-size: 11px; font-weight: 700; color: var(--color-text-secondary); letter-spacing: .06em; text-transform: uppercase; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid var(--color-border-tertiary); display: flex; align-items: center; justify-content: space-between; gap: 8px }
+
+        .btn { height: 32px; padding: 0 14px; border-radius: var(--border-radius-md); font-size: 12px; cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; border: 1.5px solid var(--color-border-tertiary); background: var(--color-background-primary); color: var(--color-text-primary); font-family: var(--font-sans); transition: all .15s; white-space: nowrap }
+        .btn:hover { border-color: var(--gray-300) }
+        .btn-dark { background: var(--blue); color: #fff; border-color: var(--blue); box-shadow: 0 6px 16px rgba(79, 126, 247, 0.3) }
+        .btn-dark:hover { background: #3a6af3 }
+        .btn-ghost { border: none; background: transparent; color: var(--color-text-secondary); cursor: pointer; font-size: 11px; display: inline-flex; align-items: center; gap: 4px; padding: 0 }
+        .btn-sm { height: 26px; padding: 0 10px; font-size: 11px }
+
+        .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px }
+        .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px }
+        .row4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 14px }
+
+        .field-item { display: flex; flex-direction: column; gap: 3px }
+        .fi-label { font-size: 11px; color: var(--color-text-tertiary) }
+        .fi-val { font-size: 13px; color: var(--color-text-primary); font-weight: 500 }
+        .fi-empty { font-size: 13px; color: var(--color-text-tertiary); font-style: italic }
+
+        .field label { display: block; font-size: 11px; color: var(--color-text-secondary); margin-bottom: 5px; font-weight: 500 }
+        .field label span.req { color: var(--red) }
+        .field .inp, .field select.inp { width: 100%; height: 32px; border: 1.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); padding: 0 10px; font-size: 12px; color: var(--color-text-primary); background: var(--color-background-secondary); display: flex; align-items: center; font-family: var(--font-sans) }
+        .field textarea.inp { height: auto; min-height: 60px; padding: 8px 10px; resize: vertical }
+        .field .inp.placeholder { color: var(--color-text-tertiary) }
+
+        table.tbl { width: 100%; border-collapse: collapse; font-size: 12px }
+        table.tbl th { font-size: 10px; font-weight: 700; color: var(--color-text-secondary); letter-spacing: .05em; text-transform: uppercase; padding: 0 8px 10px; text-align: left; border-bottom: 1.5px solid var(--color-border-tertiary); white-space: nowrap }
+        table.tbl td { padding: 10px 8px; border-bottom: 1px solid var(--gray-100); color: var(--color-text-primary); vertical-align: middle }
+        table.tbl tr:last-child td { border-bottom: none }
+        table.tbl tr.total-row td { border-top: 1.5px solid var(--color-border-tertiary); border-bottom: none; font-weight: 700; padding-top: 12px }
+        table.tbl tbody tr:hover { background: var(--color-background-secondary) }
+
+        .doc-card { border: 1.5px dashed var(--color-border-tertiary); border-radius: var(--border-radius-md); padding: 16px 10px; text-align: center; cursor: pointer; transition: border-color .15s }
+        .doc-card:hover { border-color: var(--blue) }
+        .doc-card .doc-type { font-size: 15px; font-weight: 800; margin-bottom: 6px }
+        .doc-card .doc-sub { font-size: 10px; color: var(--color-text-tertiary) }
+        .doc-card.upload { border-style: dashed; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; color: var(--color-text-secondary); font-size: 11px; font-weight: 600 }
+        .doc-card.upload i { font-size: 20px; color: var(--blue) }
+
+        .hist-item { border: 1px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); margin-bottom: 10px; overflow: hidden }
+        .hist-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; cursor: pointer; background: var(--color-background-secondary) }
+        .hist-header:hover { background: var(--color-background-tertiary) }
+        .hist-body { padding: 14px; border-top: 1px solid var(--color-border-tertiary); display: none }
+        .hist-body.open { display: block }
+
+        .empty-state { text-align: center; padding: 32px 10px; color: var(--color-text-tertiary) }
+        .empty-state i { font-size: 28px; display: block; margin-bottom: 8px; color: var(--gray-300) }
+
+        .kpi { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 14px 16px }
+        .kpi-label { font-size: 11px; color: var(--color-text-secondary); margin-bottom: 4px }
+        .kpi-val { font-size: 20px; font-weight: 700; color: var(--color-text-primary) }
+        .kpi-val.red { color: #dc2626 }
+        .kpi-val.green { color: #16a34a }
+
+        .tooth-chip { display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 22px; padding: 0 5px; border-radius: 6px; background: rgba(79, 126, 247, 0.1); color: var(--blue); font-size: 11px; font-weight: 700; margin-right: 4px }
+
+        /* ---- MODAIS ---- */
+        .modal-wrap { display: none; position: fixed; inset: 0; background: rgba(15, 32, 80, 0.35); z-index: 200; align-items: flex-start; justify-content: center; overflow-y: auto; padding: 40px 20px }
+        .modal-wrap.show { display: flex }
+        .modal-box { background: var(--color-background-primary); border-radius: var(--border-radius-lg); border: 1px solid var(--color-border-tertiary); width: 620px; max-width: 100%; padding: 22px; box-shadow: 0 24px 60px rgba(15, 32, 80, 0.25); flex-shrink: 0 }
+        .modal-box.wide { width: 920px }
+        .modal-head { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 16px }
+        .modal-title { font-size: 14px; font-weight: 700; color: var(--color-text-primary) }
+        .modal-sub { font-size: 11px; color: var(--color-text-secondary); margin-top: 2px }
+        .modal-footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--color-border-tertiary) }
+        .modal-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 18px }
+        .info-banner { background: rgba(79, 126, 247, 0.07); border: 1px solid rgba(79, 126, 247, 0.2); border-radius: var(--border-radius-md); padding: 9px 12px; font-size: 11px; color: var(--blue); display: flex; align-items: flex-start; gap: 6px; margin-bottom: 14px }
+        .totalizacao-line { display: flex; justify-content: space-between; font-size: 12px; color: var(--color-text-secondary); padding: 4px 0 }
+        .totalizacao-line.total { font-size: 15px; font-weight: 700; color: var(--color-text-primary); border-top: 1px solid var(--color-border-tertiary); margin-top: 6px; padding-top: 10px }
+        .lote-panel { background: var(--color-background-secondary); border: 1px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); padding: 14px; margin-top: 14px }
+        .checkbox-row { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--color-text-secondary); margin-bottom: 10px }
+    </style>
+</head>
+<body>
+
+<div class="wrap">
+    <div class="sidebar">
+        <div class="logo-row">
+            <div class="logo-sq"></div>
+            <div class="logo-name">OdontoSys<span>Gestão de Clínicas</span></div>
+        </div>
+        <div class="nav on"><i class="ti ti-users" aria-hidden="true"></i>Pacientes</div>
+        <div class="nav"><i class="ti ti-stethoscope" aria-hidden="true"></i>Dentistas</div>
+        <div class="nav"><i class="ti ti-user-check" aria-hidden="true"></i>Recepcionistas</div>
+        <div class="nav"><i class="ti ti-calendar" aria-hidden="true"></i>Agenda</div>
+        <div class="nav-sec">FINANCEIRO</div>
+        <div class="nav sub"><i class="ti ti-report-money" aria-hidden="true"></i>Contas</div>
+        <div class="nav sub"><i class="ti ti-arrow-down-left" aria-hidden="true"></i>A receber</div>
+        <div class="nav sub"><i class="ti ti-arrow-up-right" aria-hidden="true"></i>A pagar</div>
+        <div class="nav"><i class="ti ti-file-text" aria-hidden="true"></i>Contratos</div>
+        <div class="nav"><i class="ti ti-heart-rate-monitor" aria-hidden="true"></i>Planos</div>
+        <div class="sidebar-spacer"></div>
+        <div class="nav"><i class="ti ti-settings" aria-hidden="true"></i>Configurações</div>
+    </div>
+
+    <div class="main">
+        <div class="header">
+            <div class="hrow">
+                <div class="av">KVG</div>
+                <div style="flex:1">
+                    <div style="display:flex;align-items:center;gap:10px">
+                        <div class="hname">Kauê Vinícius Gatti</div>
+                        <span class="badge badge-green">Ativo</span>
+                        <span class="badge badge-blue"><i class="ti ti-heart-rate-monitor" style="font-size:11px"></i>Plano Essencial</span>
+                    </div>
+                    <div class="hmeta">
+                        <span>CPF: 538.350.558-01</span>
+                        <div class="dot"></div>
+                        <span>DN: 23/02/2007</span>
+                        <div class="dot"></div>
+                        <span>Cel: (19) 99871-9313</span>
+                        <div class="dot"></div>
+                        <span>Cadastrado em 25/04/2026</span>
+                    </div>
+                </div>
+                <button class="btn"><i class="ti ti-edit" aria-hidden="true" style="font-size:13px"></i>Editar dados</button>
+                <button class="btn btn-dark" onclick="showOrcamentoModal()"><i class="ti ti-calendar-plus" aria-hidden="true" style="font-size:13px"></i>Agendar</button>
+            </div>
+            <div class="tabs">
+                <div class="tab on" onclick="showTab('dados')">Dados Cadastrais</div>
+                <div class="tab" onclick="showTab('anamnese')">Anamnese</div>
+                <div class="tab" onclick="showTab('agenda')">Agendamentos</div>
+                <div class="tab" onclick="showTab('orcamentos')">Orçamentos</div>
+                <div class="tab" onclick="showTab('financeiro')">Financeiro</div>
+                <div class="tab" onclick="showTab('consultas')">Consultas e Procedimentos</div>
+            </div>
+        </div>
+
+        <div class="content">
+
+            <!-- ======================= DADOS CADASTRAIS ======================= -->
+            <div class="panel on" id="panel-dados">
+                <div class="card">
+                    <div class="sec-label">Identificação</div>
+                    <div class="row3" style="margin-bottom:14px">
+                        <div class="field-item"><div class="fi-label">Nome completo</div><div class="fi-val">Kauê Vinícius Gatti</div></div>
+                        <div class="field-item"><div class="fi-label">Data de nascimento</div><div class="fi-val">23/02/2007</div></div>
+                        <div class="field-item"><div class="fi-label">Data de cadastro</div><div class="fi-val">25/04/2026</div></div>
+                    </div>
+                    <div class="row2">
+                        <div class="field-item"><div class="fi-label">CPF</div><div class="fi-val">538.350.558-01</div></div>
+                        <div class="field-item"><div class="fi-label">RG</div><div class="fi-empty">Não informado</div></div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="sec-label">Contato</div>
+                    <div class="row4">
+                        <div class="field-item"><div class="fi-label">Telefone fixo</div><div class="fi-empty">Não informado</div></div>
+                        <div class="field-item"><div class="fi-label">Celular</div><div class="fi-val">(19) 99871-9313</div></div>
+                        <div class="field-item"><div class="fi-label">Telefone p/ emergência</div><div class="fi-val">(19) 99123-4567</div></div>
+                        <div class="field-item"><div class="fi-label">E-mail</div><div class="fi-val">kaue.gatti@email.com</div></div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="sec-label">Endereço</div>
+                    <div class="row4" style="margin-bottom:14px">
+                        <div class="field-item"><div class="fi-label">CEP</div><div class="fi-val">13500-000</div></div>
+                        <div class="field-item"><div class="fi-label">País</div><div class="fi-val">Brasil</div></div>
+                        <div class="field-item"><div class="fi-label">UF</div><div class="fi-val">SP</div></div>
+                        <div class="field-item"><div class="fi-label">Bairro</div><div class="fi-val">Centro</div></div>
+                    </div>
+                    <div class="row3">
+                        <div class="field-item" style="grid-column:span 2"><div class="fi-label">Rua</div><div class="fi-val">Rua das Palmeiras, 245</div></div>
+                        <div class="field-item"><div class="fi-label">Complemento</div><div class="fi-empty">Não informado</div></div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="sec-label">Plano e indicação</div>
+                    <div class="row3">
+                        <div class="field-item"><div class="fi-label">Plano odontológico</div><div class="fi-val">Plano Essencial</div></div>
+                        <div class="field-item"><div class="fi-label">Início do plano</div><div class="fi-val">01/03/2026</div></div>
+                        <div class="field-item"><div class="fi-label">Indicação</div><div class="fi-val">Instagram</div></div>
+                    </div>
+                </div>
+
+                <div class="card" style="border-color:rgba(248,113,113,0.4)">
+                    <div class="sec-label" style="color:#dc2626;border-bottom-color:rgba(248,113,113,0.25)">
+                        <span><i class="ti ti-alert-triangle" style="font-size:12px;vertical-align:-1px"></i> Responsável financeiro/legal <span style="font-weight:400;text-transform:none;letter-spacing:0">— obrigatório para menores de idade ou incapazes</span></span>
+                    </div>
+                    <div class="row3">
+                        <div class="field-item"><div class="fi-label">Nome</div><div class="fi-val">Renata Vinícius Gatti</div></div>
+                        <div class="field-item"><div class="fi-label">CPF</div><div class="fi-val">245.118.990-32</div></div>
+                        <div class="field-item"><div class="fi-label">RG</div><div class="fi-empty">Não informado</div></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ======================= ANAMNESE ======================= -->
+            <div class="panel" id="panel-anamnese">
+                <div class="card">
+                    <div class="sec-label">Registros de anamnese</div>
+                    <div class="row4" style="gap:12px">
+                        <div class="doc-card">
+                            <div class="doc-type" style="color:#dc2626">PDF</div>
+                            <div class="doc-sub">Anamnese<br>10:30 · 10/02/2026</div>
+                        </div>
+                        <div class="doc-card">
+                            <div class="doc-type" style="color:#2563eb">IMG</div>
+                            <div class="doc-sub">Anamnese<br>10:30 · 10/02/2026</div>
+                        </div>
+                        <div class="doc-card">
+                            <div class="doc-type" style="color:#b45309">JPEG</div>
+                            <div class="doc-sub">Anamnese<br>10:30 · 10/02/2026</div>
+                        </div>
+                        <div class="doc-card upload"><i class="ti ti-upload"></i>Adicionar Anamnese</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="sec-label">Histórico clínico <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--color-text-tertiary)">— evolui a cada consulta</span></div>
+
+                    <div class="hist-item">
+                        <div class="hist-header" onclick="toggleHist(this)">
+                            <div style="display:flex;align-items:center;gap:10px">
+                                <i class="ti ti-notes" style="font-size:14px;color:var(--color-text-secondary)"></i>
+                                <span style="font-size:12px;font-weight:600;color:var(--color-text-primary)">21/05/2026</span>
+                                <span style="font-size:11px;color:var(--color-text-secondary)">Registrado por Dr. Marcos Silva</span>
+                            </div>
+                            <i class="ti ti-chevron-down" style="font-size:13px;color:var(--color-text-tertiary)"></i>
+                        </div>
+                        <div class="hist-body open">
+                            <div class="row2" style="margin-bottom:10px">
+                                <div class="field-item"><div class="fi-label">Alergias</div><div class="fi-val">Nenhuma relatada</div></div>
+                                <div class="field-item"><div class="fi-label">Medicamentos em uso</div><div class="fi-val">Nenhum</div></div>
+                            </div>
+                            <div class="field-item"><div class="fi-label">Doenças preexistentes</div><div class="fi-val">Nenhuma relatada</div></div>
+                        </div>
+                    </div>
+
+                    <div class="hist-item">
+                        <div class="hist-header" onclick="toggleHist(this)">
+                            <div style="display:flex;align-items:center;gap:10px">
+                                <i class="ti ti-notes" style="font-size:14px;color:var(--color-text-secondary)"></i>
+                                <span style="font-size:12px;font-weight:600;color:var(--color-text-primary)">10/02/2026</span>
+                                <span style="font-size:11px;color:var(--color-text-secondary)">Registrado por Dra. Camila Freitas</span>
+                            </div>
+                            <i class="ti ti-chevron-down" style="font-size:13px;color:var(--color-text-tertiary)"></i>
+                        </div>
+                        <div class="hist-body">
+                            <div class="row2" style="margin-bottom:10px">
+                                <div class="field-item"><div class="fi-label">Alergias</div><div class="fi-val">Dipirona</div></div>
+                                <div class="field-item"><div class="fi-label">Medicamentos em uso</div><div class="fi-val">Nenhum</div></div>
+                            </div>
+                            <div class="field-item"><div class="fi-label">Doenças preexistentes</div><div class="fi-val">Nenhuma relatada</div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ======================= AGENDAMENTOS ======================= -->
+            <div class="panel" id="panel-agenda">
+                <div class="card">
+                    <div class="sec-label">
+                        <span>Paciente aguardando <span class="badge badge-amber" style="margin-left:4px">Em espera</span></span>
+                        <button class="btn btn-dark btn-sm"><i class="ti ti-calendar-plus" style="font-size:12px"></i>Agendar</button>
+                    </div>
+                    <div style="display:flex;align-items:center;justify-content:space-between;border:1px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:12px 14px;background:var(--color-background-secondary)">
+                        <div style="display:flex;align-items:center;gap:10px">
+                            <div class="av" style="width:34px;height:34px;font-size:11px">DJ</div>
+                            <div>
+                                <div style="font-size:12px;font-weight:600;color:var(--color-text-primary)">Dr. Jamie F. Jones</div>
+                                <div style="font-size:11px;color:var(--color-text-secondary)">Qui, 7 Nov às 16:55 · Consulta de dor no tornozelo</div>
+                            </div>
+                        </div>
+                        <button class="btn-ghost"><i class="ti ti-chevron-right" style="font-size:16px"></i></button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="sec-label">
+                        Próximos e histórico de agendamentos
+                        <button class="btn btn-sm"><i class="ti ti-plus" style="font-size:12px"></i>Novo agendamento</button>
+                    </div>
+                    <table class="tbl">
+                        <thead>
+                        <tr><th>Data / Hora</th><th>Dentista</th><th>Tipo</th><th>Duração</th><th>Quem agendou</th><th>Status</th><th></th></tr>
+                        </thead>
+                        <tbody>
+                        <tr>
+                            <td style="font-weight:600">28/07/2026 14:00</td>
+                            <td>Dr. Marcos Silva</td>
+                            <td>Consulta</td>
+                            <td>50 min</td>
+                            <td>Kamily Vitória</td>
+                            <td><span class="badge badge-blue">Confirmada</span></td>
+                            <td><button class="btn-ghost"><i class="ti ti-eye" style="font-size:13px"></i></button></td>
+                        </tr>
+                        <tr>
+                            <td style="font-weight:600">10/08/2026 09:00</td>
+                            <td>Dra. Camila Freitas</td>
+                            <td>Retorno</td>
+                            <td>30 min</td>
+                            <td>Kamily Vitória</td>
+                            <td><span class="badge badge-gray">Agendada</span></td>
+                            <td><button class="btn-ghost"><i class="ti ti-eye" style="font-size:13px"></i></button></td>
+                        </tr>
+                        <tr>
+                            <td style="font-weight:600">10/02/2026 11:00</td>
+                            <td>Dra. Camila Freitas</td>
+                            <td>Procedimento</td>
+                            <td>90 min</td>
+                            <td>Kamily Vitória</td>
+                            <td><span class="badge badge-green">Realizada</span></td>
+                            <td><button class="btn-ghost"><i class="ti ti-eye" style="font-size:13px"></i></button></td>
+                        </tr>
+                        <tr>
+                            <td style="font-weight:600">14/01/2026 15:30</td>
+                            <td>Dr. Marcos Silva</td>
+                            <td>Consulta</td>
+                            <td>50 min</td>
+                            <td>Fernanda Souza</td>
+                            <td><span class="badge badge-red">Cancelada</span></td>
+                            <td><button class="btn-ghost"><i class="ti ti-eye" style="font-size:13px"></i></button></td>
+                        </tr>
+                        <tr>
+                            <td style="font-weight:600">02/12/2025 08:30</td>
+                            <td>Dr. Marcos Silva</td>
+                            <td>Retorno</td>
+                            <td>30 min</td>
+                            <td>Kamily Vitória</td>
+                            <td><span class="badge badge-red badge-outline">Não compareceu</span></td>
+                            <td><button class="btn-ghost"><i class="ti ti-eye" style="font-size:13px"></i></button></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ======================= ORÇAMENTOS ======================= -->
+            <div class="panel" id="panel-orcamentos">
+                <div class="card">
+                    <div class="sec-label">
+                        Orçamentos
+                        <button class="btn btn-dark btn-sm" onclick="showOrcamentoModal()"><i class="ti ti-plus" style="font-size:12px"></i>Novo Orçamento</button>
+                    </div>
+                    <table class="tbl">
+                        <thead>
+                        <tr><th>#</th><th>Descrição</th><th>Valor total</th><th>Válido até</th><th>Criado por</th><th>Status</th><th></th></tr>
+                        </thead>
+                        <tbody>
+                        <tr>
+                            <td>1</td><td style="font-weight:600">Profilaxia 04/25</td><td>R$ 100,00</td><td>01/04/2025</td>
+                            <td><a href="#" style="color:var(--blue);text-decoration:none">Kamily Vitória</a></td>
+                            <td><span class="badge badge-green">Aprovado</span></td>
+                            <td><button class="btn-ghost" onclick="showCobrancaModal()"><i class="ti ti-eye" style="font-size:13px"></i></button></td>
+                        </tr>
+                        <tr>
+                            <td>2</td><td style="font-weight:600">Canal dente 36</td><td>R$ 500,00</td><td>10/04/2025</td>
+                            <td><a href="#" style="color:var(--blue);text-decoration:none">Kamily Vitória</a></td>
+                            <td><span class="badge badge-gray">Rascunho</span></td>
+                            <td><button class="btn-ghost"><i class="ti ti-eye" style="font-size:13px"></i></button></td>
+                        </tr>
+                        <tr>
+                            <td>3</td><td style="font-weight:600">Restauração 02/25</td><td>R$ 220,00</td><td>12/02/2025</td>
+                            <td><a href="#" style="color:var(--blue);text-decoration:none">Kamily Vitória</a></td>
+                            <td><span class="badge badge-blue">Enviado</span></td>
+                            <td><button class="btn-ghost"><i class="ti ti-eye" style="font-size:13px"></i></button></td>
+                        </tr>
+                        <tr>
+                            <td>4</td><td style="font-weight:600">Clareamento</td><td>R$ 400,00</td><td>05/01/2025</td>
+                            <td><a href="#" style="color:var(--blue);text-decoration:none">Kamily Vitória</a></td>
+                            <td><span class="badge badge-red">Recusado</span></td>
+                            <td><button class="btn-ghost"><i class="ti ti-eye" style="font-size:13px"></i></button></td>
+                        </tr>
+                        <tr>
+                            <td>5</td><td style="font-weight:600">Clareamento</td><td>R$ 400,00</td><td>05/01/2025</td>
+                            <td><a href="#" style="color:var(--blue);text-decoration:none">Kamily Vitória</a></td>
+                            <td><span class="badge badge-red badge-outline">Expirado</span></td>
+                            <td><button class="btn-ghost"><i class="ti ti-eye" style="font-size:13px"></i></button></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ======================= FINANCEIRO ======================= -->
+            <div class="panel" id="panel-financeiro">
+                <div class="card">
+                    <div class="sec-label">
+                        Contas
+                        <button class="btn btn-dark btn-sm"><i class="ti ti-plus" style="font-size:12px"></i>Novo registro</button>
+                    </div>
+                    <table class="tbl">
+                        <thead>
+                        <tr><th>Descrição</th><th>Emissão</th><th>Vencimento</th><th>Total</th><th>Pago</th><th>Saldo</th><th>Pagamento</th><th>Gerado por</th><th>Status</th><th></th></tr>
+                        </thead>
+                        <tbody>
+                        <tr>
+                            <td style="font-weight:600">Profilaxia 04/25</td><td>01/04/2025</td><td>30/04/2025</td>
+                            <td>R$ 180,00</td><td>R$ 180,00</td><td>R$ 0,00</td><td>Pix</td>
+                            <td><a href="#" style="color:var(--blue);text-decoration:none">Consulta #041</a></td>
+                            <td><span class="badge badge-green">Pago</span></td>
+                            <td><button class="btn-ghost" onclick="showCobrancaModal()"><i class="ti ti-eye" style="font-size:13px"></i></button></td>
+                        </tr>
+                        <tr>
+                            <td style="font-weight:600">Canal dente 36</td><td>10/04/2025</td><td>15/05/2025</td>
+                            <td>R$ 750,00</td><td>R$ 250,00</td><td>R$ 500,00</td><td>Cartão</td>
+                            <td><a href="#" style="color:var(--blue);text-decoration:none">Consulta #038</a></td>
+                            <td><span class="badge badge-amber">Parcial</span></td>
+                            <td><button class="btn-ghost" onclick="showCobrancaModal()"><i class="ti ti-eye" style="font-size:13px"></i></button></td>
+                        </tr>
+                        <tr>
+                            <td style="font-weight:600">Restauração 02/25</td><td>12/02/2025</td><td>28/02/2025</td>
+                            <td>R$ 220,00</td><td>—</td><td>R$ 220,00</td><td>—</td>
+                            <td>Dr. Marcos S.</td>
+                            <td><span class="badge badge-gray">Em aberto</span></td>
+                            <td><button class="btn-ghost" onclick="showParcelaModal()"><i class="ti ti-eye" style="font-size:13px"></i></button></td>
+                        </tr>
+                        <tr>
+                            <td style="font-weight:600">Clareamento</td><td>05/01/2025</td><td>10/01/2025</td>
+                            <td>R$ 400,00</td><td>—</td><td>R$ 400,00</td><td>Boleto</td>
+                            <td><a href="#" style="color:var(--blue);text-decoration:none">Consulta #031</a></td>
+                            <td><span class="badge badge-red">Vencido</span></td>
+                            <td><button class="btn-ghost" onclick="showParcelaModal()"><i class="ti ti-eye" style="font-size:13px"></i></button></td>
+                        </tr>
+                        <tr class="total-row">
+                            <td>Total</td><td></td><td></td>
+                            <td colspan="2"></td>
+                            <td style="color:#dc2626">R$ 1.120,00</td>
+                            <td colspan="4"></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="card">
+                    <div class="sec-label">Resumo financeiro</div>
+                    <div class="row4" style="margin-bottom:0">
+                        <div class="kpi"><div class="kpi-label">Total já pago</div><div class="kpi-val green">R$ 430,00</div></div>
+                        <div class="kpi"><div class="kpi-label">Saldo em aberto</div><div class="kpi-val red">R$ 1.120,00</div></div>
+                        <div class="kpi"><div class="kpi-label">Parcelas vencidas</div><div class="kpi-val red">1</div></div>
+                        <div class="kpi"><div class="kpi-label">Situação</div><div class="kpi-val" style="font-size:14px"><span class="badge badge-red">Inadimplente</span></div></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ======================= CONSULTAS E PROCEDIMENTOS ======================= -->
+            <div class="panel" id="panel-consultas">
+                <div class="card">
+                    <div class="sec-label">Consultas realizadas</div>
+                    <table class="tbl">
+                        <thead>
+                        <tr><th>Data</th><th>Dentista</th><th>Procedimentos</th><th>Dentes</th><th>Diagnóstico</th><th>Valor</th><th></th></tr>
+                        </thead>
+                        <tbody>
+                        <tr>
+                            <td style="font-weight:600">10/02/2026</td>
+                            <td>Dra. Camila Freitas</td>
+                            <td>Restauração, Profilaxia</td>
+                            <td><span class="tooth-chip">36</span><span class="tooth-chip">46</span></td>
+                            <td>Cárie profunda</td>
+                            <td>R$ 350,00</td>
+                            <td><button class="btn-ghost"><i class="ti ti-eye" style="font-size:13px"></i></button></td>
+                        </tr>
+                        <tr>
+                            <td style="font-weight:600">21/11/2025</td>
+                            <td>Dr. Marcos Silva</td>
+                            <td>Canal</td>
+                            <td><span class="tooth-chip">36</span></td>
+                            <td>Necrose pulpar</td>
+                            <td>R$ 750,00</td>
+                            <td><button class="btn-ghost"><i class="ti ti-eye" style="font-size:13px"></i></button></td>
+                        </tr>
+                        <tr>
+                            <td style="font-weight:600">03/08/2025</td>
+                            <td>Dr. Marcos Silva</td>
+                            <td>Avaliação, Radiografia</td>
+                            <td><span style="color:var(--color-text-tertiary);font-size:11px">—</span></td>
+                            <td>Avaliação inicial</td>
+                            <td>R$ 120,00</td>
+                            <td><button class="btn-ghost"><i class="ti ti-eye" style="font-size:13px"></i></button></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="card">
+                    <div class="sec-label">Plano de tratamento em andamento</div>
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+                        <span style="font-size:12px;color:var(--color-text-secondary)">Etapas concluídas</span>
+                        <span style="font-size:12px;font-weight:600;color:var(--color-text-primary)">2 de 4</span>
+                    </div>
+                    <div style="height:8px;border-radius:20px;background:var(--gray-100);overflow:hidden;margin-bottom:12px">
+                        <div style="height:100%;width:50%;background:var(--blue);border-radius:20px"></div>
+                    </div>
+                    <div style="font-size:11px;color:var(--color-text-tertiary)"><i class="ti ti-info-circle" style="font-size:13px;vertical-align:-2px"></i> Próxima consulta recomendada: 10/08/2026 — retorno para avaliação do canal do dente 36</div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- ======================= MODAL: NOVO ORÇAMENTO ======================= -->
+<div class="modal-wrap" id="modal-orcamento">
+    <div class="modal-box wide">
+        <div class="modal-head">
+            <div>
+                <div class="modal-title">Novo Orçamento</div>
+                <div class="modal-sub">Vinculado a Kauê Vinícius Gatti</div>
+            </div>
+            <button class="btn-ghost" onclick="hideModal('modal-orcamento')"><i class="ti ti-x" style="font-size:15px"></i></button>
+        </div>
+
+        <div class="modal-cols">
+            <div>
+                <div class="field" style="margin-bottom:12px">
+                    <label>Descrição <span class="req">*</span></label>
+                    <div class="inp placeholder">Enter text...</div>
+                </div>
+                <div class="row2" style="margin-bottom:12px">
+                    <div class="field"><label>Válido até</label><div class="inp placeholder">DD/MM/AAAA</div></div>
+                    <div class="field"><label>Status</label><div class="inp placeholder">Select option...</div></div>
+                </div>
+                <div class="field">
+                    <label>Observações</label>
+                    <div class="inp placeholder" style="height:64px;align-items:flex-start;padding-top:8px">Enter multiple lines...</div>
+                </div>
+
+                <div class="sec-label" style="margin-top:18px">Procedimentos <button class="btn btn-sm" style="margin-left:auto"><i class="ti ti-plus" style="font-size:11px"></i>Adicionar</button></div>
+                <table class="tbl">
+                    <thead><tr><th>Procedimento</th><th>Vlr. unit.</th><th>Desc.</th><th>Qtd.</th><th>Total</th><th></th></tr></thead>
+                    <tbody>
+                    <tr>
+                        <td style="font-weight:600">Limpeza</td><td>R$ 750,00</td><td>10%</td><td>1</td><td>R$ 675,00</td>
+                        <td><button class="btn-ghost"><i class="ti ti-trash" style="font-size:13px;color:var(--red)"></i></button></td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight:600">Canal</td><td>R$ 1.500,00</td><td>15%</td><td>1</td><td>R$ 1.350,00</td>
+                        <td><button class="btn-ghost"><i class="ti ti-trash" style="font-size:13px;color:var(--red)"></i></button></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div>
+                <div class="card" style="margin-bottom:0;background:var(--color-background-secondary)">
+                    <div class="sec-label">Totalização</div>
+                    <div class="totalizacao-line"><span>Subtotal (sem desconto)</span><span>R$ 2.350,00</span></div>
+                    <div class="totalizacao-line"><span>Total de descontos</span><span style="color:#dc2626">- R$ 325,00</span></div>
+                    <div class="totalizacao-line total"><span>Total geral</span><span>R$ 2.025,00</span></div>
+
+                    <div class="field" style="margin-top:16px">
+                        <label>Forma de pagamento</label>
+                        <div class="inp placeholder">Cartão</div>
+                    </div>
+                    <div class="row2" style="margin-top:12px">
+                        <div class="field"><label>Entrada (R$)</label><div class="inp placeholder">500</div></div>
+                        <div class="field"><label>Nº de parcelas</label><div class="inp placeholder">3</div></div>
+                    </div>
+                    <div style="font-size:11px;color:var(--color-text-secondary);margin-top:8px">Valor por parcela: <b>3x de R$ 508,33</b> · 1x de R$ 508,34</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal-footer">
+            <button class="btn" onclick="hideModal('modal-orcamento')">Cancelar</button>
+            <button class="btn btn-dark"><i class="ti ti-device-floppy" style="font-size:13px"></i>Salvar orçamento</button>
+        </div>
+    </div>
+</div>
+
+<!-- ======================= MODAL: COBRANÇA / PARCELAS ======================= -->
+<div class="modal-wrap" id="modal-cobranca">
+    <div class="modal-box wide">
+        <div class="modal-head">
+            <div>
+                <div class="modal-title">Cobrança <span class="badge badge-amber" style="margin-left:6px">Pendente</span></div>
+                <div class="modal-sub">Orçamento #012 — Clareamento · R$ 400,00 · Kauê Vinícius Gatti</div>
+            </div>
+            <button class="btn-ghost" onclick="hideModal('modal-cobranca')"><i class="ti ti-x" style="font-size:15px"></i></button>
+        </div>
+
+        <div class="modal-cols">
+            <div>
+                <div class="card" style="margin-bottom:0;background:var(--color-background-secondary)">
+                    <div class="sec-label">Valores</div>
+                    <div class="row2" style="margin-bottom:10px">
+                        <div class="field-item"><div class="fi-label">Valor bruto (R$)</div><div class="fi-val">4.000,00</div></div>
+                        <div class="field-item"><div class="fi-label">Desconto (R$)</div><div class="fi-val">0,00</div></div>
+                    </div>
+                    <div class="row2">
+                        <div class="field-item"><div class="fi-label">Total</div><div class="fi-val">R$ 4.000,00</div></div>
+                        <div class="field-item"><div class="fi-label">Pago / Restante</div><div class="fi-val">R$ 0,00 / R$ 4.000,00</div></div>
+                    </div>
+                    <div class="field" style="margin-top:12px">
+                        <label>Observações</label>
+                        <div class="inp placeholder" style="height:56px;align-items:flex-start;padding-top:8px">Observações internas sobre esta cobrança...</div>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <div class="sec-label">Parcelas <button class="btn btn-sm" style="margin-left:auto" onclick="toggleLote()"><i class="ti ti-cash" style="font-size:11px"></i>Registrar pagamento em lote</button></div>
+                <table class="tbl">
+                    <thead><tr><th>#</th><th>Vencimento</th><th>Valor</th><th>Pagamento</th><th>Status</th></tr></thead>
+                    <tbody>
+                    <tr><td>1</td><td>30/05/2025</td><td>R$ 400,00</td><td>Pix</td><td><span class="badge badge-green">Pendente</span></td></tr>
+                    <tr><td>2</td><td>30/05/2025</td><td>R$ 400,00</td><td>Pix</td><td><span class="badge badge-green">Pendente</span></td></tr>
+                    <tr><td>3</td><td>30/05/2025</td><td>R$ 400,00</td><td>Cartão débito</td><td><span class="badge badge-red">Vencido</span></td></tr>
+                    <tr style="background:rgba(79,126,247,0.06)"><td>4</td><td>30/05/2025</td><td>R$ 400,00</td><td>Pix</td><td><span class="badge badge-blue">Selecionada</span></td></tr>
+                    <tr><td>5</td><td>30/05/2025</td><td>R$ 400,00</td><td>Pix</td><td><span class="badge badge-green">Pendente</span></td></tr>
+                    </tbody>
+                </table>
+
+                <div class="lote-panel" id="lote-panel" style="display:none">
+                    <div class="sec-label" style="margin-bottom:10px">Registrar pagamento</div>
+                    <div class="row2" style="margin-bottom:10px">
+                        <div class="field"><label>Valor recebido (R$)</label><div class="inp placeholder">750,00</div></div>
+                        <div class="field"><label>Forma de pagamento</label><div class="inp placeholder">Pix — R$ 750,00</div></div>
+                    </div>
+                    <div class="checkbox-row"><input type="checkbox" checked><span>Múltiplas formas de pagamento — combinado no mesmo pagamento</span></div>
+                    <div class="totalizacao-line total"><span>Valor a pagar</span><span>R$ 750,00</span></div>
+                    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px">
+                        <button class="btn btn-sm" onclick="toggleLote()">Cancelar</button>
+                        <button class="btn btn-dark btn-sm"><i class="ti ti-check" style="font-size:12px"></i>Confirmar pagamento</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal-footer">
+            <button class="btn" onclick="hideModal('modal-cobranca')">Fechar</button>
+        </div>
+    </div>
+</div>
+
+<!-- ======================= MODAL: PARCELA INDIVIDUAL + PAGAMENTOS ======================= -->
+<div class="modal-wrap" id="modal-parcela">
+    <div class="modal-box wide">
+        <div class="modal-head">
+            <div>
+                <div class="modal-title">Parcela <span class="badge badge-amber" style="margin-left:6px">Pendente</span></div>
+                <div class="modal-sub">Restauração 02/25 · Kauê Vinícius Gatti</div>
+            </div>
+            <button class="btn-ghost" onclick="hideModal('modal-parcela')"><i class="ti ti-x" style="font-size:15px"></i></button>
+        </div>
+
+        <div class="modal-cols">
+            <div>
+                <div class="card" style="margin-bottom:0;background:var(--color-background-secondary)">
+                    <div class="sec-label">Detalhes da parcela</div>
+                    <div class="field-item" style="margin-bottom:10px"><div class="fi-label">Data de vencimento</div><div class="fi-val">30/04/2025</div></div>
+                    <div class="row2" style="margin-bottom:10px">
+                        <div class="field-item"><div class="fi-label">Valor bruto (R$)</div><div class="fi-val">4.000,00</div></div>
+                        <div class="field-item"><div class="fi-label">Desconto (R$)</div><div class="fi-val">0,00</div></div>
+                    </div>
+                    <div class="row2">
+                        <div class="field-item"><div class="fi-label">Total</div><div class="fi-val">R$ 4.000,00</div></div>
+                        <div class="field-item"><div class="fi-label">Pago / Restante</div><div class="fi-val">R$ 2.000,00 / R$ 4.000,00</div></div>
+                    </div>
+                    <div class="field" style="margin-top:12px">
+                        <label>Observações</label>
+                        <div class="inp placeholder" style="height:56px;align-items:flex-start;padding-top:8px">Observações internas sobre esta parcela...</div>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <div class="sec-label">Pagamentos <button class="btn btn-sm" style="margin-left:auto"><i class="ti ti-plus" style="font-size:11px"></i>Registrar pagamento</button></div>
+                <table class="tbl">
+                    <thead><tr><th>#</th><th>Data e hora</th><th>Valor</th><th>Forma</th></tr></thead>
+                    <tbody>
+                    <tr><td>1</td><td>30/05/2025 12:00</td><td>R$ 400,00</td><td>Pix</td></tr>
+                    <tr><td>2</td><td>30/05/2025 12:30</td><td>R$ 400,00</td><td>Cartão débito</td></tr>
+                    <tr><td>3</td><td>30/05/2025 12:30</td><td>R$ 400,00</td><td>Dinheiro</td></tr>
+                    <tr><td>4</td><td>30/05/2025 12:30</td><td>R$ 400,00</td><td>Pix</td></tr>
+                    <tr><td>5</td><td>30/05/2025 12:30</td><td>R$ 400,00</td><td>Boleto</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="modal-footer">
+            <button class="btn" onclick="hideModal('modal-parcela')">Fechar</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    var tabMap = {
+        dados: 'Dados Cadastrais',
+        anamnese: 'Anamnese',
+        agenda: 'Agendamentos',
+        orcamentos: 'Orçamentos',
+        financeiro: 'Financeiro',
+        consultas: 'Consultas e Procedimentos'
+    };
+
+    function showTab(id) {
+        document.querySelectorAll('.tab').forEach(function (t) { t.classList.remove('on') });
+        document.querySelectorAll('.panel').forEach(function (p) { p.classList.remove('on') });
+        document.querySelectorAll('.tab').forEach(function (t) {
+            if (t.textContent.trim() === tabMap[id]) t.classList.add('on');
+        });
+        var p = document.getElementById('panel-' + id);
+        if (p) p.classList.add('on');
+    }
+
+    function toggleHist(el) {
+        var b = el.nextElementSibling;
+        b.classList.toggle('open');
+        var ic = el.querySelector('.ti-chevron-down');
+        ic.style.transform = b.classList.contains('open') ? 'rotate(180deg)' : '';
+    }
+
+    function showOrcamentoModal() { document.getElementById('modal-orcamento').classList.add('show') }
+    function showCobrancaModal() { document.getElementById('modal-cobranca').classList.add('show') }
+    function showParcelaModal() { document.getElementById('modal-parcela').classList.add('show') }
+    function hideModal(id) { document.getElementById(id).classList.remove('show') }
+    function toggleLote() {
+        var p = document.getElementById('lote-panel');
+        p.style.display = p.style.display === 'none' ? 'block' : 'none';
+    }
+</script>
+</body>
+</html>

@@ -208,14 +208,14 @@ export function HorariosTab({ dentistId: _dentistId }: HorariosTabProps) {
       <Card>
         <div className="flex items-center justify-between border-b border-border px-5 py-4">
           <div className="flex items-center gap-3">
-            <p className="text-[11px] font-bold uppercase tracking-[0.06em] text-muted-foreground">
+            <p className="text-[12px] font-bold uppercase tracking-[0.06em] text-primary">
               Horário de Trabalho
             </p>
             <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
               desde 01/03/2025
             </span>
           </div>
-          <Button type="button" variant="outline" size="sm" onClick={openScheduleModal}>
+          <Button type="button" size="sm" className="gap-1.5" onClick={openScheduleModal}>
             <Clock className="h-3.5 w-3.5" />
             Editar
           </Button>
@@ -261,17 +261,17 @@ export function HorariosTab({ dentistId: _dentistId }: HorariosTabProps) {
       {/* Card 2 — Alterações na Agenda */}
       <Card>
         <div className="flex items-center justify-between border-b border-border px-5 py-4">
-          <p className="text-[11px] font-bold uppercase tracking-[0.06em] text-muted-foreground">
+          <p className="text-[12px] font-bold uppercase tracking-[0.06em] text-primary">
             Alterações na Agenda
           </p>
-          <Button type="button" variant="outline" size="sm" onClick={() => openExceptionModal()}>
+          <Button type="button" size="sm" className="gap-1.5" onClick={() => openExceptionModal()}>
             <Plus className="h-3.5 w-3.5" />
             Nova exceção
           </Button>
         </div>
         <div className="p-5">
           {/* Exceções */}
-          <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.06em] text-muted-foreground/70">
+          <p className="mb-3 text-[12px] font-bold uppercase tracking-[0.06em] text-primary/70">
             Exceções
           </p>
 
@@ -344,7 +344,7 @@ export function HorariosTab({ dentistId: _dentistId }: HorariosTabProps) {
           )}
 
           {/* Histórico */}
-          <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.06em] text-muted-foreground/70">
+          <p className="mb-3 text-[12px] font-bold uppercase tracking-[0.06em] text-primary/70">
             Histórico de alterações
           </p>
 
@@ -458,7 +458,7 @@ export function HorariosTab({ dentistId: _dentistId }: HorariosTabProps) {
             />
           </div>
 
-          <p className="mb-3 border-b border-border pb-2 text-[11px] font-bold uppercase tracking-[0.06em] text-muted-foreground">
+          <p className="mb-3 border-b border-border pb-2 text-[12px] font-bold uppercase tracking-[0.06em] text-primary">
             Dias e horários
           </p>
 
