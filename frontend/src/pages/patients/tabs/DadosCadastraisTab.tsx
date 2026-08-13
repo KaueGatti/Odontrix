@@ -77,7 +77,7 @@ export function DadosCadastraisTab({patient}: DadosCadastraisTabProps) {
         <form
             onSubmit={handleSubmit(onSubmit)}
             noValidate
-            className="mx-auto flex flex-col gap-4 px-9 py-7"
+            className="mx-auto flex flex-col gap-4 px-6 py-4"
         >
             <Card>
                 <CardHeader className="flex gap-4 items-center justify-between">

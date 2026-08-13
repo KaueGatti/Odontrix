@@ -62,7 +62,7 @@ export function SemanalView({
     format(day, "EEE", { locale: ptBR }).toUpperCase().slice(0, 3);
 
   return (
-    <div className="flex-1 overflow-auto p-6">
+    <div className="flex-1 overflow-auto p-2">
       <div
         className="grid border-l border-t border-border"
         style={{

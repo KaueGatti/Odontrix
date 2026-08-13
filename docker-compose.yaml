@@ -2,7 +2,7 @@ services:
   postgres:
     image: postgres:16-alpine
     restart: always
-    container_name: template-clinicas-odontologicas-postgres
+    container_name: Odontrix-clinicas-odontologicas-postgres
     shm_size: 128mb
     ports:
       - "5432:5432"
@@ -16,7 +16,7 @@ services:
   api:
     build:
       context: "./backend"
-    container_name: template-clinicas-odontologicas-api
+    container_name: Odontrix-clinicas-odontologicas-api
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
@@ -29,7 +29,7 @@ services:
   frontend:
     build:
       context: "./frontend"
-    container_name: template-clinicas-odontologicas-frontend
+    container_name: Odontrix-clinicas-odontologicas-frontend
     command: sh -c "npm install && npm run dev"
     ports:
       - "5173:5173"

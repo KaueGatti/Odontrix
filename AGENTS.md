@@ -140,53 +140,6 @@ src/
 - Sem autenticação — login faz apenas `console.log`
 - Sem roles/permissões — sidebar mostra todos os itens
 
-### Sessão — Telas Financeiro (Contas / A Receber / A Pagar)
-
-**Arquivos criados:**
-
-```
-src/pages/financeiro/
-├── ContasPage.tsx              # Visão geral: 4 KPIs + tabela "Próximos vencimentos"
-├── AReceberPage.tsx            # 3 KPIs + filtros (Status/Período/Paciente/Forma) + tabela recebíveis
-├── APagarPage.tsx              # 3 KPIs + botão "Nova despesa" + filtros + tabela despesas
-├── types.ts                    # PaymentStatus, PaymentType, interfaces
-├── mock-data.ts                # MOCK_PROXIMOS_VENCIMENTOS, MOCK_RECEBER, MOCK_A_PAGAR
-└── components/
-    ├── StatusBadge.tsx          # Dot + texto: pago/pendente/atrasado/a_vencer/cancelado
-    ├── TypeTag.tsx              # Tag "Receber" (verde) / "Pagar" (vermelho)
-    ├── RegistrarRecebimentoDialog.tsx  # Modal: valor, data, forma pagamento, obs
-    ├── RegistrarPagamentoDialog.tsx    # Modal: valor, data, forma pagamento
-    └── NovaDespesaDialog.tsx          # Modal: descrição, centro custo, valor, vencimento, obs
-```
-
-**Arquivos modificados:**
-- `src/main.tsx` — imports + rotas `contas` → `<ContasPage/>`, `a-pagar` → `<APagarPage/>`, `a-receber` → `<AReceberPage/>`
-
-**Componentes reutilizados:**
-- `KpiCard` (dashboard/components) — KPIs das 3 páginas
-- `Card` (ui/card) — cards das tabelas
-- `Dialog` (ui/dialog) — os 3 modais
-
-**Observações importantes:**
-- `shadcn/tailwind.css` **não existe** no projeto; cores semânticas como `bg-success/10` não funcionam. Usar valores explícitos com `bg-[rgba(...)]` e `text-[#hex]`.
-- Modais usam Radix Dialog, nunca `Modal` customizado.
-- Tamanho mínimo de campos em formulários/diálogos: inputs/selects `h-10`, `text-[13px]`, `px-3`; labels `text-[12.5px]`; gap label→campo `gap-[6px]`; entre seções `gap-4`/`mt-4`.
-
-**Status atual:**
-- Telas de Financeiro implementadas com dados mockados (`MOCK_*`).
-- 3 páginas funcionais via rota: `/contas`, `/a-receber`, `/a-pagar`.
-- Modais abrem mas não persistem dados (sem backend nem estado global).
-- Sidebar já possui grupo Financeiro com os 3 links (existente antes da sessão).
-
-**Não implementado (pendente para próxima sessão):**
-- Integração com API REST (envio real de dados).
-- Estado global ou cache dos dados financeiros.
-- Lógica de filtros (status, período, centro de custo, busca) — selects e inputs são placeholders estáticos.
-- Validação de formulários nos modais.
-- Responsividade (telas pensadas para desktop).
-
----
-
 ## Backend
 
 ### Estado atual
@@ -386,3 +339,67 @@ postgres:16-alpine (5432) → api:8080 → frontend:5173
 | `adr-agenda-calendario-custom.md` | ADR sobre construção própria da agenda |
 | `api/openapi.yaml` | Spec completa da API REST |
 | `frontend/src/styles/design-tokens.css` | Tokens CSS para mockups HTML |
+
+---
+
+## Última Sessão — 12/08/2026
+
+### O que foi feito
+
+#### 1. Patient Profile — AgendamentosTab com dialogs funcionais
+
+**`patients/tabs/AgendamentosTab.tsx`:**
+- Botão "+ Novo agendamento" agora abre o `NovaConsultaDialog` (dentistas do mock da agenda, data atual pré-selecionada); ao salvar, o novo agendamento é adicionado à lista local
+- Ícone "Olho" abre o `DetalhesConsultaDialog` com o agendamento selecionado; mudanças de status atualizam a tabela e cancelamentos passam pelo `ConfirmarAcaoDialog`
+- Reutilizados os dialogs da agenda (`NovaConsultaDialog`, `DetalhesConsultaDialog`, `ConfirmarAcaoDialog`) e o tipo compartilhado `Appointment`, estendido localmente com `createdBy` para manter a coluna "Quem agendou" — mesmo padrão do `dentists/tabs/AgendamentosTab.tsx`
+- Mantidos colunas, badge de "Não compareceu" (outline error) e toggle "Ver todos"
+- Lint: ✅ · Build: ✅
+
+### Sessão anterior — 29/07/2026
+
+### O que foi feito
+
+#### 1. Patient Profile — Implementação das 4 tabs (Agendamentos, Consultas e Procedimentos, Orçamentos, Financeiro)
+
+**`tabs/AgendamentosTab.tsx`:**
+- Tabela "Próximos e histórico de agendamentos" com colunas: Data/Hora, Dentista, Tipo, Duração, Quem agendou, Status (Badge), Ações
+- Status: Confirmada (info), Agendada (neutral), Realizada (success), Cancelada (error), Não compareceu (error outline)
+- Botão "+ Novo agendamento" (primary)
+- Toggle "Ver todos" para expandir
+
+**`tabs/ConsultasProcedimentosTab.tsx`:**
+- Tabela "Consultas realizadas" com colunas: Data, Dentista, Tipo, Procedimentos, Dentes (tooth chips FDI), Diagnóstico, Valor, Ações
+- Card "Plano de tratamento em andamento" comentado (aguardando definição)
+
+**`tabs/OrcamentosTab.tsx`:**
+- Tabela "Orçamentos" com colunas: #, Descrição, Valor total, Válido até, Criado por (link), Status (Badge), Ações
+- Status: Aprovado (success), Rascunho (neutral), Enviado (info), Recusado (error), Expirado (error outline)
+- Botão "Novo Orçamento" abre `NovoOrcamentoDialog`
+
+**`tabs/FinanceiroTab.tsx`:**
+- Card "Resumo financeiro" no topo com 4 KPIs: Total já pago (verde), Saldo em aberto (vermelho), Parcelas vencidas (vermelho), Situação (badge Inadimplente/Em dia)
+- Tabela "Contas" com totalização no tfoot (Valor total + Valor pago + Saldo)
+- Linhas vencidas com destaque vermelho (`bg-destructive/[0.06]`)
+- Eye icon abre `CobrancaDialog` ou `ParcelaDialog` conforme status
+
+#### 2. Patient Profile — 3 modais (dialogs)
+
+**`tabs/dialogs/NovoOrcamentoDialog.tsx`:** Modal wide com grid 2 colunas — formulário + tabela de procedimentos + totalização (subtotal, descontos, total geral) + forma de pagamento/parcelas
+
+**`tabs/dialogs/CobrancaDialog.tsx`:** Modal wide com card de valores + parcelas + painel "Registrar pagamento em lote" (toggle)
+
+**`tabs/dialogs/ParcelaDialog.tsx`:** Modal wide com detalhes da parcela + tabela de pagamentos
+
+#### 3. Ajustes de padding
+- Card headers padronizados para `py-3` em todas as tabs do paciente (redução de `py-4`)
+- KPIs do Resumo financeiro com padding reduzido (`p-3`, grid `p-4`)
+- Lint: ✅ (zero erros novos)
+
+### Pendente (próxima sessão)
+
+- Backend: entities, repositories, services, controllers, security
+- API Client no frontend
+- Autenticação real
+- Listas (Pacientes, Dentistas, Recepcionistas) com dados reais
+- Planos odontológicos e Contratos
+- Upload de documentos

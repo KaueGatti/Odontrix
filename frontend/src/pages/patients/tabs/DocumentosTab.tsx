@@ -313,7 +313,7 @@ export function DocumentosTab() {
     }
 
     return (
-        <div className="mx-auto flex h-full flex-col px-8 py-7">
+        <div className="mx-auto flex h-full flex-col px-6 py-4">
             <Card className="flex flex-1 flex-col overflow-hidden">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0">
                     <div>
