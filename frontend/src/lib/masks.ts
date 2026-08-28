@@ -51,6 +51,21 @@ export function maskCEP(value: string): string {
     return result;
 }
 
+/**
+ * Moeda (BRL): 1.234,56
+ * Trata os dígitos como centavos e formata no padrão pt-BR, sem símbolo R$.
+ * Funciona com backspace (reconstrói a partir dos dígitos restantes).
+ */
+export function maskCurrency(value: string): string {
+    const digits = onlyDigits(value).slice(0, 13);
+    if (digits.length === 0) return "";
+    const cents = parseInt(digits, 10);
+    return (cents / 100).toLocaleString("pt-BR", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+    });
+}
+
 /** CPF: 000.000.000-00 */
 export function maskCPF(value: string): string {
     const digits = onlyDigits(value).slice(0, 11);

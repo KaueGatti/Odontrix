@@ -1,4 +1,5 @@
-import { useState } from "react";
+/* eslint-disable react-refresh/only-export-components */
+import { useMemo, useState } from "react";
 import { Eye, Plus } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -6,18 +7,18 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { NovoOrcamentoDialog } from "./dialogs/NovoOrcamentoDialog";
 
-interface QuoteRecord {
+export interface QuoteRecord {
   id: number;
   description: string;
   totalValue: number;
-  validUntil: string;
+  validUntil: string; // DD/MM/YYYY
   createdBy: string;
   status: "approved" | "draft" | "sent" | "rejected" | "expired";
 }
 
 const MOCK_QUOTES: QuoteRecord[] = [
-  { id: 1, description: "Profilaxia 04/25", totalValue: 100, validUntil: "01/04/2025", createdBy: "Kamily Vitória", status: "approved" },
-  { id: 2, description: "Canal dente 36", totalValue: 500, validUntil: "10/04/2025", createdBy: "Kamily Vitória", status: "draft" },
+  { id: 1, description: "Profilaxia 04/25", totalValue: 100, validUntil: "01/04/2027", createdBy: "Kamily Vitória", status: "approved" },
+  { id: 2, description: "Canal dente 36", totalValue: 500, validUntil: "10/04/2027", createdBy: "Kamily Vitória", status: "draft" },
   { id: 3, description: "Restauração 02/25", totalValue: 220, validUntil: "12/02/2025", createdBy: "Kamily Vitória", status: "sent" },
   { id: 4, description: "Clareamento", totalValue: 400, validUntil: "05/01/2025", createdBy: "Kamily Vitória", status: "rejected" },
   { id: 5, description: "Clareamento", totalValue: 400, validUntil: "05/01/2025", createdBy: "Kamily Vitória", status: "expired" },
@@ -48,8 +49,113 @@ function formatCurrency(value: number) {
   return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
+export function isExpiredValidUntil(validUntil: string): boolean {
+  if (!validUntil) return false;
+  let date: Date | null = null;
+  if (validUntil.includes("/")) {
+    const [d, m, y] = validUntil.split("/").map(Number);
+    if (!d || !m || !y) return false;
+    date = new Date(y, m - 1, d);
+  } else if (validUntil.includes("-")) {
+    const [y, m, d] = validUntil.split("-").map(Number);
+    if (!y || !m || !d) return false;
+    date = new Date(y, m - 1, d);
+  } else {
+    return false;
+  }
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  date.setHours(0, 0, 0, 0);
+  return date < today;
+}
+
+export function getEffectiveStatus(q: QuoteRecord): QuoteRecord["status"] {
+  const past = isExpiredValidUntil(q.validUntil);
+  if (past) {
+    if (q.status === "draft" || q.status === "sent" || q.status === "expired") return "expired";
+    return q.status;
+  }
+  if (q.status === "expired") return "draft";
+  return q.status;
+}
+
+function brToIso(br: string): string {
+  if (!br || !br.includes("/")) return br;
+  const [d, m, y] = br.split("/");
+  if (!d || !m || !y) return "";
+  return `${y}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
+}
+
+function isoToBr(iso: string): string {
+  if (!iso || !iso.includes("-")) return iso;
+  const [y, m, d] = iso.split("-");
+  if (!y || !m || !d) return "";
+  return `${d.padStart(2, "0")}/${m.padStart(2, "0")}/${y}`;
+}
+
 export function OrcamentosTab() {
+  const [quotes, setQuotes] = useState<QuoteRecord[]>(MOCK_QUOTES);
   const [isNewOpen, setNewOpen] = useState(false);
+  const [selectedQuote, setSelectedQuote] = useState<QuoteRecord | null>(null);
+
+  const handleNew = () => {
+    setSelectedQuote(null);
+    setNewOpen(true);
+  };
+
+  const handleView = (q: QuoteRecord) => {
+    setSelectedQuote(q);
+    setNewOpen(true);
+  };
+
+  const handleOpenChange = (open: boolean) => {
+    setNewOpen(open);
+    if (!open) setSelectedQuote(null);
+  };
+
+  const handleSave = (data: { description: string; validUntilIso: string; status: QuoteRecord["status"]; totalValue: number }) => {
+    const validUntilBr = isoToBr(data.validUntilIso) || new Date().toLocaleDateString("pt-BR");
+    if (selectedQuote) {
+      const effectiveTotal = data.totalValue !== 0 ? data.totalValue : selectedQuote.totalValue;
+      setQuotes((prev) =>
+        prev.map((q) =>
+          q.id === selectedQuote.id
+            ? {
+                ...q,
+                description: data.description || q.description,
+                validUntil: validUntilBr,
+                status: data.status,
+                totalValue: effectiveTotal,
+              }
+            : q,
+        ),
+      );
+    } else {
+      const nextId = Math.max(0, ...quotes.map((q) => q.id)) + 1;
+      setQuotes((prev) => [
+        ...prev,
+        {
+          id: nextId,
+          description: data.description || "Novo orçamento",
+          validUntil: validUntilBr,
+          createdBy: "Kamily Vitória",
+          status: data.status,
+          totalValue: data.totalValue,
+        },
+      ]);
+    }
+    setNewOpen(false);
+    setSelectedQuote(null);
+  };
+
+  const rows = useMemo(
+    () =>
+      quotes.map((q) => {
+        const effective = getEffectiveStatus(q);
+        return { q, effective };
+      }),
+    [quotes],
+  );
 
   return (
     <div className="flex flex-col gap-4 px-6 py-4">
@@ -58,7 +164,7 @@ export function OrcamentosTab() {
           <p className="text-[12px] font-bold uppercase tracking-[0.06em] text-primary">
             Orçamentos
           </p>
-          <Button size="sm" className="gap-1.5" onClick={() => setNewOpen(true)}>
+          <Button size="sm" className="gap-1.5" onClick={handleNew}>
             <Plus className="h-3.5 w-3.5" />
             Novo Orçamento
           </Button>
@@ -78,7 +184,7 @@ export function OrcamentosTab() {
               </tr>
             </thead>
             <tbody>
-              {MOCK_QUOTES.map((q) => (
+              {rows.map(({ q, effective }) => (
                 <tr key={q.id} className="border-b border-border/50 last:border-b-0">
                   <td className="px-6 py-3 text-muted-foreground">{q.id}</td>
                   <td className="px-6 py-3 font-semibold text-foreground">{q.description}</td>
@@ -95,28 +201,29 @@ export function OrcamentosTab() {
                     </button>
                   </td>
                   <td className="px-6 py-3">
-                    {q.status === "expired" ? (
+                    {effective === "expired" ? (
                       <span className="inline-flex items-center gap-1.5 rounded-full border border-destructive/30 px-2.5 py-1 text-[11px] font-semibold leading-none text-destructive">
                         Expirado
                       </span>
                     ) : (
-                      <Badge variant={getBadgeVariant(q.status)}>
-                        {STATUS_LABELS[q.status]}
+                      <Badge variant={getBadgeVariant(effective)}>
+                        {STATUS_LABELS[effective]}
                       </Badge>
                     )}
                   </td>
                   <td className="px-6 py-3 text-right">
                     <button
                       type="button"
+                      onClick={() => handleView(q)}
                       className="inline-flex items-center gap-1 border-none bg-transparent p-0 text-[11px] text-muted-foreground hover:text-foreground"
-                      aria-label="Ver detalhes"
+                      aria-label={`Ver orçamento ${q.id}`}
                     >
                       <Eye className="h-3.5 w-3.5" />
                     </button>
                   </td>
                 </tr>
               ))}
-              {MOCK_QUOTES.length === 0 && (
+              {rows.length === 0 && (
                 <tr>
                   <td colSpan={7} className="px-6 py-8 text-center text-[13px] text-muted-foreground">
                     Nenhum orçamento encontrado.
@@ -130,8 +237,22 @@ export function OrcamentosTab() {
 
       <NovoOrcamentoDialog
         open={isNewOpen}
-        onOpenChange={setNewOpen}
+        onOpenChange={handleOpenChange}
         patientName={PATIENT_NAME}
+        patientLocked
+        quote={
+          selectedQuote
+            ? {
+                id: selectedQuote.id,
+                description: selectedQuote.description,
+                validUntilIso: brToIso(selectedQuote.validUntil),
+                status: getEffectiveStatus(selectedQuote),
+                // keep original status for revert logic
+                originalStatus: selectedQuote.status,
+              }
+            : null
+        }
+        onSave={handleSave}
       />
     </div>
   );
