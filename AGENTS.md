@@ -342,7 +342,62 @@ postgres:16-alpine (5432) → api:8080 → frontend:5173
 
 ---
 
-## Última Sessão — 28/08/2026
+## Última Sessão — 31/08/2026
+
+### O que foi feito
+
+#### Tela de Atendimento / Finalização da Consulta (fiel ao `mockups/dentist_appointment_finalization_mockup.html`)
+
+**Fluxo:** Agenda → modal de detalhes → **"Iniciar atendimento"** → `/agenda/atendimento/:id` (status `em_atendimento`) → **"Finalizar consulta"** → status `realizada` → volta para `/agenda` com o card verde.
+
+- **Rota nova** `agenda/atendimento/:id` no `main.tsx`, dentro do `AppLayout`
+- **Novo `pages/agenda/atendimento/AtendimentoPage.tsx`** — header (voltar à agenda, avatar, nome + badge "Em atendimento", meta tipo/agendado/duração estimada, **Início real / Término reais editáveis (`type=time`) + duração calculada**); banner de campos obrigatórios (fica vermelho quando há erros); footer fixo `Cancelar` / `Salvar rascunho` (feedback "Rascunho salvo às HH:MM") / `Finalizar consulta`
+- **Novo `atendimento/components/Odontograma.tsx`** — odontograma FDI clicável de 32 dentes em SVG (coroa + raiz; inferiores espelhados com `flex-col-reverse`), quadrantes separados por vão central, legenda e texto "Dentes: 36, 37"
+- **Novo `atendimento/components/ProcedimentosCard.tsx`** — painel "Adicionar procedimento" (Select com catálogo + **preço auto-preenchido**, obs, odontograma, Valor/Desconto em **centavos** via `MoneyInput` local + `maskMoney`/`parseMoneyToCents`, valor final estático) + tabela (Procedimento/Dentes em pills/Valor/Desconto/Valor final/Obs/remover) com empty state
+- **Novo `atendimento/components/AnamneseCard.tsx`** — anamnese exibida (Alergias/Medicamentos/Doenças) + tag "atualizada em" + modal "Atualizar anamnese" (`ui/dialog`; o registro anterior vai para o histórico, data vira hoje) + "Registro anterior" expansível
+- **Novo `atendimento/components/AnexosCard.tsx`** — dropzone funcional **local** (input file múltiplo, sem upload), itens com ícone (Bone/Image/FileText), badge de tipo, tamanho e remoção
+- **Novo `atendimento/types.ts`** (`ProcedimentoRealizado`, `AnamneseData`, `AnamneseHistorico`, `AnexoItem`) e **`atendimento/shared.ts`** (classes de estilo compartilhadas CARD/SEC_LABEL/FIELD_LABEL/TEXTAREA + `maskDataBR`)
+- **`pages/agenda/mock-data.ts`** — registro compartilhado entre rotas: `appointmentRegistry` + `statusOverrides` com `syncMockAppointments`, `getMockAppointmentById` (fallback regenera do seed pelo formato do id `appt-<ano>-<mês 0-based>-<dia>-<dentista>-<hora>`) e `setMockAppointmentStatus`
+- **`pages/agenda/AgendaPage.tsx`** — sincroniza o estado com o registro (`useEffect`), reaplica status persistidos ao remontar e `handleStatusChange` persiste imediatamente (a navegação pode ocorrer antes do effect rodar)
+- **`components/DetalhesConsultaDialog.tsx`** — `Action` ganhou `navigateTo?`; "Iniciar atendimento" navega para `/agenda/atendimento/:id` após mudar o status
+- **Validação de finalização:** procedimentos + queixa principal + diagnóstico obrigatórios; banner vermelho + `aria-invalid` + mensagem inline + `scrollIntoView` até o primeiro card com erro
+- Ícones 100% **Lucide** (o mockup usava Tabler — Bone p/ radiografia, Image p/ foto, CloudUpload, History…)
+- Lint: ✅ (arquivos da sessão) · Build: ✅ (965 kB)
+
+## Sessão anterior — 30/08/2026
+
+### O que foi feito
+
+#### 1. Cobrança — forma de pagamento read-only + modal de Registro de Pagamento real (fiel ao `mockups/registrar_pagamento.html`)
+
+**Novo `patients/tabs/dialogs/RegistrarPagamentoDialog.tsx`** — modal de pagamento baseado no mockup:
+- **Título** `REGISTRAR PAGAMENTO` (20px/700); `Desconto (R$)` + `Acréscimo / multa (R$)` + `Valor final (R$)` (quadro estático `#eaf0fe`/`#c9d9fc`); `Forma de pagamento` (Select PIX/Dinheiro/Cartão débito/Cartão crédito/Boleto) + `Valor`
+- Checkbox **"Múltiplas formas de pagamento"** → cards `Forma 1..N` (Tipo/Valor/Data, remover por `X`) + botão dashed `+ Adicionar forma`; banner warning quando forma ≠ combinado do orçamento
+- **Summary box**: `Valor a pagar` + `Total` + chip `✓ Correto` / `⚠ Ajustar valor`
+- **Parcelas selecionadas**: badge `N parcelas`, banner info (vence primeiro paga primeiro), tabela `Parcela/Vencimento/Valor/Situação` com pills `Será paga`/`Valor insuf.`/`Pendente` (borda esquerda verde/âmbar/cinza) e totais `Total das parcelas` / `Será pago`
+- **Observações** + **registrado por** (avatar KV) + footer `Cancelar` / `Gerar comprovante` (toggle verde) / `Confirmar pagamento` (verde)
+- `valorFinal = valor − desconto + acréscimo` (nunca negativo); `coverage` ordenado por vencimento via `parseDateBR` (DD/MM/AAAA); props `installments`/`combinadoOrcamento`/`onConfirm`
+
+**`patients/tabs/dialogs/CobrancaDialog.tsx`:**
+- **Forma de pagamento read-only**: `<Select>` editável → display estático `r.forma || "—"` (padrão da coluna Combinado)
+- **"Registrar pagamento em lote"** adaptado ao system design → componente `Button` (`size="sm"` `variant="default"` + `Banknote`), `disabled` sem seleção com `title` explicativo; painel inline `loteOpen` removido
+- **Modal em 2 modos**: nota `Banknote` da linha abre modo **parcela única** (`openSinglePayment`); botão de lote abre modo **várias parcelas** (`openLotePayment` — só selecionadas e não pagas)
+- **Pagamento funcional**: `onConfirm` marca parcelas como `paid` (pill `Pago #e7f9ee` + bloqueio de checkbox/nota); header pill dinâmico `Pendente`/`Parcial`/`Pago`; cards `Total/Pago/Restante` derivados do estado
+- Lint: ✅ (arquivos da sessão — repo tem 13 erros pré-existentes em outros arquivos) · Build: ✅ (930 kB)
+
+#### 2. Máscara de moeda baseada em centavos (inputs do modal de pagamento)
+
+**`lib/masks.ts`** — novos helpers `parseMoneyToCents`, `formatMoneyFromCents`, `maskMoney` e `centsToNumber` (o `maskCurrency` antigo permanece intacto para o `NovoOrcamentoDialog`):
+- `maskMoney` reconstrói a máscara apenas com dígitos a cada tecla: numérica entra pela direita (nos centavos) e desloca as anteriores à esquerda; backspace remove o último dígito; vírgula/ponto/não-numéricos são ignorados; sempre exibe `R$ 0,00` → `R$ 1.234,56` (milhar + 2 casas decimais)
+- `parseMoneyToCents` extrai dígitos e devolve inteiro de centavos (ex: `"R$ 10,05"` → `1005`); `formatMoneyFromCents(cents, withSymbol)` formata; `centsToNumber` → número puro (ex: `123456` → `1234.56`)
+
+**`RegistrarPagamentoDialog.tsx`:**
+- Estados `desconto/acrescimo/valor` e `PaymentForma.valor` agora são **inteiros de centavos**; novo componente local `MoneyInput` (controlado com `maskMoney`/`parseMoneyToCents`, força o DOM correto quando digita não-numérico)
+- Cálculos (valor final, soma das formas, cobertura das parcelas, `Será pago`) em centavos — sem aritmética de ponto flutuante
+- Payload `ConfirmPaymentPayload` agora expõe `valorPago` (reais), `valorPagoCents` (centavos) e `valorPagoFormatado` (`"R$ 1.234,56"`)
+- Lint: ✅ (arquivos da sessão) · Build: ✅ (930 kB)
+
+### Sessão anterior — 28/08/2026
 
 ### O que foi feito
 
@@ -362,114 +417,10 @@ postgres:16-alpine (5432) → api:8080 → frontend:5173
 - **Título design system:** `COBRANÇA 26px extrabold #1a8cff` → `22px font-bold leading-none tracking-tight text-primary`; `PARCELAS 20px #9aa0a6` → `18px font-bold tracking-tight text-muted-foreground` — idêntico ao `ORÇAMENTO`/`PROCEDIMENTOS`
 - Lint: ✅ · Build: ✅ (918kB)
 
-### Sessão anterior — 27/08/2026
+### Próxima sessão
 
-### O que foi feito
-
-#### 1. Orçamento — título + SELECT de status no header
-
-**`patients/tabs/dialogs/NovoOrcamentoDialog.tsx`:**
-- Título renomeado de `NOVO ORÇAMENTO` → `ORÇAMENTO` (`h2` + `DialogTitle` sr-only)
-- `SELECT` de **Status** movido de dentro do grid `Válido até + Status` para **ao lado do título** (`flex justify-between`): `h-8 w-[150px] text-[12px]`, opções `Rascunho/Enviado/Aprovado/Recusado/Expirado`; campo `Válido até` passou a ocupar coluna única
-- Lint: ✅ · Build: ✅
-
-#### 2. Orçamentos — abertura via Olho + expirado automático + bloqueio com liberação imediata
-
-**`patients/tabs/OrcamentosTab.tsx`:**
-- `MOCK_QUOTES` → `useState` + `selectedQuote`; helpers `isExpiredValidUntil` (DD/MM/YYYY ou YYYY-MM-DD vs `today 00h`), `getEffectiveStatus` (deriva `expired` automaticamente para `draft/sent/expired` com `validUntil < hoje`; `approved/rejected` nunca expiram; `expired` futuro reverte para `draft`), `brToIso`/`isoToBr`
-- Tabela usa `effective` para badge (`expired` → outline `destructive/30`, demais via `Badge` variant)
-- Ícone `Eye` agora com `onClick={() => handleView(q)}` abre `NovoOrcamentoDialog` preenchido (`quote` + `originalStatus`); botão `Novo Orçamento` abre em modo criação (`selectedQuote=null`); `handleSave` atualiza lista (converte `YYYY-MM-DD` → `DD/MM/YYYY`, preserva `totalValue` se `0`, insere com `nextId`)
-
-**`patients/tabs/dialogs/NovoOrcamentoDialog.tsx`:**
-- Novas props `quote?: QuoteView | null` e `onSave?`; `QuoteView { id, description, validUntilIso, status, originalStatus }`
-- `isExpiredIso()` + `const isLocked = isExpiredIso(validUntil)` (sem `useMemo`) e `handleValidUntilChange` que no **`onChange`** já seta `validUntil` + se `!expired && status==="expired"` reverte `status` para `originStatus/draft` — **liberação imediata** de campos e remoção do aviso sem aguardar `blur/save`
-- `useEffect` sync ao `open` (hidrata `description/validUntil/status/originStatus` do `quote` ou reseta para criação) + `useEffect` fallback de desbloqueio
-- **Quando `isLocked=true`:** banner `role="alert"` `border-amber-200 bg-amber-50` com `AlertTriangle` (“Orçamento expirado — Altere a data de validade…”) + hint sob `Válido até` + `Lock` footer; `Válido até` com `border-amber-300`; todos os demais desabilitados (`disabled + opacity-60`): `Status` (header), `Paciente` (`patientLocked || isLocked`), `Descrição`, `Observações`, cada linha de `Procedimentos` (Select, `CurrencyInput`, desconto, `Qtd`, observação, `Remover`, `Alternar R$/%`), `Adicionar Procedimento`, `Forma pagamento/Entrada/Parcelas/Obs pagamento` (`pointer-events-none opacity-60` no grid), `Salvar` (`disabled`, `title` explicativo). `Válido até` permanece habilitado e é o único que desbloqueia edição ao receber data futura
-- `CurrencyInput` e `TextArea` estendidos para `disabled`; `handleSave` bloqueado se `isLocked`, senão chama `onSave({ description, validUntilIso, status, totalValue })` onde `totalValue` é o `total` calculado dos procedimentos
-
-- Lint: ✅ · Build: ✅ (912kB)
-
-### Sessão anterior — 14/08/2026
-
-### O que foi feito
-
-#### 1. Novo Orçamento — redesign completo do modal (Patient Profile)
-
-**`lib/masks.ts`:**
-- Nova máscara `maskCurrency` (dígitos → `1.234,56` pt-BR, funciona com backspace) — usada nos inputs de moeda do modal
-
-**`patients/tabs/dialogs/NovoOrcamentoDialog.tsx`** — reescrito:
-- **Layout 2 colunas `2fr_3fr`:** esquerda "Dados do orçamento" (Paciente Select, Descrição, Válido até + Status, Observações) | direita com Procedimentos + Totalização/Pagamento
-- **Paciente:** nova prop `patientLocked` — select desabilitado quando aberto pela tela do paciente, editável em telas genéricas; opções vêm de `MOCK_PATIENTS` (agenda), com o paciente atual inserido no topo se ausente
-- **Tabela de procedimentos (edição inline):** Procedimento (Select que preenche o valor unit. de referência), Valor Unit. (máscara R$), Desconto (input + Select `R$/%` por linha), Qtd, Total calculado, Observação, Delete (`Trash2`)
-- **Botão "Adicionar procedimento"** (verde `emerald-600`) abaixo da tabela
-- **Card único "Totalização + Pagamento"** com divisor vertical (`divide-x`): subtotal, total de descontos (vermelho), total geral (verde); Forma de pagamento, Entrada (máscara R$), `NumberSpinner` de parcelas (−/+), label "Valor por parcela" (resto na última parcela), observações do pagamento
-- **Componentes auxiliares co-localizados:** `CurrencyInput`, `TextArea`, `NumberSpinner` (padrão do projeto)
-- **Cálculo de parcelas em centavos** (`Math.round`/`Math.floor`/`%`) para evitar erro de ponto flutuante — ex: 2.033,33 em 4x → "3x de R$ 508,33 e 1x de R$ 508,34"
-- **Dimensões do modal:** `max-w-7xl` + `max-h-[85vh]`, sem scroll no body (`overflow-hidden`, header/footer `shrink-0`); card de Procedimentos é `flex-1` e a **tabela rola internamente** (`min-h-0 flex-1 overflow-y-auto`)
-
-**`patients/tabs/OrcamentosTab.tsx`:**
-- Passa `patientLocked` ao abrir o modal pela tela do paciente
-
-- Lint: ✅ · Build: ✅
-
-### Sessão anterior — 12/08/2026
-
-### O que foi feito
-
-#### 1. Patient Profile — AgendamentosTab com dialogs funcionais
-
-**`patients/tabs/AgendamentosTab.tsx`:**
-- Botão "+ Novo agendamento" agora abre o `NovaConsultaDialog` (dentistas do mock da agenda, data atual pré-selecionada); ao salvar, o novo agendamento é adicionado à lista local
-- Ícone "Olho" abre o `DetalhesConsultaDialog` com o agendamento selecionado; mudanças de status atualizam a tabela e cancelamentos passam pelo `ConfirmarAcaoDialog`
-- Reutilizados os dialogs da agenda (`NovaConsultaDialog`, `DetalhesConsultaDialog`, `ConfirmarAcaoDialog`) e o tipo compartilhado `Appointment`, estendido localmente com `createdBy` para manter a coluna "Quem agendou" — mesmo padrão do `dentists/tabs/AgendamentosTab.tsx`
-- Mantidos colunas, badge de "Não compareceu" (outline error) e toggle "Ver todos"
-- Lint: ✅ · Build: ✅
-
-### Sessão anterior — 29/07/2026
-
-### O que foi feito
-
-#### 1. Patient Profile — Implementação das 4 tabs (Agendamentos, Consultas e Procedimentos, Orçamentos, Financeiro)
-
-**`tabs/AgendamentosTab.tsx`:**
-- Tabela "Próximos e histórico de agendamentos" com colunas: Data/Hora, Dentista, Tipo, Duração, Quem agendou, Status (Badge), Ações
-- Status: Confirmada (info), Agendada (neutral), Realizada (success), Cancelada (error), Não compareceu (error outline)
-- Botão "+ Novo agendamento" (primary)
-- Toggle "Ver todos" para expandir
-
-**`tabs/ConsultasProcedimentosTab.tsx`:**
-- Tabela "Consultas realizadas" com colunas: Data, Dentista, Tipo, Procedimentos, Dentes (tooth chips FDI), Diagnóstico, Valor, Ações
-- Card "Plano de tratamento em andamento" comentado (aguardando definição)
-
-**`tabs/OrcamentosTab.tsx`:**
-- Tabela "Orçamentos" com colunas: #, Descrição, Valor total, Válido até, Criado por (link), Status (Badge), Ações
-- Status: Aprovado (success), Rascunho (neutral), Enviado (info), Recusado (error), Expirado (error outline)
-- Botão "Novo Orçamento" abre `NovoOrcamentoDialog`
-
-**`tabs/FinanceiroTab.tsx`:**
-- Card "Resumo financeiro" no topo com 4 KPIs: Total já pago (verde), Saldo em aberto (vermelho), Parcelas vencidas (vermelho), Situação (badge Inadimplente/Em dia)
-- Tabela "Contas" com totalização no tfoot (Valor total + Valor pago + Saldo)
-- Linhas vencidas com destaque vermelho (`bg-destructive/[0.06]`)
-- Eye icon abre `CobrancaDialog` ou `ParcelaDialog` conforme status
-
-#### 2. Patient Profile — 3 modais (dialogs)
-
-**`tabs/dialogs/NovoOrcamentoDialog.tsx`:** Modal wide com grid 2 colunas — formulário + tabela de procedimentos + totalização (subtotal, descontos, total geral) + forma de pagamento/parcelas
-
-**`tabs/dialogs/CobrancaDialog.tsx`:** Modal wide com card de valores + parcelas + painel "Registrar pagamento em lote" (toggle)
-
-**`tabs/dialogs/ParcelaDialog.tsx`:** Modal wide com detalhes da parcela + tabela de pagamentos
-
-#### 3. Ajustes de padding
-- Card headers padronizados para `py-3` em todas as tabs do paciente (redução de `py-4`)
-- KPIs do Resumo financeiro com padding reduzido (`p-3`, grid `p-4`)
-- Lint: ✅ (zero erros novos)
-
-### Próxima sessão — Tab Financeiro do perfil do paciente
-
-**Alvo:** `frontend/src/pages/patients/tabs/FinanceiroTab.tsx` (+ `tabs/dialogs/CobrancaDialog.tsx` / `tabs/dialogs/ParcelaDialog.tsx`)
-- Próxima tela a ser trabalhada — ajustes de layout/funcionalidades do Resumo financeiro, tabela de Contas e modais de cobrança/parcela, seguindo o mesmo padrão das tabs Orçamentos/Agendamentos.
+- Persistir os dados do atendimento (procedimentos, avaliação clínica, anamnese, anexos, horários reais) quando o backend/API estiver disponível — hoje são estado local mockado; apenas o **status da consulta** persiste entre rotas via registro compartilhado em `mock-data.ts`
+- Integrar a sugestão automática de agendamento do card "Retorno" com a Agenda (criar rascunho de consulta na data recomendada)
 
 ### Pendente (próximas sessões)
 

@@ -1,4 +1,4 @@
-import type { Appointment } from "@/types/appointment";
+import type { Appointment, AppointmentStatus } from "@/types/appointment";
 import type { DentistAgenda } from "@/pages/agenda/types";
 
 export const MOCK_PATIENTS = [
@@ -126,6 +126,64 @@ export function generateMockAppointments(
   }
 
   return appointments;
+}
+
+/**
+ * Registro compartilhado entre rotas (mock).
+ * O estado das consultas vive dentro da AgendaPage, mas a tela de atendimento
+ * (/agenda/atendimento/:id) precisa ler e atualizar uma consulta ao longo da
+ * navegação. A AgendaPage sincroniza a lista aqui (syncMockAppointments) a cada
+ * mudança, e status definidos fora dela (ex: "realizada" ao finalizar o
+ * atendimento) são preservados via statusOverrides e reaplicados quando a
+ * AgendaPage regenera os dados mockados.
+ */
+const appointmentRegistry = new Map<string, Appointment>();
+const statusOverrides = new Map<string, AppointmentStatus>();
+
+export function syncMockAppointments(list: Appointment[]): void {
+  for (const a of list) {
+    const override = statusOverrides.get(a.id);
+    appointmentRegistry.set(a.id, override ? { ...a, status: override } : a);
+  }
+}
+
+export function getMockAppointmentById(
+  id: string | undefined
+): Appointment | null {
+  if (!id) return null;
+  const cached = appointmentRegistry.get(id);
+  if (cached) return cached;
+
+  // Fallback: regenera a partir do seed quando a página é aberta diretamente
+  // (refresh). Os ids seguem o formato appt-<ano>-<mês 0-based>-<dia>-<dentista>-<hora>.
+  const parts = id.split("-");
+  if (parts.length >= 6 && parts[0] === "appt") {
+    const year = Number(parts[1]);
+    const month = Number(parts[2]);
+    if (!Number.isNaN(year) && !Number.isNaN(month)) {
+      const seeded = generateMockAppointments(year, month).find(
+        (a) => a.id === id
+      );
+      if (seeded) {
+        const override = statusOverrides.get(id);
+        const result = override ? { ...seeded, status: override } : seeded;
+        appointmentRegistry.set(id, result);
+        return result;
+      }
+    }
+  }
+  return null;
+}
+
+export function setMockAppointmentStatus(
+  id: string,
+  status: AppointmentStatus
+): void {
+  statusOverrides.set(id, status);
+  const current = appointmentRegistry.get(id);
+  if (current) {
+    appointmentRegistry.set(id, { ...current, status });
+  }
 }
 
 export function getAppointmentStatusColor(status: Appointment["status"]): {

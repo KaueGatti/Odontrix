@@ -1,9 +1,14 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { addMonths, subMonths, format, addDays, subDays, addWeeks, subWeeks, startOfWeek, endOfWeek } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import type { Appointment, AppointmentStatus } from "@/types/appointment";
 import type { ViewMode, FilterState } from "./types";
-import { generateMockAppointments } from "./mock-data";
+import {
+  generateMockAppointments,
+  getMockAppointmentById,
+  setMockAppointmentStatus,
+  syncMockAppointments,
+} from "./mock-data";
 import { MOCK_DENTISTS } from "./mock-data";
 import { AgendaHeader } from "./components/AgendaHeader";
 import { AgendaFilters } from "./components/AgendaFilters";
@@ -29,9 +34,19 @@ export default function AgendaPage() {
   const [currentDate, setCurrentDate] = useState(today);
   const [filters, setFilters] = useState<FilterState>(INITIAL_FILTERS);
 
+  // Ao montar (ou voltar de outra rota), reaplica os status persistidos no
+  // registro compartilhado (ex: consulta finalizada na tela de atendimento).
   const [appointments, setAppointments] = useState<Appointment[]>(() =>
-    generateMockAppointments(today.getFullYear(), today.getMonth())
+    generateMockAppointments(today.getFullYear(), today.getMonth()).map(
+      (a) => getMockAppointmentById(a.id) ?? a
+    )
   );
+
+  // Mantém o registro compartilhado em sincronia com o estado local para que
+  // outras telas (ex: /agenda/atendimento/:id) leiam os dados atuais.
+  useEffect(() => {
+    syncMockAppointments(appointments);
+  }, [appointments]);
 
   const [novaDialogOpen, setNovaDialogOpen] = useState(false);
   const [novaPrefill, setNovaPrefill] = useState<{
@@ -137,6 +152,9 @@ export default function AgendaPage() {
       setAppointments((prev) =>
         prev.map((a) => (a.id === id ? { ...a, status: newStatus } : a))
       );
+      // Persiste imediatamente no registro compartilhado — a navegação para a
+      // tela de atendimento pode acontecer antes do useEffect sincronizar.
+      setMockAppointmentStatus(id, newStatus);
     },
     []
   );

@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import type { Appointment, AppointmentStatus } from "@/types/appointment";
 import { APPOINTMENT_STATUS_LABELS } from "@/types/appointment";
 import { getStatusBadgeVariant } from "../mock-data";
+import { useNavigate } from "react-router";
 
 interface DetalhesConsultaDialogProps {
   open: boolean;
@@ -39,6 +40,8 @@ type Action = {
   nextStatus: AppointmentStatus;
   variant?: "default" | "destructive" | "outline";
   requiresMotivo?: boolean;
+  /** Rota para onde navegar após aplicar a ação (ex: tela de atendimento). */
+  navigateTo?: string;
 };
 
 function getAvailableActions(
@@ -69,7 +72,11 @@ function getAvailableActions(
       },
     ],
     em_espera: [
-      { label: "Iniciar atendimento", nextStatus: "em_atendimento" },
+      {
+        label: "Iniciar atendimento",
+        nextStatus: "em_atendimento",
+        navigateTo: "/agenda/atendimento",
+      },
       {
         label: "Cancelar",
         nextStatus: "cancelada",
@@ -103,6 +110,8 @@ export function DetalhesConsultaDialog({
   onStatusChange,
   onConfirmAction,
 }: DetalhesConsultaDialogProps) {
+  const navigate = useNavigate();
+
   if (!appointment) return null;
 
   const actions = getAvailableActions(appointment.status);
@@ -120,6 +129,9 @@ export function DetalhesConsultaDialog({
     } else {
       onStatusChange(appointment.id, action.nextStatus);
       onOpenChange(false);
+      if (action.navigateTo) {
+        navigate(`${action.navigateTo}/${appointment.id}`);
+      }
     }
   }
 
