@@ -1,9 +1,8 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Banknote, Check, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -12,6 +11,11 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import {
+  RegistrarPagamentoDialog,
+  type ConfirmPaymentPayload,
+  type PaymentInstallment,
+} from "./RegistrarPagamentoDialog";
 
 interface CobrancaDialogProps {
   open: boolean;
@@ -25,15 +29,17 @@ interface InstallmentRow {
   id: number;
   dueDate: string;
   value: string;
+  pago: string;
   combinado: string;
   forma: string;
-  status: "pending" | "overdue";
+  status: "pending" | "overdue" | "paid";
 }
 
 const INITIAL_ROWS: InstallmentRow[] = Array.from({ length: 10 }, (_, i) => ({
   id: i + 1,
   dueDate: "30/05/2025",
   value: "400,00",
+  pago: "",
   combinado: "PIX",
   forma: "",
   status: i + 1 === 2 ? "overdue" : "pending",
@@ -43,6 +49,16 @@ function formatCurrency(value: number) {
   return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
+function formatNumber(value: number) {
+  return value.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function parseInstallmentValue(raw: string): number {
+  const cleaned = raw.replace(/R\$\s?/gi, "").replace(/\./g, "").replace(",", ".");
+  const n = Number.parseFloat(cleaned);
+  return Number.isFinite(n) ? n : 0;
+}
+
 export function CobrancaDialog({
   open,
   onOpenChange,
@@ -50,11 +66,14 @@ export function CobrancaDialog({
   quoteTotal,
   patientName,
 }: CobrancaDialogProps) {
-  const [rows] = useState<InstallmentRow[]>(INITIAL_ROWS);
+  const [rows, setRows] = useState<InstallmentRow[]>(INITIAL_ROWS);
   const [selected, setSelected] = useState<Set<number>>(new Set([4]));
-  const [loteOpen, setLoteOpen] = useState(false);
+  const [paymentOpen, setPaymentOpen] = useState(false);
+  const [paymentInstallments, setPaymentInstallments] = useState<PaymentInstallment[]>([]);
 
   const toggle = (id: number) => {
+    const row = rows.find((r) => r.id === id);
+    if (!row || row.status === "paid") return;
     setSelected((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
@@ -63,16 +82,62 @@ export function CobrancaDialog({
     });
   };
 
-  const allSelected = selected.size === rows.length;
+  const selectableRows = rows.filter((r) => r.status !== "paid");
+  const allSelected = selectableRows.length > 0 && selected.size === selectableRows.length;
   const toggleAll = () => {
     if (allSelected) setSelected(new Set());
-    else setSelected(new Set(rows.map((r) => r.id)));
+    else setSelected(new Set(selectableRows.map((r) => r.id)));
   };
 
-  // Valores da esquerda para bater com a imagem
-  const valorBruto = "4000,00";
+  // Valores da esquerda derivados das parcelas
+  const totalParcelas = useMemo(
+    () => rows.reduce((acc, r) => acc + parseInstallmentValue(r.value), 0),
+    [rows],
+  );
+  const totalPago = useMemo(
+    () =>
+      rows
+        .filter((r) => r.status === "paid")
+        .reduce((acc, r) => acc + parseInstallmentValue(r.value), 0),
+    [rows],
+  );
+  const totalRestante = totalParcelas - totalPago;
+  const valorBruto = formatNumber(totalParcelas);
   const desconto = "0,00";
-  const valorLiquido = "4000,00";
+  const valorLiquido = formatNumber(totalParcelas);
+  const headerPill =
+    totalRestante <= 0 ? "Pago" : totalPago > 0 ? "Parcial" : "Pendente";
+  const combinadoOrcamento = rows[0]?.combinado || "PIX";
+
+  function openSinglePayment(r: InstallmentRow) {
+    setPaymentInstallments([
+      { id: r.id, dueDate: r.dueDate, value: parseInstallmentValue(r.value) },
+    ]);
+    setPaymentOpen(true);
+  }
+
+  function openLotePayment() {
+    const rowsToPay = rows.filter((r) => r.status !== "paid" && selected.has(r.id));
+    if (rowsToPay.length === 0) return;
+    setPaymentInstallments(
+      rowsToPay.map((r) => ({
+        id: r.id,
+        dueDate: r.dueDate,
+        value: parseInstallmentValue(r.value),
+      })),
+    );
+    setPaymentOpen(true);
+  }
+
+  function handlePaymentConfirm(payload: ConfirmPaymentPayload) {
+    const paidIds = new Set(payload.installmentIds);
+    setRows((prev) =>
+      prev.map((r) =>
+        paidIds.has(r.id) ? { ...r, status: "paid" as const, pago: r.value } : r,
+      ),
+    );
+    setSelected(new Set());
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -90,7 +155,17 @@ export function CobrancaDialog({
             {/* Título — design system igual ao modal ORÇAMENTO */}
             <div className="flex items-center gap-3">
               <h2 className="text-[22px] font-bold leading-none tracking-tight text-primary">COBRANÇA</h2>
-              <span className="rounded-full bg-[#e6f7f0] px-3 py-1 text-[11px] font-semibold text-[#0f766e]">Pendente</span>
+              <span
+                className={`rounded-full px-3 py-1 text-[11px] font-semibold ${
+                  headerPill === "Pago"
+                    ? "bg-[#e7f9ee] text-[#16a34a]"
+                    : headerPill === "Parcial"
+                      ? "bg-[#fef9ec] text-[#b45309]"
+                      : "bg-[#e6f7f0] text-[#0f766e]"
+                }`}
+              >
+                {headerPill}
+              </span>
             </div>
 
             {/* PACIENTE */}
@@ -111,17 +186,10 @@ export function CobrancaDialog({
               <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.06em] text-muted-foreground">Orçamento</p>
               <div className="grid grid-cols-[1.55fr_0.9fr] gap-3">
                 <div className="flex flex-col gap-1">
-                  <span className="text-[11px] text-muted-foreground">Orçamento vinculado</span>
-                  <div className="relative">
-                    <select
-                      defaultValue="012"
-                      className="flex h-8 w-full appearance-none rounded-[8px] border border-emerald-400 bg-white px-2.5 pr-7 text-[12px] font-medium text-foreground shadow-sm focus-visible:border-emerald-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/20"
-                    >
-                      <option value="012">Orçamento #012 — {quoteDescription} — {formatCurrency(quoteTotal)}</option>
-                      <option value="013">Orçamento #013 — Outro — R$ 250,00</option>
-                    </select>
-                    <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground">▾</span>
-                  </div>
+                  <span className="text-[11px] text-muted-foreground">Origem da Cobrança</span>
+                  <span className="text-[12px] font-medium leading-snug text-foreground">
+                    {quoteDescription || "—"}
+                  </span>
                 </div>
                 <div className="flex flex-col gap-1">
                   <span className="text-[11px] text-muted-foreground">Data de emissão</span>
@@ -155,19 +223,19 @@ export function CobrancaDialog({
                   <div className="rounded-[8px] border border-border bg-[#f8fafc] px-3 py-2">
                     <p className="text-[11px] leading-none text-muted-foreground">Total</p>
                     <p className="mt-1 flex items-baseline gap-1 text-[12px] font-bold text-[#0f766e]">
-                      <span className="text-[11px] font-normal text-muted-foreground">R$</span> 4000,00
+                      <span className="text-[11px] font-normal text-muted-foreground">R$</span> {formatNumber(totalParcelas)}
                     </p>
                   </div>
                   <div className="rounded-[8px] border border-border bg-[#f8fafc] px-3 py-2">
                     <p className="text-[11px] leading-none text-muted-foreground">Pago</p>
                     <p className="mt-1 flex items-baseline gap-1 text-[12px] font-bold text-foreground">
-                      <span className="text-[11px] font-normal text-muted-foreground">R$</span> 0,00
+                      <span className="text-[11px] font-normal text-muted-foreground">R$</span> {formatNumber(totalPago)}
                     </p>
                   </div>
                   <div className="rounded-[8px] border border-border bg-[#f8fafc] px-3 py-2">
                     <p className="text-[11px] leading-none text-muted-foreground">Restante</p>
                     <p className="mt-1 flex items-baseline gap-1 text-[12px] font-bold text-[#15803d]">
-                      <span className="text-[11px] font-normal text-muted-foreground">R$</span> 4000,00
+                      <span className="text-[11px] font-normal text-muted-foreground">R$</span> {formatNumber(totalRestante)}
                     </p>
                   </div>
                 </div>
@@ -187,15 +255,24 @@ export function CobrancaDialog({
           {/* DIREITA — PARCELAS */}
           <div className="flex min-h-0 flex-col overflow-hidden bg-white p-4">
             {/* Header parcelas — design system igual ao modal ORÇAMENTO (PROCEDIMENTOS) */}
-            <div className="mb-3 flex shrink-0 items-center justify-between">
+            <div className="mb-3 flex shrink-0 items-center justify-between gap-3">
               <h3 className="text-[18px] font-bold tracking-tight text-muted-foreground">PARCELAS</h3>
-              <button
+              <Button
                 type="button"
-                onClick={() => setLoteOpen(!loteOpen)}
-                className="rounded-full border-2 border-foreground bg-white px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.04em] text-foreground transition-colors hover:bg-muted"
+                size="sm"
+                variant="default"
+                disabled={selected.size === 0}
+                title={
+                  selected.size === 0
+                    ? "Selecione ao menos uma parcela para registrar pagamento em lote"
+                    : undefined
+                }
+                onClick={openLotePayment}
+                className="shrink-0 gap-1.5 disabled:opacity-50"
               >
+                <Banknote className="h-3.5 w-3.5" />
                 Registrar pagamento em lote
-              </button>
+              </Button>
             </div>
 
             {/* Tabela */}
@@ -217,6 +294,7 @@ export function CobrancaDialog({
                       <th className="px-1 py-2 text-center font-bold">#</th>
                       <th className="px-2 py-2 font-bold">Vencimento</th>
                       <th className="px-2 py-2 font-bold">Valor</th>
+                      <th className="px-2 py-2 font-bold">Pago</th>
                       <th className="px-2 py-2 font-bold">Combinado</th>
                       <th className="px-2 py-2 font-bold">Forma de pagamento</th>
                       <th className="px-2 py-2 font-bold">Status</th>
@@ -253,31 +331,30 @@ export function CobrancaDialog({
                             </div>
                           </td>
                           <td className="px-2 py-1.5">
-                            <div className="relative">
-                              <select
-                                defaultValue={r.combinado}
-                                className="flex h-6 w-full appearance-none rounded-[6px] border border-border bg-[#f3f4f6] px-2 pr-5 text-[12px] text-foreground focus-visible:outline-none"
-                              >
-                                <option value="PIX">PIX</option>
-                                <option value="Dinheiro">Dinheiro</option>
-                                <option value="Cartão">Cartão</option>
-                              </select>
-                              <span className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 text-[9px] text-muted-foreground">▾</span>
+                            {r.pago ? (
+                              <div className="flex h-6 items-center justify-center rounded-[6px] border border-[#bbe7c7] bg-[#e7f9ee] px-2 text-[12px] font-semibold text-[#16a34a]">
+                                {r.pago}
+                              </div>
+                            ) : (
+                              <div className="flex h-6 items-center justify-center rounded-[6px] border border-border bg-[#f8f9fb] px-2 text-[12px] text-muted-foreground/50">
+                                —
+                              </div>
+                            )}
+                          </td>
+                          <td className="px-2 py-1.5">
+                            <div className="flex h-6 items-center justify-center rounded-[6px] border border-border bg-[#f3f4f6] px-2 text-[12px] text-foreground">
+                              {r.combinado}
                             </div>
                           </td>
                           <td className="px-2 py-1.5">
-                            <div className="relative">
-                              <Select className="h-6 rounded-[6px] border-border bg-[#f3f4f6] px-2 pr-5 text-[12px]" defaultValue={r.forma}>
-                                <option value=""> </option>
-                                <option value="pix">Pix</option>
-                                <option value="cartao">Cartão</option>
-                                <option value="boleto">Boleto</option>
-                                <option value="dinheiro">Dinheiro</option>
-                              </Select>
+                            <div className="flex h-6 items-center justify-center rounded-[6px] border border-border bg-[#f3f4f6] px-2 text-[12px] text-foreground">
+                              {r.forma || "—"}
                             </div>
                           </td>
                           <td className="px-2 py-1.5">
-                            {r.status === "overdue" ? (
+                            {r.status === "paid" ? (
+                              <span className="inline-flex rounded-full bg-[#e7f9ee] px-2.5 py-1 text-[10px] font-semibold leading-none text-[#16a34a]">Pago</span>
+                            ) : r.status === "overdue" ? (
                               <span className="inline-flex rounded-full bg-[#ffe4e6] px-2.5 py-1 text-[10px] font-semibold leading-none text-[#be123c]">Vencido</span>
                             ) : (
                               <span className="inline-flex rounded-full bg-[#ccfbf1] px-2.5 py-1 text-[10px] font-semibold leading-none text-[#115e59]">Pendente</span>
@@ -286,8 +363,10 @@ export function CobrancaDialog({
                           <td className="px-1 py-1.5 text-center">
                             <button
                               type="button"
-                              aria-label="Registrar pagamento"
-                              className="inline-flex h-6 w-6 items-center justify-center rounded-[4px] border border-emerald-500 bg-white text-emerald-600 transition-colors hover:bg-emerald-50"
+                              aria-label={`Registrar pagamento da parcela ${r.id}`}
+                              disabled={r.status === "paid"}
+                              onClick={() => openSinglePayment(r)}
+                              className="inline-flex h-6 w-6 items-center justify-center rounded-[4px] border border-emerald-500 bg-white text-emerald-600 transition-colors hover:bg-emerald-50 disabled:cursor-not-allowed disabled:border-muted disabled:text-muted-foreground/40 disabled:hover:bg-white"
                             >
                               <Banknote className="h-3.5 w-3.5" />
                             </button>
@@ -298,28 +377,19 @@ export function CobrancaDialog({
                   </tbody>
                 </table>
               </div>
-
-              {loteOpen && (
-                <div className="border-t border-border bg-muted/30 p-3">
-                  <div className="flex items-center justify-between text-[12px] font-semibold">
-                    <span>Pagamento em lote — {selected.size} parcela(s) selecionada(s)</span>
-                    <span className="text-emerald-600">{formatCurrency(selected.size * 400)}</span>
-                  </div>
-                  <div className="mt-2 flex justify-end gap-2">
-                    <Button type="button" size="sm" variant="outline" onClick={() => setLoteOpen(false)}>
-                      Cancelar
-                    </Button>
-                    <Button type="button" size="sm" className="gap-1">
-                      <Check className="h-3.5 w-3.5" /> Confirmar
-                    </Button>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         </div>
 
-        <DialogFooter className="shrink-0 !m-0 !border-0 bg-white px-5 py-3 rounded-b-[20px]">
+        <RegistrarPagamentoDialog
+          open={paymentOpen}
+          onOpenChange={setPaymentOpen}
+          installments={paymentInstallments}
+          combinadoOrcamento={combinadoOrcamento}
+          onConfirm={handlePaymentConfirm}
+        />
+
+      <DialogFooter className="shrink-0 !m-0 !border-0 bg-white px-5 py-3 rounded-b-[20px]">
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)} size="sm" className="h-7 gap-1.5 rounded-md px-3 text-xs">
             <X className="h-3 w-3" />
             Fechar

@@ -77,7 +77,7 @@ export function DadosCadastraisTab({patient}: DadosCadastraisTabProps) {
         <form
             onSubmit={handleSubmit(onSubmit)}
             noValidate
-            className="mx-auto flex flex-col gap-4 px-6 py-4"
+            className=" flex flex-col gap-4 px-6 py-4"
         >
             <Card>
                 <CardHeader className="flex gap-4 items-center justify-between">
@@ -93,8 +93,8 @@ export function DadosCadastraisTab({patient}: DadosCadastraisTabProps) {
                         <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.06em] text-muted-foreground">
                             Identificação
                         </p>
-                        <div className="grid grid-cols-2 gap-4 sm:grid-cols-6">
-                            <div className="sm:col-span-2">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
                                 <Label htmlFor="fullName" className="mb-1.5 block">
                                     Nome <span className="text-destructive">*</span>
                                 </Label>
@@ -161,7 +161,7 @@ export function DadosCadastraisTab({patient}: DadosCadastraisTabProps) {
                         <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.06em] text-muted-foreground">
                             Contato
                         </p>
-                        <div className="grid grid-cols-4 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <Label htmlFor="landlinePhone" className="mb-1.5 block">
                                     Telefone Fixo <span className="text-destructive">*</span>
@@ -227,7 +227,7 @@ export function DadosCadastraisTab({patient}: DadosCadastraisTabProps) {
                         <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.06em] text-muted-foreground">
                             Endereço
                         </p>
-                        <div className="grid grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                             <div>
                                 <Label htmlFor="cep" className="mb-1.5 block">
                                     CEP <span className="text-destructive">*</span>
@@ -341,7 +341,7 @@ export function DadosCadastraisTab({patient}: DadosCadastraisTabProps) {
                         Paciente é menor de idade ou incapaz
                     </label>
                     {hasResponsible && (
-                        <div className="-mx-5 -mb-5 overflow-hidden rounded-b-lg border-t border-border">
+                        <div className="rounded-b-lg border-t border-border">
                             <div
                                 className="bg-destructive px-5 py-2 text-center text-[11px] font-bold uppercase tracking-[0.05em] text-white">
                                 Obrigatório para pacientes menores de idade ou incapazes
@@ -411,7 +411,7 @@ export function DadosCadastraisTab({patient}: DadosCadastraisTabProps) {
         <form> tem padding horizontal (px-9) aplicado no elemento pai.
       */}
             <div
-                className="sticky bottom-0 z-10 -mx-9 -mb-7 mt-2 border-t border-border bg-background/95 px-9 py-4 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+                className="sticky bottom-0 z-10 -mx-6 -mb-7 mt-2 border-t border-border bg-background/95 px-9 py-4 backdrop-blur supports-[backdrop-filter]:bg-background/80">
                 <div className="flex justify-end">
                     <Button type="submit" disabled={isSubmitting}>
                         <Check className="h-4 w-4"/>

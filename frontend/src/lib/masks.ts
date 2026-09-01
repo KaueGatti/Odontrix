@@ -66,6 +66,47 @@ export function maskCurrency(value: string): string {
     });
 }
 
+/**
+ * Converte uma string monetária em um inteiro de centavos.
+ * Aceita qualquer entrada (formatada "R$ 1.234,56", com ponto/vírgula ou só
+ * dígitos) porque extrai apenas os dígitos. Ex: "R$ 10,05" → 1005 · "1.234,56" → 123456.
+ */
+export function parseMoneyToCents(value: string): number {
+    const digits = onlyDigits(value).slice(0, 14);
+    return digits ? parseInt(digits, 10) : 0;
+}
+
+/**
+ * Formata um inteiro de centavos no padrão brasileiro.
+ * withSymbol=false → "1.234,56"; withSymbol=true (padrão) → "R$ 1.234,56".
+ * Sempre com 2 casas decimais e separador de milhar.
+ */
+export function formatMoneyFromCents(cents: number, withSymbol = true): string {
+    const sign = cents < 0 ? "-" : "";
+    const abs = Math.abs(Math.trunc(cents));
+    const whole = Math.floor(abs / 100);
+    const frac = abs % 100;
+    const body = `${whole.toLocaleString("pt-BR")},${String(frac).padStart(2, "0")}`;
+    return withSymbol ? `${sign}R$ ${body}` : `${sign}${body}`;
+}
+
+/**
+ * Máscara de moeda baseada em centavos para input controlado.
+ * Cada tecla numérica entra pela direita (nos centavos) e empurra os dígitos
+ * anteriores para a esquerda; backspace remove o último dígito. Teclas não
+ * numéricas (exceto backspace) são ignoradas porque a formatação reconstrói
+ * apenas a partir dos dígitos restantes.
+ * Ex: "1" → "R$ 0,01" · "10" → "R$ 0,10" · "100" → "R$ 1,00" · "1005" → "R$ 10,05"
+ */
+export function maskMoney(value: string, withSymbol = true): string {
+    return formatMoneyFromCents(parseMoneyToCents(value), withSymbol);
+}
+
+/** Converte centavos para número puro em reais. Ex: 123456 → 1234.56 */
+export function centsToNumber(cents: number): number {
+    return cents / 100;
+}
+
 /** CPF: 000.000.000-00 */
 export function maskCPF(value: string): string {
     const digits = onlyDigits(value).slice(0, 11);

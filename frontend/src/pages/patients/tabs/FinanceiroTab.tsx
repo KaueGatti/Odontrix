@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { CobrancaDialog } from "./dialogs/CobrancaDialog";
-import { ParcelaDialog } from "./dialogs/ParcelaDialog";
+import { NovoRegistroDialog, type NovoRegistroPayload } from "./dialogs/NovoRegistroDialog";
 
 interface BillingRecord {
   id: number;
@@ -54,13 +54,33 @@ function formatCurrency(value: number | null) {
 
 export function FinanceiroTab() {
   const [cobrancaOpen, setCobrancaOpen] = useState(false);
-  const [parcelaOpen, setParcelaOpen] = useState(false);
+  const [selectedRecord, setSelectedRecord] = useState<BillingRecord | null>(null);
+  const [novoRegistroOpen, setNovoRegistroOpen] = useState(false);
+  const [billings, setBillings] = useState<BillingRecord[]>(MOCK_BILLINGS);
 
-  const totalValue = MOCK_BILLINGS.reduce((acc, b) => acc + b.total, 0);
-  const totalPaid = MOCK_BILLINGS.reduce((acc, b) => acc + (b.paid ?? 0), 0);
-  const openBalance = MOCK_BILLINGS.reduce((acc, b) => acc + b.balance, 0);
-  const overdueCount = MOCK_BILLINGS.filter((b) => b.status === "overdue").length;
+  const totalValue = billings.reduce((acc, b) => acc + b.total, 0);
+  const totalPaid = billings.reduce((acc, b) => acc + (b.paid ?? 0), 0);
+  const openBalance = billings.reduce((acc, b) => acc + b.balance, 0);
+  const overdueCount = billings.filter((b) => b.status === "overdue").length;
   const isDelinquent = overdueCount > 0;
+
+  function handleNovoRegistro(data: NovoRegistroPayload) {
+    const total = data.valorLiquido;
+    const record: BillingRecord = {
+      id: billings.reduce((max, b) => Math.max(max, b.id), 0) + 1,
+      description: data.descricao,
+      issueDate: new Date().toLocaleDateString("pt-BR"),
+      dueDate: data.vencimentoBR,
+      total,
+      paid: data.entrada > 0 ? data.entrada : null,
+      balance: Math.max(0, total - data.entrada),
+      paymentMethod: data.forma,
+      generatedBy: "Registro manual",
+      isConsulta: false,
+      status: total - data.entrada <= 0 ? "paid" : "open",
+    };
+    setBillings((prev) => [record, ...prev]);
+  }
 
   return (
     <div className="flex flex-col gap-4 px-6 py-4">
@@ -101,7 +121,7 @@ export function FinanceiroTab() {
           <p className="text-[12px] font-bold uppercase tracking-[0.06em] text-primary">
             Contas
           </p>
-          <Button size="sm" className="gap-1.5">
+          <Button size="sm" className="gap-1.5" onClick={() => setNovoRegistroOpen(true)}>
             <Plus className="h-3.5 w-3.5" />
             Novo registro
           </Button>
@@ -124,7 +144,7 @@ export function FinanceiroTab() {
               </tr>
             </thead>
             <tbody>
-              {MOCK_BILLINGS.map((b) => (
+              {billings.map((b) => (
                 <tr key={b.id} className={`border-b border-border/50 last:border-b-0 ${b.status === "overdue" ? "bg-destructive/[0.06]" : ""}`}>
                   <td className="px-6 py-3 font-semibold text-foreground">{b.description}</td>
                   <td className="px-6 py-3 text-muted-foreground">{b.issueDate}</td>
@@ -158,11 +178,8 @@ export function FinanceiroTab() {
                     <button
                       type="button"
                       onClick={() => {
-                        if (b.status === "open") {
-                          setParcelaOpen(true);
-                        } else {
-                          setCobrancaOpen(true);
-                        }
+                        setSelectedRecord(b);
+                        setCobrancaOpen(true);
                       }}
                       className="inline-flex items-center gap-1 border-none bg-transparent p-0 text-[11px] text-muted-foreground hover:text-foreground"
                       aria-label="Ver detalhes"
@@ -194,20 +211,19 @@ export function FinanceiroTab() {
       </Card>
 
       <CobrancaDialog
+        key={selectedRecord?.id ?? "none"}
         open={cobrancaOpen}
         onOpenChange={setCobrancaOpen}
-        quoteDescription="Clareamento"
-        quoteTotal={400}
+        quoteDescription={selectedRecord?.description ?? ""}
+        quoteTotal={selectedRecord?.total ?? 0}
         patientName={PATIENT_NAME}
       />
 
-      <ParcelaDialog
-        open={parcelaOpen}
-        onOpenChange={setParcelaOpen}
-        description="Restauração 02/25"
+      <NovoRegistroDialog
+        open={novoRegistroOpen}
+        onOpenChange={setNovoRegistroOpen}
         patientName={PATIENT_NAME}
-        dueDate="28/02/2025"
-        totalValue={220}
+        onSave={handleNovoRegistro}
       />
     </div>
   );
