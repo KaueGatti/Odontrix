@@ -342,7 +342,43 @@ postgres:16-alpine (5432) → api:8080 → frontend:5173
 
 ---
 
-## Última Sessão — 31/08/2026
+## Última Sessão — 01/09/2026
+
+### O que foi feito
+
+#### Padronização de todos os campos monetários (referência: `NovoRegistroDialog`)
+
+**Padrão único (novo `components/ui/money-input.tsx`):** `MoneyInput` controlado por **centavos** — valor exibido sempre formatado (`0,00` → `1.234,56`), prefixo **"R$" fixo** fora do valor, `inputMode="decimal"`, placeholder `0,00`, limite **R$ 100.000,00** (`MAX_MONEY_CENTS`), cada tecla entra pela direita (centavos), backspace remove o último dígito. Aceita `value: number | null` (null → exibe placeholder).
+
+- **`lib/masks.ts`** — novos helpers `maskPercent` (máscara de percentual por basis-points, teto 100,00), `formatMoney` (número real → `"R$ 1.234,56"`) e `formatMoneyPlain` (`"1.234,56"`); `maskCurrency` antiga ficou sem uso pelo front.
+- **`NovoRegistroDialog` / `RegistrarPagamentoDialog` / `ProcedimentosCard`** — agora usam o `MoneyInput` compartilhado; o `RegistrarPagamentoDialog` saiu da variante "R$ dentro do texto" para o prefixo fixo (igual padrão); limite R$ 100k aplicado.
+- **`NovoOrcamentoDialog`** — substituiu a máscara antiga `maskCurrency` (string) pelo padrão de centavos em **Valor unitário** e **Desconto R$** (corrige bug: preço `180` virava `1,80`); desconto em **%** agora usa `maskPercent`; totais/subtotal/parcelas via `formatMoney`.
+- **`Auxiliares`** — campo tipo `currency` ganhou `maskMoney` (antes entrada crua).
+- **`CadastroDentista` + `dentists/tabs/DadosCadastraisTab`** — "Preço por Consulta" com prefixo R$ fixo + `withMask(register(...), maskMoney)` e "Comissão (%)" com `maskPercent` (convenção RHF do projeto).
+- **`financeiro/NovaDespesaDialog`** — campo Valor virou `MoneyInput` controlado (antes input não controlado).
+- **Exibição unificada** (CobrancaDialog, FinanceiroTab x2, OrcamentosTab, ParcelaDialog, ConsultasProcedimentosTab) — todos os `toLocaleString("pt-BR", {style:"currency"})` / `formatNumber` substituídos por `formatMoney`/`formatMoneyPlain` (visual idêntico, fonte única em `lib/masks`).
+- Lint: ✅ (arquivos da sessão — repo mantém 13 erros pré-existentes) · Build: ✅ (~964 kB)
+
+#### Tela de Boletos (`pages/boletos/`) — página nova, integrada à navegação
+
+- **`BoletosPage.tsx`** — tela completa de boletos: header "Financeiro / Boletos", 5 KPIs (Total / Registrados / Pagos / Vencidos / Valor vencido em aberto), card "Todos os boletos" com abas de status (contadores dinâmicos) + filtros (paciente / nosso número / vencimento de–até) + tabela (Paciente / Nosso número / Vencimento / Valor / Status / Emitido em / Ações). Reaproveita `BoletoStatusBadge` e os dialogs `DetalheBoletoDialog`, `RegistrarPagamentoBoletoDialog`, `AdiarVencimentoDialog`, `CancelarBoletoDialog`, e os helpers `formatMoney`/`centsToNumber` de `lib/masks`.
+- **Rota `/boletos`** registrada no `main.tsx` (dentro de `AppLayout`).
+- Corrigi bug de chave faltando em `confirmarCancelamento` e ajustei assinatura de `confirmarAdiamento`.
+- Lint: ✅ · Build: ✅
+
+#### Tela de Usuários (`pages/usuarios/`) — página nova, integrada à navegação
+
+- **`types.ts`** — `SystemUser` (profiles manager/dentist/receptionist; status active/inactive; flag `isSelf`).
+- **`mock-data.ts`** — 9 usuários mock (1 identificado como "Você").
+- **`components/EditarEmailDialog.tsx`** — modal para alterar e-mail (e-mail atual read-only + novo e-mail).
+- **`components/ConfirmarUsuarioDialog.tsx`** — confirmação de inativar/reativar usuário (ícone semântico + tom de cor).
+- **`components/NovoUsuarioDialog.tsx`** — criação de usuário Gerente (banner informativo sobre dentistas/recepcionistas; senha provisória gerada automaticamente).
+- **`UsuariosPage.tsx`** — 6 KPIs + card "Acesso ao sistema" com busca + toggle Ativos/Inativos + tabela (avatar de iniciais / e-mail / perfil / situação / último login / criado em / ações).
+- **Rota `/usuarios`** registrada no `main.tsx`; item **"Usuários"** adicionado à `Sidebar` (`BOTTOM_NAV_ITEMS`). Limpeza de imports não-usados na Sidebar (`Star`, `FileText`).
+- Como `@radix-ui/react-dropdown-menu` e `react-popover` **não estão instalados**, o menu de ações do usuário usa botões diretos (Power/UserCheck) em vez de dropdown — 100% Lucide, sem nova dependência.
+- Lint: ✅ · Build: ✅
+
+### Sessão anterior — 31/08/2026
 
 ### O que foi feito
 

@@ -12,6 +12,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { formatMoney } from "@/lib/masks";
 
 interface PaymentRecord {
   id: number;
@@ -38,7 +39,7 @@ const MOCK_PAYMENTS: PaymentRecord[] = [
 ];
 
 function formatCurrency(value: number) {
-  return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  return formatMoney(value);
 }
 
 export function ParcelaDialog({

@@ -4,11 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
+import { MoneyInput } from "@/components/ui/money-input";
 import { cn } from "@/lib/utils";
-import { formatMoneyFromCents, maskMoney, parseMoneyToCents } from "@/lib/masks";
-import { Odontograma } from "./Odontograma";
+import { formatMoneyFromCents } from "@/lib/masks";
 import { CARD_CLASS, FIELD_LABEL_CLASS, SEC_LABEL_CLASS } from "../shared";
 import type { ProcedimentoRealizado } from "../types";
+import {Odontograma} from "@/pages/agenda/atendimento/components/Odontograma.tsx";
 
 /** Catálogo de procedimentos com preço padrão (mock, igual ao mockup). */
 const CATALOGO: { nome: string; precoCents: number }[] = [
@@ -23,39 +24,6 @@ const CATALOGO: { nome: string; precoCents: number }[] = [
 const TH_CLASS =
   "border-b-[1.5px] border-[var(--gray-100)] px-2 pb-2.5 text-left text-[10px] font-semibold uppercase tracking-[0.05em] text-[var(--gray-500)]";
 const TD_CLASS = "border-b border-[var(--gray-100)] px-2 py-2.5";
-
-/**
- * Input de moeda controlado por centavos (mesmo padrão do
- * NovoRegistroDialog/RegistrarPagamentoDialog).
- */
-function MoneyInput({
-  value,
-  onCentsChange,
-}: {
-  value: number;
-  onCentsChange: (cents: number) => void;
-}) {
-  return (
-    <div className="relative">
-      <span className="pointer-events-none absolute left-2.5 top-1/2 z-10 -translate-y-1/2 text-[12px] text-muted-foreground">
-        R$
-      </span>
-      <Input
-        inputMode="decimal"
-        placeholder="0,00"
-        value={formatMoneyFromCents(value, false)}
-        onChange={(event) => {
-          const masked = maskMoney(event.target.value, false);
-          const cents = parseMoneyToCents(masked);
-          const formatted = formatMoneyFromCents(cents, false);
-          if (event.target.value !== formatted) event.target.value = formatted;
-          onCentsChange(cents);
-        }}
-        className="h-10 rounded-[10px] pl-7 text-[13px]"
-      />
-    </div>
-  );
-}
 
 interface ProcedimentosCardProps {
   procedimentos: ProcedimentoRealizado[];
@@ -180,7 +148,7 @@ export function ProcedimentosCard({
                 — notação FDI, opcional
               </span>
             </Label>
-            <Odontograma selecionados={dentes} onToggle={toggleDente} />
+            <Odontograma selecionados={dentes} onToggle={toggleDente}/>
           </div>
 
           <div className="mb-3 grid grid-cols-3 gap-3">

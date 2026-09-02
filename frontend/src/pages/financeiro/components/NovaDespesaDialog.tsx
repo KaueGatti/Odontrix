@@ -6,6 +6,8 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { MoneyInput } from "@/components/ui/money-input";
+import { useState } from "react";
 
 const FIELD_CLASS = "h-10 rounded-[10px] border-[1.5px] border-border bg-[var(--gray-50)] px-3 text-[13px] text-foreground outline-none transition-[border-color,box-shadow,background] focus:border-primary focus:bg-background focus:shadow-[0_0_0_3px_rgba(79,126,247,0.13)]";
 const SELECT_CLASS = FIELD_CLASS + " appearance-none bg-no-repeat";
@@ -19,6 +21,8 @@ export function NovaDespesaDialog({
   open,
   onOpenChange,
 }: NovaDespesaDialogProps) {
+  const [valorCents, setValorCents] = useState<number | null>(null);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-[480px]">
@@ -58,9 +62,9 @@ export function NovaDespesaDialog({
             <label className="text-[12.5px] font-medium text-[var(--gray-700)]">
               Valor <span className="text-destructive">*</span>
             </label>
-            <input
-              className={FIELD_CLASS}
-              placeholder="R$ 0,00"
+            <MoneyInput
+              value={valorCents}
+              onCentsChange={setValorCents}
             />
           </div>
         </div>

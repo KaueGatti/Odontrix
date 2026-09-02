@@ -14,6 +14,7 @@ import * as Select from "@radix-ui/react-select";
 import { Pencil, Plus, ChevronDown } from "lucide-react";
 
 import { cn } from "@/lib/utils.ts";
+import { maskMoney } from "@/lib/masks";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -151,7 +152,7 @@ function FormField({
                     <span className="mr-1.5 text-[12.5px] text-[var(--color-text-tertiary)]">R$</span>
                     <input
                         value={stringValue}
-                        onChange={(e) => onChange(e.target.value)}
+                        onChange={(e) => onChange(maskMoney(e.target.value, false))}
                         placeholder="0,00"
                         inputMode="decimal"
                         className="h-full w-full bg-transparent text-[12.5px] text-[var(--color-text-primary)] outline-none"

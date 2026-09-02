@@ -86,9 +86,9 @@ export function Odontograma({ selecionados, onToggle }: OdontogramaProps) {
   return (
     <div className="inline-block rounded-[10px] border-[1.5px] border-border bg-white px-4 pb-3 pt-3.5">
       <div className="mb-1 flex text-[9px] font-semibold tracking-[0.03em] text-muted-foreground">
-        <span className="flex-1 text-center">Superior direito</span>
+        <span className="w-[220px] text-center">Superior direito</span>
         <span className="w-2.5" />
-        <span className="flex-1 text-center">Superior esquerdo</span>
+        <span className="w-[185px] text-center">Superior esquerdo</span>
       </div>
 
       <div className="flex items-end gap-px">
@@ -136,9 +136,9 @@ export function Odontograma({ selecionados, onToggle }: OdontogramaProps) {
       </div>
 
       <div className="mt-1 flex text-[9px] font-semibold tracking-[0.03em] text-muted-foreground">
-        <span className="flex-1 text-center">Inferior direito</span>
+        <span className="w-[220px] text-center">Inferior direito</span>
         <span className="w-2.5" />
-        <span className="flex-1 text-center">Inferior esquerdo</span>
+        <span className="w-[185px] text-center">Inferior esquerdo</span>
       </div>
 
       <div className="mt-2.5 flex items-center gap-2.5 border-t border-dashed border-border pt-2.5 text-[10px] text-muted-foreground">

@@ -16,6 +16,7 @@ import {
   type ConfirmPaymentPayload,
   type PaymentInstallment,
 } from "./RegistrarPagamentoDialog";
+import { formatMoney, formatMoneyPlain } from "@/lib/masks";
 
 interface CobrancaDialogProps {
   open: boolean;
@@ -44,14 +45,6 @@ const INITIAL_ROWS: InstallmentRow[] = Array.from({ length: 10 }, (_, i) => ({
   forma: "",
   status: i + 1 === 2 ? "overdue" : "pending",
 }));
-
-function formatCurrency(value: number) {
-  return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-}
-
-function formatNumber(value: number) {
-  return value.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
 
 function parseInstallmentValue(raw: string): number {
   const cleaned = raw.replace(/R\$\s?/gi, "").replace(/\./g, "").replace(",", ".");
@@ -102,9 +95,9 @@ export function CobrancaDialog({
     [rows],
   );
   const totalRestante = totalParcelas - totalPago;
-  const valorBruto = formatNumber(totalParcelas);
+  const valorBruto = formatMoneyPlain(totalParcelas);
   const desconto = "0,00";
-  const valorLiquido = formatNumber(totalParcelas);
+  const valorLiquido = formatMoneyPlain(totalParcelas);
   const headerPill =
     totalRestante <= 0 ? "Pago" : totalPago > 0 ? "Parcial" : "Pendente";
   const combinadoOrcamento = rows[0]?.combinado || "PIX";
@@ -145,7 +138,7 @@ export function CobrancaDialog({
         <DialogHeader className="sr-only">
           <DialogTitle>Cobrança</DialogTitle>
           <DialogDescription>
-            {patientName} — {quoteDescription} — {formatCurrency(quoteTotal)}
+            {patientName} — {quoteDescription} — {formatMoney(quoteTotal)}
           </DialogDescription>
         </DialogHeader>
 
@@ -223,19 +216,19 @@ export function CobrancaDialog({
                   <div className="rounded-[8px] border border-border bg-[#f8fafc] px-3 py-2">
                     <p className="text-[11px] leading-none text-muted-foreground">Total</p>
                     <p className="mt-1 flex items-baseline gap-1 text-[12px] font-bold text-[#0f766e]">
-                      <span className="text-[11px] font-normal text-muted-foreground">R$</span> {formatNumber(totalParcelas)}
+                      <span className="text-[11px] font-normal text-muted-foreground">R$</span> {formatMoneyPlain(totalParcelas)}
                     </p>
                   </div>
                   <div className="rounded-[8px] border border-border bg-[#f8fafc] px-3 py-2">
                     <p className="text-[11px] leading-none text-muted-foreground">Pago</p>
                     <p className="mt-1 flex items-baseline gap-1 text-[12px] font-bold text-foreground">
-                      <span className="text-[11px] font-normal text-muted-foreground">R$</span> {formatNumber(totalPago)}
+                      <span className="text-[11px] font-normal text-muted-foreground">R$</span> {formatMoneyPlain(totalPago)}
                     </p>
                   </div>
                   <div className="rounded-[8px] border border-border bg-[#f8fafc] px-3 py-2">
                     <p className="text-[11px] leading-none text-muted-foreground">Restante</p>
                     <p className="mt-1 flex items-baseline gap-1 text-[12px] font-bold text-[#15803d]">
-                      <span className="text-[11px] font-normal text-muted-foreground">R$</span> {formatNumber(totalRestante)}
+                      <span className="text-[11px] font-normal text-muted-foreground">R$</span> {formatMoneyPlain(totalRestante)}
                     </p>
                   </div>
                 </div>

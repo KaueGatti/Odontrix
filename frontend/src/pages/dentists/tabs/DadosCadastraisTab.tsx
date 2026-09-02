@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { maskCPF, maskCNPJ, maskRG, maskTelefone } from "@/lib/masks";
+import { formatMoneyFromCents, maskCPF, maskCNPJ, maskMoney, maskPercent, maskRG, maskTelefone } from "@/lib/masks";
 import { withMask } from "@/lib/mask-register";
 import type { Dentist } from "@/types/dentist";
 import {
@@ -43,8 +43,14 @@ export function DadosCadastraisTab({ dentist }: DadosCadastraisTabProps) {
       birthDate: dentist.birthDate ?? "",
       phone: dentist.phone,
       email: dentist.email ?? "",
-      appointmentPrice: dentist.appointmentPrice?.toString() ?? "",
-      commissionPercent: dentist.commissionPercent?.toString() ?? "",
+      appointmentPrice:
+        dentist.appointmentPrice != null
+          ? formatMoneyFromCents(Math.round(dentist.appointmentPrice * 100), false)
+          : "",
+      commissionPercent:
+        dentist.commissionPercent != null
+          ? formatMoneyFromCents(Math.round(dentist.commissionPercent * 100), false)
+          : "",
       personType: dentist.personType,
       username: dentist.access.username,
       loginEmail: dentist.access.email,
@@ -280,11 +286,18 @@ export function DadosCadastraisTab({ dentist }: DadosCadastraisTabProps) {
                 <Label htmlFor="appointmentPrice" className="mb-1.5 block">
                   Preço por Consulta
                 </Label>
-                <Input
-                  id="appointmentPrice"
-                  placeholder="R$ 0,00"
-                  {...register("appointmentPrice")}
-                />
+                <div className="relative">
+                  <span className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-[12px] text-muted-foreground">
+                    R$
+                  </span>
+                  <Input
+                    id="appointmentPrice"
+                    placeholder="0,00"
+                    inputMode="decimal"
+                    className="pl-7"
+                    {...withMask(register("appointmentPrice"), (v) => maskMoney(v, false))}
+                  />
+                </div>
               </div>
               <div>
                 <Label htmlFor="commissionPercent" className="mb-1.5 block">
@@ -292,8 +305,9 @@ export function DadosCadastraisTab({ dentist }: DadosCadastraisTabProps) {
                 </Label>
                 <Input
                   id="commissionPercent"
-                  placeholder="0,00%"
-                  {...register("commissionPercent")}
+                  placeholder="0,00"
+                  inputMode="decimal"
+                  {...withMask(register("commissionPercent"), maskPercent)}
                 />
               </div>
             </div>

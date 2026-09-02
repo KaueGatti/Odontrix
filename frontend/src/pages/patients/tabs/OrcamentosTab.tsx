@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { NovoOrcamentoDialog } from "./dialogs/NovoOrcamentoDialog";
+import { formatMoney } from "@/lib/masks";
 
 export interface QuoteRecord {
   id: number;
@@ -46,7 +47,7 @@ const STATUS_LABELS: Record<QuoteRecord["status"], string> = {
 const PATIENT_NAME = "Kauê Vinícius Gatti";
 
 function formatCurrency(value: number) {
-  return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  return formatMoney(value);
 }
 
 export function isExpiredValidUntil(validUntil: string): boolean {

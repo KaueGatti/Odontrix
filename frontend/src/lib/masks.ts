@@ -102,9 +102,33 @@ export function maskMoney(value: string, withSymbol = true): string {
     return formatMoneyFromCents(parseMoneyToCents(value), withSymbol);
 }
 
+/** Teto da máscara de percentual: 100,00%. */
+const MAX_PERCENT_BASIS_POINTS = 10_000;
+
+/**
+ * Máscara de percentual para input controlado: cada tecla entra pela direita
+ * (nas centésimas de %) e o backspace remove o último dígito.
+ * Ex: "1" → "0,01" · "1250" → "12,50" · teto de 100,00.
+ */
+export function maskPercent(value: string): string {
+    let basisPoints = parseMoneyToCents(value);
+    if (basisPoints > MAX_PERCENT_BASIS_POINTS) basisPoints = MAX_PERCENT_BASIS_POINTS;
+    return formatMoneyFromCents(basisPoints, false);
+}
+
 /** Converte centavos para número puro em reais. Ex: 123456 → 1234.56 */
 export function centsToNumber(cents: number): number {
     return cents / 100;
+}
+
+/** Formata um número em reais com símbolo. Ex: 1234.56 → "R$ 1.234,56" */
+export function formatMoney(value: number): string {
+    return formatMoneyFromCents(Math.round(value * 100));
+}
+
+/** Formata um número em reais sem símbolo. Ex: 1234.56 → "1.234,56" */
+export function formatMoneyPlain(value: number): string {
+    return formatMoneyFromCents(Math.round(value * 100), false);
 }
 
 /** CPF: 000.000.000-00 */

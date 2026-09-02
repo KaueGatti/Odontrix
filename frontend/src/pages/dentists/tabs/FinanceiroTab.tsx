@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { Calendar, DollarSign, Percent } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { formatMoney } from "@/lib/masks";
 
 interface FinanceiroTabProps {
   dentistId: number;
@@ -85,10 +86,7 @@ export function FinanceiroTab({ dentistId: _dentistId }: FinanceiroTabProps) {
             </div>
             <p className="mb-[3px] text-[11px] text-muted-foreground">Total faturado</p>
             <p className="text-[22px] font-bold tracking-tight text-foreground">
-              {financeiro.totalFaturado.toLocaleString("pt-BR", {
-                style: "currency",
-                currency: "BRL",
-              })}
+              {formatMoney(financeiro.totalFaturado)}
             </p>
           </div>
 
@@ -100,10 +98,7 @@ export function FinanceiroTab({ dentistId: _dentistId }: FinanceiroTabProps) {
               Comissão ({financeiro.comissaoPercentual}%)
             </p>
             <p className="text-[22px] font-bold tracking-tight text-foreground">
-              {valorComissao.toLocaleString("pt-BR", {
-                style: "currency",
-                currency: "BRL",
-              })}
+              {formatMoney(valorComissao)}
             </p>
           </div>
         </div>

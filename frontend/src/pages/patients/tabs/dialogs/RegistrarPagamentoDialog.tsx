@@ -3,11 +3,11 @@ import { Check, Info, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { MAX_MONEY_CENTS, MoneyInput } from "@/components/ui/money-input";
 import { Select } from "@/components/ui/select";
 import {
   centsToNumber,
   formatMoneyFromCents,
-  maskMoney,
   parseMoneyToCents,
 } from "@/lib/masks";
 import {
@@ -56,47 +56,10 @@ interface RegistrarPagamentoDialogProps {
 
 const PAYMENT_METHODS = ["PIX", "Dinheiro", "Cartão débito", "Cartão crédito", "Boleto"];
 
-/** Limite máximo dos campos de valor: R$ 100.000,00 (em centavos). */
-const MAX_MONEY_CENTS = 10_000_000;
-
 function parseDateBR(s: string): number {
   const [d, m, y] = s.split("/").map(Number);
   if (!d || !m || !y) return 0;
   return y * 10000 + m * 100 + d;
-}
-
-/**
- * Input de moeda controlado por centavos.
- * O value exibido é sempre formatado ("R$ 0,00" → "R$ 1.234,56"); cada tecla
- * numérica entra pela direita (nos centavos) e o backspace remove o último dígito.
- */
-function MoneyInput({
-  value,
-  onCentsChange,
-  className,
-  max = MAX_MONEY_CENTS,
-}: {
-  value: number;
-  onCentsChange: (cents: number) => void;
-  className?: string;
-  /** Limite superior em centavos (padrão: R$ 100.000,00). */
-  max?: number;
-}) {
-  return (
-    <Input
-      value={formatMoneyFromCents(value > max ? max : value)}
-      inputMode="decimal"
-      onChange={(event) => {
-        const masked = maskMoney(event.target.value);
-        let cents = parseMoneyToCents(masked);
-        if (cents > max) cents = max;
-        const formatted = formatMoneyFromCents(cents);
-        if (event.target.value !== formatted) event.target.value = formatted;
-        onCentsChange(cents);
-      }}
-      className={className}
-    />
-  );
 }
 export function RegistrarPagamentoDialog({
   open,
@@ -213,21 +176,13 @@ export function RegistrarPagamentoDialog({
               <label className="block text-[12.5px] font-medium text-muted-foreground">
                 Desconto (R$)
               </label>
-              <MoneyInput
-                value={desconto}
-                onCentsChange={setDesconto}
-                className="h-10 text-[13px]"
-              />
+              <MoneyInput value={desconto} onCentsChange={setDesconto} />
             </div>
             <div className="space-y-[6px]">
               <label className="block text-[12.5px] font-medium text-muted-foreground">
                 Acréscimo / multa (R$)
               </label>
-              <MoneyInput
-                value={acrescimo}
-                onCentsChange={setAcrescimo}
-                className="h-10 text-[13px]"
-              />
+              <MoneyInput value={acrescimo} onCentsChange={setAcrescimo} />
             </div>
             <div className="space-y-[6px]">
               <label className="block text-[12.5px] font-medium text-muted-foreground">
@@ -259,12 +214,7 @@ export function RegistrarPagamentoDialog({
               </div>
               <div className="space-y-[6px]">
                 <label className="block text-[12.5px] font-medium text-muted-foreground">Valor</label>
-                <MoneyInput
-                  value={valor}
-                  onCentsChange={setValor}
-                  className="h-10 text-[13px]"
-                  max={maxValorCents}
-                />
+                <MoneyInput value={valor} onCentsChange={setValor} max={maxValorCents} />
               </div>
             </div>
           )}

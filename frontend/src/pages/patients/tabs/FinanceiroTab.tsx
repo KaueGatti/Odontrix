@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { CobrancaDialog } from "./dialogs/CobrancaDialog";
 import { NovoRegistroDialog, type NovoRegistroPayload } from "./dialogs/NovoRegistroDialog";
+import { formatMoney } from "@/lib/masks";
 
 interface BillingRecord {
   id: number;
@@ -49,7 +50,7 @@ const PATIENT_NAME = "Kauê Vinícius Gatti";
 
 function formatCurrency(value: number | null) {
   if (value === null) return "—";
-  return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  return formatMoney(value);
 }
 
 export function FinanceiroTab() {

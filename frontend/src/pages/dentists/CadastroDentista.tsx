@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-import { maskCPF, maskCNPJ, maskRG, maskTelefone } from "@/lib/masks";
+import { maskCPF, maskCNPJ, maskMoney, maskPercent, maskRG, maskTelefone } from "@/lib/masks";
 import { withMask } from "@/lib/mask-register";
 import {
   cadastroDentistaSchema,
@@ -341,11 +341,18 @@ export default function CadastroDentistaPage() {
                   <Label htmlFor="appointmentPrice" className="mb-1.5 block">
                     Preço por Consulta
                   </Label>
-                  <Input
-                    id="appointmentPrice"
-                    placeholder="R$ 0,00"
-                    {...register("appointmentPrice")}
-                  />
+                  <div className="relative">
+                    <span className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-[12px] text-muted-foreground">
+                      R$
+                    </span>
+                    <Input
+                      id="appointmentPrice"
+                      placeholder="0,00"
+                      inputMode="decimal"
+                      className="pl-7"
+                      {...withMask(register("appointmentPrice"), (v) => maskMoney(v, false))}
+                    />
+                  </div>
                 </div>
                 <div>
                   <Label htmlFor="commissionPercent" className="mb-1.5 block">
@@ -353,8 +360,9 @@ export default function CadastroDentistaPage() {
                   </Label>
                   <Input
                     id="commissionPercent"
-                    placeholder="0,00%"
-                    {...register("commissionPercent")}
+                    placeholder="0,00"
+                    inputMode="decimal"
+                    {...withMask(register("commissionPercent"), maskPercent)}
                   />
                 </div>
               </div>

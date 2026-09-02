@@ -5,9 +5,9 @@ import {
     Calendar,
     Users,
     Settings,
-    type LucideIcon, Stethoscope, User, SlidersVertical, Star, FileText, CircleDollarSign, TrendingUp,
+    type LucideIcon, Stethoscope, User, SlidersVertical, CircleDollarSign, TrendingUp,
     TrendingDown,
-    ChevronRight,
+    ChevronRight, Receipt,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils.ts";
@@ -36,6 +36,7 @@ const BOTTOM_NAV_ITEMS: NavItem[] = [
     /* { to: "contratos", label: "Contratos", icon: FileText },
     { to: "planos", label: "Planos", icon: Star }, */
     { to: "auxiliares", label: "Auxiliares", icon: SlidersVertical },
+    { to: "usuarios", label: "Usuários", icon: Users },
 ];
 
 const NAV_GROUPS: NavGroupConfig[] = [
@@ -46,6 +47,7 @@ const NAV_GROUPS: NavGroupConfig[] = [
             { to: "contas", label: "Contas", icon: CircleDollarSign },
             { to: "a-receber", label: "A Receber", icon: TrendingUp },
             { to: "a-pagar", label: "A Pagar", icon: TrendingDown },
+            { to: "boletos", label: "Boletos", icon: Receipt },
         ],
     },
 ];

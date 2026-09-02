@@ -13,7 +13,14 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Select } from "@/components/ui/select";
-import { maskCurrency } from "@/lib/masks";
+import { MoneyInput } from "@/components/ui/money-input";
+import {
+  formatMoney,
+  formatMoneyFromCents,
+  maskMoney,
+  maskPercent,
+  parseMoneyToCents,
+} from "@/lib/masks";
 import { cn } from "@/lib/utils";
 import { MOCK_PATIENTS } from "@/pages/agenda/mock-data";
 
@@ -48,16 +55,6 @@ interface NovoOrcamentoDialogProps {
   onSave?: (data: { description: string; validUntilIso: string; status: QuoteStatus; totalValue: number }) => void;
 }
 
-interface CurrencyInputProps {
-  value: string;
-  onValueChange: (value: string) => void;
-  id?: string;
-  className?: string;
-  placeholder?: string;
-  "aria-label"?: string;
-  disabled?: boolean;
-}
-
 const MOCK_PROCEDURES = [
   { name: "Limpeza", price: 180 },
   { name: "Extração", price: 250 },
@@ -71,15 +68,21 @@ function parseCurrency(value: string): number {
   return digits ? parseInt(digits, 10) / 100 : 0;
 }
 
-function formatCurrency(value: number): string {
-  return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+/** Converte centavos (vindos do MoneyInput) para a string formatada sem símbolo usada no estado. */
+function centsToString(cents: number): string {
+  return cents ? formatMoneyFromCents(cents, false) : "";
+}
+
+/** Centavos a partir da string formatada do estado ("" → null para exibir o placeholder). */
+function stringToCents(value: string): number | null {
+  return value === "" ? null : parseMoneyToCents(value);
 }
 
 function normalizeDiscountInput(value: string, type: DiscountType): string {
   if (type === "percent") {
-    return value.replace(/\D/g, "").replace(/^0+(?=\d)/, "").slice(0, 4);
+    return maskPercent(value);
   }
-  return maskCurrency(value);
+  return maskMoney(value, false);
 }
 
 function isExpiredIso(dateStr: string): boolean {
@@ -94,29 +97,6 @@ function isExpiredIso(dateStr: string): boolean {
   today.setHours(0, 0, 0, 0);
   date.setHours(0, 0, 0, 0);
   return date < today;
-}
-
-function CurrencyInput({
-  value,
-  onValueChange,
-  id,
-  className,
-  placeholder,
-  "aria-label": ariaLabel,
-  disabled,
-}: CurrencyInputProps) {
-  return (
-    <Input
-      id={id}
-      aria-label={ariaLabel}
-      inputMode="numeric"
-      placeholder={placeholder ?? "0,00"}
-      value={value}
-      disabled={disabled}
-      onChange={(e) => onValueChange(maskCurrency(e.target.value))}
-      className={className}
-    />
-  );
 }
 
 function TextArea({ className, disabled, ...props }: TextareaHTMLAttributes<HTMLTextAreaElement> & { disabled?: boolean }) {
@@ -237,7 +217,7 @@ export function NovoOrcamentoDialog({
   const handleProcedureSelect = (id: number, name: string) => {
     if (isLocked) return;
     const proc = MOCK_PROCEDURES.find((p) => p.name === name);
-    updateRow(id, { procedureName: name, unitValue: proc ? maskCurrency(String(proc.price)) : "" });
+    updateRow(id, { procedureName: name, unitValue: proc ? centsToString(proc.price * 100) : "" });
   };
 
   const lineDiscount = (p: ProcedureLine) => {
@@ -262,11 +242,11 @@ export function NovoOrcamentoDialog({
     const perCents = Math.floor(totalCents / n);
     const remCents = totalCents % n;
     if (n === 1) {
-      installmentLabel = `1x de ${formatCurrency(base)}`;
+      installmentLabel = `1x de ${formatMoney(base)}`;
     } else if (remCents === 0) {
-      installmentLabel = `${n}x de ${formatCurrency(perCents / 100)}`;
+      installmentLabel = `${n}x de ${formatMoney(perCents / 100)}`;
     } else {
-      installmentLabel = `${n - 1}x de ${formatCurrency(perCents / 100)} e 1x de ${formatCurrency(
+      installmentLabel = `${n - 1}x de ${formatMoney(perCents / 100)} e 1x de ${formatMoney(
         (perCents + remCents) / 100,
       )}`;
     }
@@ -472,29 +452,27 @@ export function NovoOrcamentoDialog({
                       ))}
                     </Select>
 
-                    <CurrencyInput
+                    <MoneyInput
                       aria-label="Valor unitário"
-                      value={p.unitValue}
+                      value={stringToCents(p.unitValue)}
                       disabled={isLocked}
-                      onValueChange={(v) => updateRow(p.id, { unitValue: v })}
-                      placeholder="R$ 150,00"
-                      className={cn("h-7 rounded-[8px] px-1.5 text-center text-[10px]", isLocked && "opacity-60")}
+                      onCentsChange={(c) => updateRow(p.id, { unitValue: centsToString(c) })}
+                      className={cn("h-7 rounded-[8px] text-[10px]", isLocked && "opacity-60")}
                     />
 
                     <div className="relative">
                       {p.discountType === "currency" ? (
-                        <CurrencyInput
+                        <MoneyInput
                           aria-label="Desconto"
-                          value={p.discountValue}
+                          value={stringToCents(p.discountValue)}
                           disabled={isLocked}
-                          onValueChange={(v) => updateRow(p.id, { discountValue: v })}
-                          placeholder="0,00"
-                          className={cn("h-7 rounded-[8px] pr-7 text-center text-[10px]", isLocked && "opacity-60")}
+                          onCentsChange={(c) => updateRow(p.id, { discountValue: centsToString(c) })}
+                          className={cn("h-7 rounded-[8px] pr-7 text-[10px]", isLocked && "opacity-60")}
                         />
                       ) : (
                         <Input
                           aria-label="Desconto"
-                          inputMode="numeric"
+                          inputMode="decimal"
                           value={p.discountValue}
                           disabled={isLocked}
                           onChange={(e) =>
@@ -540,7 +518,7 @@ export function NovoOrcamentoDialog({
                     />
 
                     <div className="flex h-7 items-center justify-center rounded-[8px] border border-input bg-muted px-1 text-center text-[10px] font-medium text-foreground">
-                      {formatCurrency(lineTotal)}
+                      {formatMoney(lineTotal)}
                     </div>
 
                     <Input
@@ -590,15 +568,15 @@ export function NovoOrcamentoDialog({
                 <div className="mt-3 space-y-1.5">
                   <div className="flex justify-between text-[13px] text-muted-foreground">
                     <span>Subtotal (sem desconto)</span>
-                    <span className="font-medium text-foreground">{formatCurrency(subtotal)}</span>
+                    <span className="font-medium text-foreground">{formatMoney(subtotal)}</span>
                   </div>
                   <div className="flex justify-between text-[13px] text-muted-foreground">
                     <span>Total de descontos</span>
-                    <span className="font-medium text-destructive">- {formatCurrency(totalDiscount)}</span>
+                    <span className="font-medium text-destructive">- {formatMoney(totalDiscount)}</span>
                   </div>
                   <div className="flex items-center justify-between border-t border-border pt-2 text-[13px] font-bold text-foreground">
                     <span>Total geral</span>
-                    <span className="text-[15px] text-emerald-600">{formatCurrency(total)}</span>
+                    <span className="text-[15px] text-emerald-600">{formatMoney(total)}</span>
                   </div>
                 </div>
               </div>
@@ -628,19 +606,13 @@ export function NovoOrcamentoDialog({
                     <Label htmlFor="orc-entrada" className="text-[11px] font-medium text-muted-foreground">
                       Entrada (R$)
                     </Label>
-                    <div className="relative">
-                      <span className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-[12px] text-muted-foreground">
-                        R$
-                      </span>
-                      <CurrencyInput
-                        id="orc-entrada"
-                        value={entrada}
-                        disabled={isLocked}
-                        onValueChange={setEntrada}
-                        placeholder="500"
-                        className={cn("h-9 rounded-[10px] pl-7 text-[13px]", isLocked && "opacity-60")}
-                      />
-                    </div>
+                    <MoneyInput
+                      id="orc-entrada"
+                      value={stringToCents(entrada)}
+                      disabled={isLocked}
+                      onCentsChange={(c) => setEntrada(centsToString(c))}
+                      className={cn("h-9 rounded-[10px]", isLocked && "opacity-60")}
+                    />
                   </div>
                   <div className="flex flex-col gap-[6px]">
                     <Label htmlFor="orc-parcelas" className="text-[11px] font-medium text-muted-foreground">

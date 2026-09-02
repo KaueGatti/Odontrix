@@ -1,6 +1,7 @@
 import { Eye } from "lucide-react";
 
 import { Card } from "@/components/ui/card";
+import { formatMoney } from "@/lib/masks";
 
 interface ProcedureRecord {
   id: string;
@@ -20,7 +21,7 @@ const MOCK_PROCEDURES: ProcedureRecord[] = [
 ];
 
 function formatCurrency(value: number) {
-  return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  return formatMoney(value);
 }
 
 export function ConsultasProcedimentosTab() {

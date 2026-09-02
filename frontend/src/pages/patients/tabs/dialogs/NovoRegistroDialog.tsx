@@ -13,16 +13,9 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Select } from "@/components/ui/select";
-import {
-  centsToNumber,
-  formatMoneyFromCents,
-  maskMoney,
-  parseMoneyToCents,
-} from "@/lib/masks";
+import { MoneyInput } from "@/components/ui/money-input";
+import { centsToNumber, formatMoneyFromCents } from "@/lib/masks";
 import { cn } from "@/lib/utils";
-
-/** Limite máximo dos campos de valor: R$ 100.000,00 (em centavos). */
-const MAX_MONEY_CENTS = 10_000_000;
 
 const PAYMENT_METHODS = ["PIX", "Dinheiro", "Cartão débito", "Cartão crédito", "Boleto"];
 
@@ -63,50 +56,14 @@ function isPastDate(iso: string): boolean {
   return date < today;
 }
 
-/** Data de hoje em ISO (YYYY-MM-DD), sem depender de timezone (UTC). */
+/**
+ * Data de hoje em ISO (YYYY-MM-DD), sem depender de timezone (UTC).
+ */
 function todayIso(): string {
   const now = new Date();
   const m = String(now.getMonth() + 1).padStart(2, "0");
   const d = String(now.getDate()).padStart(2, "0");
   return `${now.getFullYear()}-${m}-${d}`;
-}
-
-/**
- * Input de moeda controlado por centavos (mesmo padrão do RegistrarPagamentoDialog):
- * o value exibido é sempre formatado, cada tecla entra pelos centavos e o valor
- * é limitado a R$ 100.000,00.
- */
-function MoneyInput({
-  id,
-  value,
-  onCentsChange,
-}: {
-  id: string;
-  value: number;
-  onCentsChange: (cents: number) => void;
-}) {
-  return (
-    <div className="relative">
-      <span className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-[12px] text-muted-foreground">
-        R$
-      </span>
-      <Input
-        id={id}
-        inputMode="decimal"
-        placeholder="0,00"
-        value={formatMoneyFromCents(value, false)}
-        onChange={(event) => {
-          const masked = maskMoney(event.target.value, false);
-          let cents = parseMoneyToCents(masked);
-          if (cents > MAX_MONEY_CENTS) cents = MAX_MONEY_CENTS;
-          const formatted = formatMoneyFromCents(cents, false);
-          if (event.target.value !== formatted) event.target.value = formatted;
-          onCentsChange(cents);
-        }}
-        className="h-10 rounded-[10px] pl-7 text-[13px]"
-      />
-    </div>
-  );
 }
 
 export function NovoRegistroDialog({

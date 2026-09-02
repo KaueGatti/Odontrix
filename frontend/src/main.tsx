@@ -24,6 +24,8 @@ import AReceberPage from "@/pages/financeiro/AReceberPage.tsx";
 import APagarPage from "@/pages/financeiro/APagarPage.tsx";
 import AgendaPage from "@/pages/agenda/AgendaPage.tsx";
 import AtendimentoPage from "@/pages/agenda/atendimento/AtendimentoPage.tsx";
+import UsuariosPage from "@/pages/usuarios/UsuariosPage.tsx";
+import BoletosPage from "@/pages/boletos/BoletosPage.tsx";
 
 const router = createBrowserRouter([
     {
@@ -94,13 +96,17 @@ const router = createBrowserRouter([
                 path: "contas",
                 element: <ContasPage/>,
             },
-            {
+                        {
                 path: "a-pagar",
                 element: <APagarPage/>,
             },
             {
                 path: "a-receber",
                 element: <AReceberPage/>,
+            },
+            {
+                path: "boletos",
+                element: <BoletosPage/>,
             },
             {
                 path: "contratos",
@@ -113,6 +119,10 @@ const router = createBrowserRouter([
             {
                 path: "auxiliares",
                 element: <AuxiliaresPage/>,
+            },
+            {
+                path: "usuarios",
+                element: <UsuariosPage/>,
             },
             {
                 path: "configuracoes",
