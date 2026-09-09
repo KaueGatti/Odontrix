@@ -342,6 +342,25 @@ postgres:16-alpine (5432) → api:8080 → frontend:5173
 
 ---
 
+## Última Sessão — 09/09/2026
+
+### O que foi feito
+
+#### Integração da branch `feat/odontograma-anatomico` na `main`
+
+- **Merge fast-forward** da branch na `main` — 2 commits: `097e493` (telas Boletos + Usuários) e `d828cbc` (ajustes abaixo).
+- **Branch excluída** localmente (`git branch -d`). A branch **não existia no remoto** — nenhuma exclusão em `origin`.
+- `origin/main` ficou **atrás** do `main` local (estava em `e1e462b`, sem novos pushes) — pendente de push.
+
+#### Ajustes de ledger/despesa + UI de boletos (commit `d828cbc`)
+
+- **`backend/.../V1__create-database.sql`** — tabela `expense` ganhou coluna `issued_on DATE NOT NULL` (data de emissão, separada do vencimento); corrige typo na chave de `payment_installment`: `amount_apllied` → `amount_applied`.
+- **`backend/.../V2__seed-data.sql`** — seed de `expense` passou a incluir `issued_on` (5–7 dias antes das datas de referência) e usa o nome corrigido `amount_applied`.
+- **`financeiro/NovaDespesaDialog`** — campo único "Vencimento" virou grid de 2 colunas: **Emissão** + **Vencimento** (ambos `DD/MM/AAAA`, padrão `FIELD_CLASS`, `h-10`).
+- **`boletos/DetalheBoletoDialog`** — largura `max-w-[520px]` → `max-w-[600px]` + `pr-8` no header (evita sobreposição com o botão de fechar); botões de ação com cor semântica e hover suave: "Visualizar PDF" (azul #3b82f6), "Registrar pagamento" (verde #16a34a), "Adiar vencimento" (âmbar #b45309).
+- Lint: ✅ · Build: ✅
+
+### Sessão anterior — 01/09/2026
 ## Última Sessão — 01/09/2026
 
 ### O que foi feito
