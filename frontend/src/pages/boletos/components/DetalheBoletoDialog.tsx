@@ -88,9 +88,9 @@ export function DetalheBoletoDialog({
   }
 return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[520px]">
+      <DialogContent className="max-w-[600px]">
         <DialogHeader>
-          <div className="flex items-start justify-between gap-3">
+          <div className="flex items-start justify-between gap-3 pr-8">
             <div>
               <DialogTitle className="text-[15px] font-bold tracking-tight text-foreground">
                 {boleto.paciente}
@@ -170,7 +170,13 @@ return (
         )}
 
         <div className="mt-5 flex flex-wrap gap-2 border-t border-border pt-4">
-          <Button type="button" variant="outline" size="sm" onClick={() => setShowPdfNote((v) => !v)}>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="text-[#3b82f6] hover:bg-[rgba(59,130,246,0.08)] hover:text-[#2563eb]"
+            onClick={() => setShowPdfNote((v) => !v)}
+          >
             <FileText className="h-3.5 w-3.5" />
             Visualizar PDF
           </Button>
@@ -180,6 +186,7 @@ return (
                 type="button"
                 variant="outline"
                 size="sm"
+                className="text-[#16a34a] hover:bg-[rgba(34,197,94,0.1)] hover:text-[#15803d]"
                 onClick={() => {
                   onOpenChange(false);
                   onRegistrarPagamento(boleto);
@@ -192,6 +199,7 @@ return (
                 type="button"
                 variant="outline"
                 size="sm"
+                className="text-[#b45309] hover:bg-[rgba(245,158,11,0.12)] hover:text-[#92400e]"
                 onClick={() => {
                   onOpenChange(false);
                   onAdiarVencimento(boleto);

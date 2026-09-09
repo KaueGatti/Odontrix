@@ -69,14 +69,25 @@ export function NovaDespesaDialog({
           </div>
         </div>
 
-        <div className="mt-4 flex flex-col gap-[6px]">
-          <label className="text-[12.5px] font-medium text-[var(--gray-700)]">
-            Vencimento <span className="text-destructive">*</span>
-          </label>
-          <input
-            className={FIELD_CLASS}
-            placeholder="DD/MM/AAAA"
-          />
+        <div className="mt-4 grid grid-cols-2 gap-4">
+          <div className="flex flex-col gap-[6px]">
+            <label className="text-[12.5px] font-medium text-[var(--gray-700)]">
+              Emissão <span className="text-destructive">*</span>
+            </label>
+            <input
+              className={FIELD_CLASS}
+              placeholder="DD/MM/AAAA"
+            />
+          </div>
+          <div className="flex flex-col gap-[6px]">
+            <label className="text-[12.5px] font-medium text-[var(--gray-700)]">
+              Vencimento <span className="text-destructive">*</span>
+            </label>
+            <input
+              className={FIELD_CLASS}
+              placeholder="DD/MM/AAAA"
+            />
+          </div>
         </div>
 
         <div className="mt-4 flex flex-col gap-[6px]">

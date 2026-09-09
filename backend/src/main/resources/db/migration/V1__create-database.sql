@@ -503,6 +503,7 @@ CREATE TABLE expense
     description    VARCHAR(200)   NOT NULL,
     observation    TEXT,
     amount         NUMERIC(10, 2) NOT NULL,
+    issued_on      DATE           NOT NULL,
     due_date       DATE           NOT NULL,
     payment_date   DATE,                                 -- NULL = ainda não paga
     active         BOOLEAN        NOT NULL DEFAULT TRUE, -- FALSE = cancelada
@@ -582,7 +583,7 @@ CREATE TABLE payment_installment
 (
     payment_id     INT            NOT NULL REFERENCES payment (id),
     installment_id INT            NOT NULL REFERENCES installment (id),
-    amount_apllied NUMERIC(10, 2) NOT NULL,
+    amount_applied NUMERIC(10, 2) NOT NULL,
     PRIMARY KEY (payment_id, installment_id)
 );
 

@@ -260,9 +260,9 @@ SELECT setval('boleto_id_seq', 2);
 -- payment 1: recebimento da consulta completed (installment 1), por Bruna
 -- payment 2: pagamento de despesa (Administrativo), apenas Gerente pode
 -- ------------------------------------------------------------
-INSERT INTO expense (id, cost_center_id, description, observation, amount, due_date, payment_date, active, created_by, created_at) VALUES
-    (1, 2, 'Anúncio Instagram', NULL, 250.00, CURRENT_DATE + INTERVAL '10 days', NULL, TRUE, 1, CURRENT_DATE - INTERVAL '3 days'),
-    (2, 3, 'Material de escritório', NULL, 120.00, CURRENT_DATE - INTERVAL '3 days', CURRENT_DATE - INTERVAL '3 days', TRUE, 1, CURRENT_DATE - INTERVAL '4 days');
+INSERT INTO expense (id, cost_center_id, description, observation, amount, issued_on, due_date, payment_date, active, created_by, created_at) VALUES
+    (1, 2, 'Anúncio Instagram', NULL, 250.00, CURRENT_DATE - INTERVAL '7 days', CURRENT_DATE + INTERVAL '10 days', NULL, TRUE, 1, CURRENT_DATE - INTERVAL '3 days'),
+    (2, 3, 'Material de escritório', NULL, 120.00, CURRENT_DATE - INTERVAL '5 days', CURRENT_DATE - INTERVAL '3 days', CURRENT_DATE - INTERVAL '3 days', TRUE, 1, CURRENT_DATE - INTERVAL '4 days');
 SELECT setval('expense_id_seq', 2);
 
 INSERT INTO payment (id, user_id, type, notes, amount, payment_method, date_time, refund_ref_id) VALUES
@@ -270,7 +270,7 @@ INSERT INTO payment (id, user_id, type, notes, amount, payment_method, date_time
     (2, 1, 'expense', 'Compra de material de escritório',               120.00, 3, CURRENT_DATE - INTERVAL '3 days', NULL);
 SELECT setval('payment_id_seq', 2);
 
-INSERT INTO payment_installment (payment_id, installment_id, amount_apllied) VALUES
+INSERT INTO payment_installment (payment_id, installment_id, amount_applied) VALUES
     (1, 1, 320.00);
 
 INSERT INTO payment_expense (payment_id, expense_id, amount_applied) VALUES
