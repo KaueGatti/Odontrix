@@ -19,7 +19,6 @@ import {
   FIELD_LABEL_CLASS,
   SEC_LABEL_CLASS,
   TEXTAREA_CLASS,
-  maskDataBR,
 } from "./shared";
 import type {
   AnamneseData,
@@ -402,11 +401,10 @@ export default function AtendimentoPage() {
                   Próxima consulta recomendada
                 </Label>
                 <Input
+                  type="date"
                   value={retorno}
-                  onChange={(e) => setRetorno(maskDataBR(e.target.value))}
-                  placeholder="DD/MM/AAAA"
-                  inputMode="numeric"
-                  className="h-10 rounded-[10px] text-[13px]"
+                  onChange={(e) => setRetorno(e.target.value)}
+                  className="h-10 rounded-[10px] border-[1.5px] border-border bg-[var(--gray-50)] px-3 text-[13px] text-foreground"
                 />
               </div>
             </div>

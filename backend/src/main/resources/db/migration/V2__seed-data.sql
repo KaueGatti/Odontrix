@@ -230,6 +230,8 @@ SELECT setval('attachment_id_seq', 2);
 -- BILLING / INSTALLMENTS
 -- Billing 1: gerado pela consulta completed (id 5), já quitado
 -- Billing 2: avulso (boleto a vulso), sem consulta vinculada, parcelado 2x
+-- OBS: installment.intended_payment_method admite NULL (cobrança sem
+-- combinado estruturado — ver V1)
 -- ------------------------------------------------------------
 INSERT INTO billing (id, appointment_id, patient_id, cost_center_id, total_amount, discount, created_at) VALUES
     (1, 5,    5, 1, 320.00, 0, (CURRENT_DATE - INTERVAL '1 day' + TIME '16:10')::timestamptz),
@@ -259,15 +261,17 @@ SELECT setval('boleto_id_seq', 2);
 -- PAYMENTS
 -- payment 1: recebimento da consulta completed (installment 1), por Bruna
 -- payment 2: pagamento de despesa (Administrativo), apenas Gerente pode
+-- OBS: o crédito do orçamento (type=credit) é semeado na seção QUOTES,
+-- mais abaixo — quote 1 ainda não existe neste ponto do arquivo
 -- ------------------------------------------------------------
 INSERT INTO expense (id, cost_center_id, description, observation, amount, issued_on, due_date, payment_date, active, created_by, created_at) VALUES
     (1, 2, 'Anúncio Instagram', NULL, 250.00, CURRENT_DATE - INTERVAL '7 days', CURRENT_DATE + INTERVAL '10 days', NULL, TRUE, 1, CURRENT_DATE - INTERVAL '3 days'),
     (2, 3, 'Material de escritório', NULL, 120.00, CURRENT_DATE - INTERVAL '5 days', CURRENT_DATE - INTERVAL '3 days', CURRENT_DATE - INTERVAL '3 days', TRUE, 1, CURRENT_DATE - INTERVAL '4 days');
 SELECT setval('expense_id_seq', 2);
 
-INSERT INTO payment (id, user_id, type, notes, amount, payment_method, date_time, refund_ref_id) VALUES
-    (1, 2, 'income',  'Pagamento da consulta de limpeza + restauração', 320.00, 1, CURRENT_DATE - INTERVAL '1 day', NULL),
-    (2, 1, 'expense', 'Compra de material de escritório',               120.00, 3, CURRENT_DATE - INTERVAL '3 days', NULL);
+INSERT INTO payment (id, user_id, type, notes, amount, payment_method, date_time, refund_ref_id, patient_id, quote_id) VALUES
+    (1, 2, 'income',  'Pagamento da consulta de limpeza + restauração', 320.00, 1, CURRENT_DATE - INTERVAL '1 day', NULL, NULL, NULL),
+    (2, 1, 'expense', 'Compra de material de escritório',               120.00, 3, CURRENT_DATE - INTERVAL '3 days', NULL, NULL, NULL);
 SELECT setval('payment_id_seq', 2);
 
 INSERT INTO payment_installment (payment_id, installment_id, amount_applied) VALUES
@@ -278,10 +282,26 @@ INSERT INTO payment_expense (payment_id, expense_id, amount_applied) VALUES
 
 -- ------------------------------------------------------------
 -- QUOTES
+-- Orçamento 1: enviado, com combinado de pagamento (entrada R$ 205 +
+-- saldo em 3x no Cartão de Crédito, payment_method id 2). planned_*
+-- guardam a expectativa combinada com o paciente — a cobrança real
+-- (billing) só nasce na finalização da consulta
 -- ------------------------------------------------------------
-INSERT INTO quote (id, patient_id, created_by, description, status, discount, discount_type, total_amount, valid_until, notes, payment_notes) VALUES
-    (1, 4, 4, 'Orçamento: clareamento + tratamento de canal', 'sent', 0, 'percent', 1205.00, CURRENT_DATE + INTERVAL '30 days', 'Inclui avaliação inicial', NULL);
+INSERT INTO quote (id, patient_id, created_by, description, status, discount, discount_type, total_amount, valid_until, notes, payment_notes,
+                   planned_payment_method, planned_installments, entrance_amount) VALUES
+    (1, 4, 4, 'Orçamento: clareamento + tratamento de canal', 'sent', 0, 'percent', 1205.00, CURRENT_DATE + INTERVAL '30 days', 'Inclui avaliação inicial', NULL,
+     2, 3, 205.00);
 SELECT setval('quote_id_seq', 1);
+
+-- payment 3: crédito do paciente (type=credit) — entrada de R$ 205 combinada
+-- no orçamento 1, paga na aprovação e ainda NÃO alocada a parcela alguma
+-- (a billing da consulta ainda não existe); será alocada automaticamente
+-- à 1ª parcela quando a billing nascer (Opção B / unearned — ver V1).
+-- Semeado aqui (e não na seção PAYMENTS) porque quote 1 ainda não existia
+-- naquele ponto do arquivo.
+INSERT INTO payment (id, user_id, type, notes, amount, payment_method, date_time, refund_ref_id, patient_id, quote_id) VALUES
+    (3, 2, 'credit', 'Entrada do orçamento 1 (clareamento + canal) — aguardando alocação', 205.00, 2, CURRENT_DATE - INTERVAL '2 days', NULL, 4, 1);
+SELECT setval('payment_id_seq', 3);
 
 INSERT INTO quote_procedure (id, quote_id, procedure_id, unit_price, discount, discount_type, quantity, final_price, notes) VALUES
     (1, 1, 5, 450.00, 10, 'percent', 1, 405.00, NULL),

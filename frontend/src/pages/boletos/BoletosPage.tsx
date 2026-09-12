@@ -19,6 +19,12 @@ function brDateToNumber(br: string): number {
   return y * 10000 + m * 100 + d;
 }
 
+/** Converte "AAAA-MM-DD" (input type="date") em número comparável (AAAAMMDD). */
+function isoDateToNumber(iso: string): number {
+  const digits = iso.replaceAll("-", "");
+  return digits.length === 8 ? Number(digits) : 0;
+}
+
 type StatusTab = "all" | BoletoStatus;
 
 const TABS: { value: StatusTab; label: string }[] = [
@@ -64,8 +70,8 @@ export default function BoletosPage() {
   };
 
   const filtrados = useMemo(() => {
-    const de = brDateToNumber(vencimentoDe);
-    const ate = brDateToNumber(vencimentoAte);
+    const de = isoDateToNumber(vencimentoDe);
+    const ate = isoDateToNumber(vencimentoAte);
     return boletos.filter((b) => {
       if (tab !== "all" && b.status !== tab) return false;
       if (buscaPaciente.trim() && !b.paciente.toLowerCase().includes(buscaPaciente.toLowerCase().trim()))
@@ -219,19 +225,19 @@ export default function BoletosPage() {
               <div className="flex flex-col gap-[5px]">
                 <label className="text-[10.5px] font-medium text-muted-foreground">Vencimento de</label>
                 <input
+                  type="date"
                   value={vencimentoDe}
                   onChange={(e) => setVencimentoDe(e.target.value)}
-                  placeholder="DD/MM/AAAA"
-                  className={FILTER_CLASS + " min-w-[130px]"}
+                  className={FILTER_DATE_CLASS + " min-w-[130px]"}
                 />
               </div>
               <div className="flex flex-col gap-[5px]">
                 <label className="text-[10.5px] font-medium text-muted-foreground">até</label>
                 <input
+                  type="date"
                   value={vencimentoAte}
                   onChange={(e) => setVencimentoAte(e.target.value)}
-                  placeholder="DD/MM/AAAA"
-                  className={FILTER_CLASS + " min-w-[130px]"}
+                  className={FILTER_DATE_CLASS + " min-w-[130px]"}
                 />
               </div>
             </div>
@@ -334,6 +340,10 @@ function hojeBR(): string {
 
 const FILTER_CLASS =
   "h-8 appearance-none rounded-[10px] border-[1.5px] border-border bg-[var(--gray-50)] bg-no-repeat px-[10px] text-[12px] text-foreground outline-none transition-[border-color,box-shadow,background] focus:border-primary focus:bg-background focus:shadow-[0_0_0_3px_rgba(79,126,247,0.13)]";
+
+// Sem appearance-none — preserva o ícone de calendário nativo do type="date"
+const FILTER_DATE_CLASS =
+  "h-8 rounded-[10px] border-[1.5px] border-border bg-[var(--gray-50)] px-[10px] text-[12px] text-foreground outline-none transition-[border-color,box-shadow,background] focus:border-primary focus:bg-background focus:shadow-[0_0_0_3px_rgba(79,126,247,0.13)]";
 
 function TabPill({
   active,

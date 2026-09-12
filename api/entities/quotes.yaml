@@ -413,6 +413,19 @@ components:
         paymentNotes:
           type: string
           nullable: true
+        plannedPaymentMethod:
+          type: integer
+          nullable: true
+          description: Forma de pagamento combinada com o paciente (ID de Payment Method) — expectativa; a forma real é registrada no recebimento
+        plannedInstallments:
+          type: integer
+          default: 1
+          description: Número de parcelas combinado com o paciente
+        entranceAmount:
+          type: number
+          format: decimal
+          default: 0
+          description: Entrada combinada
         createdAt:
           type: string
           format: date-time
@@ -444,6 +457,18 @@ components:
         paymentNotes:
           type: string
           nullable: true
+        plannedPaymentMethod:
+          type: integer
+          nullable: true
+          description: Forma de pagamento combinada com o paciente (ID de Payment Method)
+        plannedInstallments:
+          type: integer
+          minimum: 1
+          default: 1
+        entranceAmount:
+          type: number
+          format: decimal
+          default: 0
 
     QuotePatch:
       type: object
@@ -466,6 +491,16 @@ components:
         paymentNotes:
           type: string
           nullable: true
+        plannedPaymentMethod:
+          type: integer
+          nullable: true
+          description: Forma de pagamento combinada com o paciente (ID de Payment Method)
+        plannedInstallments:
+          type: integer
+          minimum: 1
+        entranceAmount:
+          type: number
+          format: decimal
 
     QuoteFilter:
       type: object

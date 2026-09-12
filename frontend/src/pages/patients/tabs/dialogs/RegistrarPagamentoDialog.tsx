@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import { Check, Info, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { MAX_MONEY_CENTS, MoneyInput } from "@/components/ui/money-input";
 import { Select } from "@/components/ui/select";
 import {
@@ -29,7 +28,6 @@ export interface PaymentForma {
   tipo: string;
   /** Valor em centavos (inteiro). */
   valor: number;
-  data: string;
 }
 
 export interface ConfirmPaymentPayload {
@@ -82,6 +80,10 @@ export function RegistrarPagamentoDialog({
     [installments],
   );
 
+  // Modo simplificado: cobrança com parcela única (à vista) — sem tabela de
+  // parcelas/seleção; card único com vencimento, combinado e valor.
+  const modoSimples = installments.length === 1;
+
   useEffect(() => {
     if (!open) return;
     setDesconto(0);
@@ -89,7 +91,7 @@ export function RegistrarPagamentoDialog({
     setForma("PIX");
     setValor(totalParcelasCents);
     setMultiFormas(false);
-    setFormas([{ id: 1, tipo: "PIX", valor: totalParcelasCents, data: "" }]);
+    setFormas([{ id: 1, tipo: "PIX", valor: totalParcelasCents }]);
     setObservacoes("");
     setComprovante(false);
   }, [open, totalParcelasCents]);
@@ -126,20 +128,19 @@ export function RegistrarPagamentoDialog({
   }, [installments, totalPagoCents]);
 
   function addForma() {
-    setFormas((prev) => [...prev, { id: Date.now(), tipo: "PIX", valor: 0, data: "" }]);
+    setFormas((prev) => [...prev, { id: Date.now(), tipo: "PIX", valor: 0 }]);
   }
 
   function removeForma(id: number) {
     setFormas((prev) => (prev.length > 1 ? prev.filter((f) => f.id !== id) : prev));
   }
 
-  function updateForma(id: number, field: keyof PaymentForma, value: string) {
+  function updateForma(id: number, field: "tipo" | "valor", value: string) {
     setFormas((prev) =>
       prev.map((f) => {
         if (f.id !== id) return f;
         if (field === "valor") return { ...f, valor: parseMoneyToCents(value) };
-        if (field === "tipo") return { ...f, tipo: value };
-        return { ...f, data: value };
+        return { ...f, tipo: value };
       }),
     );
   }
@@ -267,7 +268,7 @@ export function RegistrarPagamentoDialog({
                       </button>
                     )}
                   </div>
-                  <div className="grid grid-cols-3 gap-3">
+                  <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-[6px]">
                       <label className="block text-[12px] text-muted-foreground">Tipo</label>
                       <Select
@@ -289,17 +290,6 @@ export function RegistrarPagamentoDialog({
                         onCentsChange={(cents) => updateForma(f.id, "valor", String(cents))}
                         className="h-10 text-[13px]"
                         max={maxValorCents}
-                      />
-                    </div>
-                    <div className="space-y-[6px]">
-                      <label className="block text-[12px] text-muted-foreground">
-                        Data do pagamento
-                      </label>
-                      <Input
-                        value={f.data}
-                        onChange={(e) => updateForma(f.id, "data", e.target.value)}
-                        placeholder="DD/MM/AAAA"
-                        className="h-10 text-[13px]"
                       />
                     </div>
                   </div>
@@ -350,19 +340,35 @@ export function RegistrarPagamentoDialog({
               </span>
             </div>
 
-            <div className="mb-3 flex items-start gap-2.5 rounded-[12px] border border-[#bfdbfe] bg-[#eff6ff] px-4 py-3 text-[12.5px] leading-relaxed text-[#1d4ed8]">
-              <Info className="mt-0.5 h-4 w-4 shrink-0" />
-              <span>
-                Caso o valor não cubra todas as parcelas, as de vencimento mais próximo serão pagas
-                primeiro.
-              </span>
-            </div>
+            {modoSimples ? (
+              <div className="mb-3 flex items-center justify-between rounded-[12px] border border-border bg-[#f8fafc] px-4 py-3">
+                <div>
+                  <p className="text-[12.5px] font-semibold text-foreground">
+                    Pagamento à vista — parcela única
+                  </p>
+                  <p className="text-[12px] text-muted-foreground">
+                    Vencimento {installments[0].dueDate} · Combinado: {combinadoOrcamento}
+                  </p>
+                </div>
+                <span className="text-[15px] font-bold text-foreground">
+                  {formatMoneyFromCents(totalParcelasCents)}
+                </span>
+              </div>
+            ) : (
+              <div className="mb-3 flex items-start gap-2.5 rounded-[12px] border border-[#bfdbfe] bg-[#eff6ff] px-4 py-3 text-[12.5px] leading-relaxed text-[#1d4ed8]">
+                <Info className="mt-0.5 h-4 w-4 shrink-0" />
+                <span>
+                  Caso o valor não cubra todas as parcelas, as de vencimento mais próximo serão
+                  pagas primeiro.
+                </span>
+              </div>
+            )}
 
             {installments.length === 0 ? (
               <p className="rounded-[12px] border border-dashed border-border p-6 text-center text-[12.5px] text-muted-foreground">
                 Nenhuma parcela selecionada.
               </p>
-            ) : (
+            ) : modoSimples ? null : (
               <>
             <div className="overflow-hidden rounded-[12px] border border-border">
                   <table className="w-full text-left">

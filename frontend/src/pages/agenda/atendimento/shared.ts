@@ -14,15 +14,6 @@ export const FIELD_LABEL_CLASS = "text-[12.5px] font-medium text-muted-foregroun
 export const TEXTAREA_CLASS =
   "min-h-[64px] w-full resize-y rounded-[10px] border border-input bg-muted/40 px-3 py-2 text-[13px] text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:border-primary focus-visible:bg-background focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15 aria-[invalid=true]:border-destructive aria-[invalid=true]:focus-visible:ring-destructive/15";
 
-/** Máscara simples de data: DD/MM/AAAA */
-export function maskDataBR(value: string): string {
-  const digits = value.replace(/\D/g, "").slice(0, 8);
-  let out = digits.slice(0, 2);
-  if (digits.length > 2) out += "/" + digits.slice(2, 4);
-  if (digits.length > 4) out += "/" + digits.slice(4, 8);
-  return out;
-}
-
 export function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
