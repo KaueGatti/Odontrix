@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -12,6 +13,7 @@ import type { Appointment, AppointmentStatus } from "@/types/appointment";
 import { APPOINTMENT_STATUS_LABELS } from "@/types/appointment";
 import { getStatusBadgeVariant } from "../mock-data";
 import { useNavigate } from "react-router";
+import { RegistrarPagamentoDialog } from "@/pages/patients/tabs/dialogs/RegistrarPagamentoDialog";
 
 interface DetalhesConsultaDialogProps {
   open: boolean;
@@ -35,6 +37,11 @@ const TYPE_LABELS: Record<string, string> = {
   manutencao: "Manutenção",
 };
 
+/** Converte data ISO (YYYY-MM-DD) para DD/MM/AAAA */
+function isoToBr(iso: string): string {
+  return iso ? `${iso.slice(8, 10)}/${iso.slice(5, 7)}/${iso.slice(0, 4)}` : "";
+}
+
 type Action = {
   label: string;
   nextStatus: AppointmentStatus;
@@ -42,7 +49,12 @@ type Action = {
   requiresMotivo?: boolean;
   /** Rota para onde navegar após aplicar a ação (ex: tela de atendimento). */
   navigateTo?: string;
+  /** Ação especial: abre o recebimento (RegistrarPagamentoDialog) sem mudar status. */
+  pagamento?: boolean;
 };
+
+/** Mock: valor da consulta — virá da Billing (appointment_procedure) quando a API client existir */
+const MOCK_APPT_TOTAL = 320;
 
 function getAvailableActions(
   status: AppointmentStatus
@@ -93,7 +105,11 @@ function getAvailableActions(
         requiresMotivo: true,
       },
     ],
-    realizada: [],
+    realizada: [
+      // Fluxo de balcão: paciente sai da consulta e o recepcionista registra
+      // o recebimento. Gate por perfil (manager/receptionist) quando houver auth.
+      { label: "Registrar pagamento", nextStatus: "realizada", pagamento: true },
+    ],
     cancelada: [],
     nao_compareceu: [
       { label: "Reativar (Em espera)", nextStatus: "em_espera" },
@@ -111,12 +127,17 @@ export function DetalhesConsultaDialog({
   onConfirmAction,
 }: DetalhesConsultaDialogProps) {
   const navigate = useNavigate();
+  const [pagamentoOpen, setPagamentoOpen] = useState(false);
 
   if (!appointment) return null;
 
   const actions = getAvailableActions(appointment.status);
 
   function handleAction(action: Action) {
+    if (action.pagamento) {
+      setPagamentoOpen(true);
+      return;
+    }
     if (action.requiresMotivo) {
       onConfirmAction(
         `${action.label} consulta`,
@@ -136,7 +157,8 @@ export function DetalhesConsultaDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[600px]">
         <DialogHeader>
           <DialogTitle>Detalhes da Consulta</DialogTitle>
@@ -166,7 +188,7 @@ export function DetalhesConsultaDialog({
               <div className="flex justify-between">
                 <span className="text-[var(--gray-500)]">Data</span>
                 <span className="font-medium text-[var(--gray-900)]">
-                  {appointment.date}
+                  {isoToBr(appointment.date)}
                 </span>
               </div>
               <div className="flex justify-between">
@@ -227,6 +249,19 @@ export function DetalhesConsultaDialog({
           </Button>
         </DialogFooter>
       </DialogContent>
-    </Dialog>
+      </Dialog>
+
+      {/* Recebimento no balcão (mock) — abre a partir da consulta Realizada.
+          Valor/combinado mockados; virão da Billing quando a API client existir. */}
+      <RegistrarPagamentoDialog
+        open={pagamentoOpen}
+        onOpenChange={setPagamentoOpen}
+        installments={[
+          { id: 1, dueDate: isoToBr(appointment.date), value: MOCK_APPT_TOTAL },
+        ]}
+        combinadoOrcamento="Cartão de Débito"
+        onConfirm={(payload) => console.log("Pagamento registrado (mock):", payload)}
+      />
+    </>
   );
 }

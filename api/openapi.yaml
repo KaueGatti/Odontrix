@@ -110,6 +110,8 @@ paths:
     $ref: './entities/appointments.yaml#/paths/~1appointments~1{id}~1no-show'
   /appointments/{id}/reactivate:
     $ref: './entities/appointments.yaml#/paths/~1appointments~1{id}~1reactivate'
+  /appointments/{id}/billing:
+    $ref: './entities/appointments.yaml#/paths/~1appointments~1{id}~1billing'
   /appointment-types:
     $ref: './entities/appointments.yaml#/paths/~1appointment-types'
   /appointment-types/{id}:
@@ -214,12 +216,16 @@ paths:
     $ref: './entities/billing.yaml#/paths/~1billings~1{id}'
   /billings/{billingId}/installments:
     $ref: './entities/billing.yaml#/paths/~1billings~1{billingId}~1installments'
+  /billings/{billingId}/payments:
+    $ref: './entities/billing.yaml#/paths/~1billings~1{billingId}~1payments'
   /installments:
     $ref: './entities/billing.yaml#/paths/~1installments'
   /installments/{id}:
     $ref: './entities/billing.yaml#/paths/~1installments~1{id}'
   /installments/{installmentId}/payments:
     $ref: './entities/billing.yaml#/paths/~1installments~1{installmentId}~1payments'
+  /payments:
+    $ref: './entities/billing.yaml#/paths/~1payments'
   /payments/{id}:
     $ref: './entities/billing.yaml#/paths/~1payments~1{id}'
   /payments/{id}/reverse:

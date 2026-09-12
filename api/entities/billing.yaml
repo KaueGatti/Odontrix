@@ -2,7 +2,10 @@ tags:
   - name: Billing
     description: >
       Cobrança gerada automaticamente quando uma consulta é finalizada
-      (status completed). Não é criada manualmente via API.
+      (status completed). Não é criada manualmente via API. Na geração,
+      créditos do paciente não alocados (Payment type=credit) são aplicados
+      automaticamente às parcelas — FIFO por vencimento; a parcela recebe
+      paymentDate quando o crédito zera seu saldo.
   - name: Installments
     description: Parcelas de uma cobrança
   - name: Payments
@@ -117,6 +120,9 @@ paths:
         existentes primeiro, funcionalidade não coberta neste endpoint).
         "installmentCount" maior que 1 só é aceito quando intendedPaymentMethod
         corresponde a Cartão de Crédito ou Boleto (validado contra Payment Methods).
+        O método pretendido é escolhido no ato da geração do plano — não
+        precisa corresponder ao combinado do orçamento; a forma REAL fica
+        registrada no recebimento (Payment).
         As datas de vencimento de cada parcela são geradas automaticamente pelo
         servidor a partir de "firstDueDate", com intervalo mensal.
       requestBody:
@@ -254,6 +260,85 @@ paths:
             application/problem+json:
               schema:
                 $ref: '../common.yaml#/components/schemas/ProblemValidation'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+
+  /billings/{billingId}/payments:
+    parameters:
+      - $ref: '#/components/parameters/BillingIdPath'
+    post:
+      tags: [Payments]
+      summary: Registra um pagamento na cobrança (à vista ou aplicado ao plano)
+      x-required-roles: [manager, receptionist]
+      description: >
+        Rota primária do recebimento no balcão (a partir da consulta
+        finalizada — ver GET /appointments/{id}/billing). Se a cobrança
+        ainda não tiver plano de parcelas, o servidor cria implicitamente o
+        plano de 1 parcela e registra o Payment numa única transação
+        (pagamento à vista). Se já houver plano, o valor é aplicado às
+        parcelas em aberto mais antigas (FIFO por vencimento), marcando
+        paymentDate por parcela quitada. Créditos do paciente não alocados
+        (type=credit) são aplicados antes do valor informado.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentInput'
+      responses:
+        '201':
+          description: Pagamento registrado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Payment'
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+        '422':
+          description: Erro de validação — inclui o caso de amount exceder o saldo restante da cobrança
+          content:
+            application/problem+json:
+              schema:
+                $ref: '../common.yaml#/components/schemas/ProblemValidation'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+
+  /payments:
+    post:
+      tags: [Payments]
+      summary: Registra uma receita avulsa ou um crédito do paciente
+      x-required-roles: [manager, receptionist]
+      description: >
+        Pagamento sem vínculo direto com parcela. Dois usos: type=credit —
+        crédito do paciente (unearned): exige patientId; quoteId opcional
+        documenta a origem (ex.: entrada combinada no orçamento aprovado).
+        O crédito é alocado automaticamente às parcelas quando a billing
+        correspondente nascer (FIFO por vencimento). type=income — receita
+        avulsa da clínica (não é crédito, não se aloca a parcelas).
+        Despesas (type=expense) são registradas pelo fluxo de expenses.yaml.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentStandaloneInput'
+      responses:
+        '201':
+          description: Pagamento registrado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Payment'
+        '422':
+          $ref: '../common.yaml#/components/responses/ValidationError'
+        '401':
+          $ref: '../common.yaml#/components/responses/Unauthorized'
         '403':
           $ref: '../common.yaml#/components/responses/Forbidden'
 
@@ -622,6 +707,8 @@ components:
           nullable: true
         intendedPaymentMethod:
           type: integer
+          nullable: true
+          description: Forma de pagamento combinada (ID de Payment Method). NULL quando a cobrança é avulsa, sem orçamento aprovado — a forma real é escolhida no recebimento
         status:
           type: string
           enum: [pending, paid, overdue]
@@ -665,8 +752,9 @@ components:
     Payment:
       type: object
       description: >
-        Representa tanto recebimentos (type=income, usados aqui em Billing)
-        quanto pagamentos de despesas (type=expense, usados em expenses.yaml).
+        Representa recebimentos (type=income, vinculados a parcelas em
+        Billing), pagamentos de despesas (type=expense, usados em
+        expenses.yaml) e créditos do paciente (type=credit — unearned).
       properties:
         id:
           type: integer
@@ -676,7 +764,15 @@ components:
           description: Usuário autenticado que registrou o pagamento
         type:
           type: string
-          enum: [income, expense]
+          enum: [income, expense, credit]
+          description: >
+            income = recebimento vinculado a parcela(s); expense = despesa
+            (payments-expenses); credit = crédito do paciente — dinheiro
+            recebido antes de existir recebível (ex.: entrada do orçamento
+            combinado, pagamento antecipado). Crédito não é receita: só se
+            realiza quando alocado a parcelas via payment_installment.
+            Créditos não alocados sobrevivem a no_show/cancelamento e
+            permanecem disponíveis para a próxima cobrança.
         notes:
           type: string
           nullable: true
@@ -689,6 +785,24 @@ components:
           type: string
           format: date-time
           readOnly: true
+        patientId:
+          type: integer
+          nullable: true
+          description: Obrigatório para type=credit — identifica de quem é o crédito
+        quoteId:
+          type: integer
+          nullable: true
+          description: Origem do crédito — entrada combinada no orçamento aprovado
+        allocatedAmount:
+          type: number
+          format: decimal
+          readOnly: true
+          description: Soma dos amount_applied em payment_installment (0 para income/expense avulsos)
+        unallocatedAmount:
+          type: number
+          format: decimal
+          readOnly: true
+          description: amount − allocatedAmount; para type=credit, é o saldo de crédito disponível do paciente
         refundRefId:
           type: integer
           nullable: true
@@ -708,6 +822,32 @@ components:
         notes:
           type: string
           nullable: true
+
+    PaymentStandaloneInput:
+      type: object
+      required: [type, amount, paymentMethod]
+      properties:
+        type:
+          type: string
+          enum: [income, credit]
+          description: income = receita avulsa da clínica; credit = crédito do paciente (unearned). expense é registrado pelo fluxo de expenses.yaml
+        amount:
+          type: number
+          format: decimal
+          minimum: 0.01
+        paymentMethod:
+          type: integer
+        notes:
+          type: string
+          nullable: true
+        patientId:
+          type: integer
+          nullable: true
+          description: Obrigatório quando type=credit
+        quoteId:
+          type: integer
+          nullable: true
+          description: Origem do crédito — entrada do orçamento aprovado
 
     PaymentMethod:
       type: object

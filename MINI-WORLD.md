@@ -206,6 +206,23 @@ Confirmada → Cancelada
 
 ### Financeiro
 
+#### Regime de cobrança — definição da forma de pagamento (decisão)
+
+O modelo segue o padrão de mercado (Simples Dental, Open Dental, Clinicorp) em três camadas:
+
+| Camada | Quando | O que é |
+|---|---|---|
+| **Combinado** | No orçamento (antes do tratamento) | Forma de pagamento, entrada e nº de parcelas combinados com o paciente (`quote.planned_*`) — expectativa, nunca transação |
+| **Cobrança** | Na **finalização da consulta** (dentista) | Billing gerada automaticamente com o valor real dos procedimentos realizados |
+| **Recebimento** | No ato do pagamento | Forma de pagamento **real** escolhida pelo recepcionista/gerente (`payment.payment_method`) — pode divergir do combinado (gera alerta) |
+| **Entrada (crédito)** | Na aprovação do orçamento | Entrada paga vira **crédito do paciente** (`payment type=credit`, *unearned*) — não é receita ainda; alocada automaticamente à 1ª parcela quando a billing nascer (FIFO por vencimento) |
+
+- A forma de pagamento **nunca é definida no agendamento** — o valor final só é conhecido após a execução dos procedimentos, e a consulta pode ser cancelada ou não comparecer
+- A entrada paga vira **crédito** (`payment type=credit`, exige `patient_id`; `quote_id` documenta a origem) — sobrevive a no_show/cancelamento e permanece disponível para a próxima cobrança
+- **Rota do recebimento no balcão:** Agenda → consulta *Realizada* → "Registrar pagamento" — a cobrança é resolvida pelo vínculo 1:1 consulta↔billing (`GET /appointments/{id}/billing`); à vista numa billing sem plano de parcelas cria implicitamente o plano de 1 parcela + o pagamento numa transação só (`POST /billings/{billingId}/payments`)
+- Cobranças avulsas (sem orçamento aprovado) não têm combinado estruturado — `installment.intended_payment_method` admite `NULL`
+- Consultas com valor fixo conhecido (ex.: planos odontológicos) podem ter o combinado capturado via orçamento quando aplicável
+
 - Um pagamento registrado não pode ser excluído — apenas estornado, gerando um registro de estorno vinculado ao original
 - O parcelamento deve respeitar a forma de pagamento: apenas Cartão de Crédito e Boleto podem ser parcelados
 - A data de vencimento das parcelas deve ser gerada automaticamente a partir da data do primeiro pagamento

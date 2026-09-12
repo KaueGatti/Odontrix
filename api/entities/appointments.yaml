@@ -278,6 +278,34 @@ paths:
               schema:
                 $ref: '../common.yaml#/components/schemas/Problem'
 
+  /appointments/{id}/billing:
+    parameters:
+      - $ref: '#/components/parameters/AppointmentId'
+    get:
+      tags: [Appointments]
+      summary: Busca a cobrança gerada pela consulta (vínculo 1:1)
+      x-required-roles: [manager, receptionist]
+      description: >
+        Atalho do fluxo de balcão: o recepcionista abre a consulta
+        "completed" na Agenda e resolve a cobrança diretamente — não é
+        necessário buscar a Billing manualmente (appointment_id é único em
+        billing). Use POST /billings/{billingId}/payments para registrar o
+        recebimento.
+      responses:
+        '200':
+          description: Cobrança da consulta
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '../billing.yaml#/components/schemas/Billing'
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+
   /appointments/{id}/cancel:
     parameters:
       - $ref: '#/components/parameters/AppointmentId'

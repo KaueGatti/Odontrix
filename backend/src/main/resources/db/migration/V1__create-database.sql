@@ -11,7 +11,10 @@ EXTENSION IF NOT EXISTS btree_gist;
 CREATE TYPE user_profile AS ENUM ('manager', 'receptionist', 'dentist');
 CREATE TYPE appointment_status AS ENUM ('scheduled', 'confirmed', 'checked_in', 'in_progress', 'completed', 'cancelled', 'no_show');
 CREATE TYPE day_of_week AS ENUM ('monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday');
-CREATE TYPE payment_type AS ENUM ('income', 'expense');
+-- credit = pagamento recebido como crédito do paciente (unearned): dinheiro
+-- que entra antes de existir recebível (ex.: entrada combinada no orçamento
+-- aprovado). Receita só se realiza quando o crédito é alocado a parcelas.
+CREATE TYPE payment_type AS ENUM ('income', 'expense', 'credit');
 CREATE TYPE audit_action AS ENUM ('create', 'update', 'deactivate');
 CREATE TYPE person_type AS ENUM ('legal_entity', 'natural_person');
 CREATE TYPE quote_status AS ENUM ('draft', 'sent', 'approved', 'rejected', 'expired');
@@ -538,7 +541,10 @@ CREATE TABLE installment
     paid_amount             NUMERIC(10, 2) NOT NULL DEFAULT 0,
     due_date                DATE           NOT NULL,
     payment_date            DATE,
-    intended_payment_method INT            NOT NULL REFERENCES payment_method (id)
+    -- Forma de pagamento combinada (intenção). NULL quando a cobrança é
+    -- avulsa, sem orçamento aprovado — a forma REAL é escolhida no
+    -- recebimento (payment.payment_method).
+    intended_payment_method INT REFERENCES payment_method (id)
 );
 
 -- ------------------------------------------------------------
@@ -573,7 +579,12 @@ CREATE TABLE payment
     amount         NUMERIC(10, 2) NOT NULL,
     payment_method INT            NOT NULL REFERENCES payment_method (id),
     date_time      TIMESTAMPTZ    NOT NULL DEFAULT NOW(),
-    refund_ref_id  INT REFERENCES payment (id)
+    refund_ref_id  INT REFERENCES payment (id),
+    -- Crédito do paciente (unearned, type='credit'): dinheiro recebido antes
+    -- de existir recebível (ex.: entrada combinada no orçamento aprovado).
+    -- Obrigatório nesse caso — sem parcela vinculada, precisa saber de quem é.
+    patient_id     INT REFERENCES patient (id),
+    quote_id       INT            -- FK adicionada após a criação de quote
 );
 
 -- ------------------------------------------------------------
@@ -614,8 +625,18 @@ CREATE TABLE quote
     valid_until   DATE,
     notes         TEXT,
     payment_notes TEXT,
-    created_at    TIMESTAMPTZ    NOT NULL DEFAULT NOW()
+    -- Combinado de pagamento (expectativa — a cobrança real só nasce na
+    -- finalização da consulta; a forma REAL é escolhida no recebimento)
+    planned_payment_method INT REFERENCES payment_method (id),
+    planned_installments   SMALLINT       NOT NULL DEFAULT 1,
+    entrance_amount        NUMERIC(10, 2) NOT NULL DEFAULT 0,
+    created_at             TIMESTAMPTZ    NOT NULL DEFAULT NOW()
 );
+
+-- Crédito do pagamento (payment.quote_id) referencia o orçamento de origem —
+-- declarada aqui porque quote é criada depois de payment no arquivo
+ALTER TABLE payment
+    ADD CONSTRAINT fk_payment_quote FOREIGN KEY (quote_id) REFERENCES quote (id);
 
 -- ------------------------------------------------------------
 -- QUOTE × PROCEDURE (1:N)

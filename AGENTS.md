@@ -116,6 +116,10 @@ src/
 - Multi-step: `IntersectionObserver` + `scrollIntoView` com flag `isClickScrolling`
 - Input masking: `withMask(register("field"), maskFn)` + `inputMode="numeric"`
 - Schema cross-field validation: `.superRefine()` / `.refine()`
+- **Campos de data (padrão obrigatório):**
+  - **Input:** sempre `<Input type="date">` — ícone de calendário nativo à direita; valor em **ISO** (`YYYY-MM-DD`); classes de referência: `h-10 border-[1.5px] bg-[var(--gray-50)] px-3 text-[13px]` (ver `financeiro/NovaDespesaDialog`). Não usar `appearance-none` (remove o ícone).
+  - **Exibição** (tabelas, textos somente leitura): sempre **DD/MM/AAAA** via helper local `isoToBr` (convenção de `BoletosPage`, `OrcamentosTab`, `AdiarVencimentoDialog`, `DetalhesConsultaDialog`).
+  - **Proibido:** input textual com placeholder "DD/MM/AAAA" + máscara manual (`maskDataBR` — removida do projeto).
 - **Tamanho mínimo de campos:** inputs/selects `h-10` (40px), fonte `text-[13px]`, padding horizontal `px-3`. Labels em `text-[12.5px]`. Espaçamento label→campo `gap-[6px]`, entre campos/seções `gap-4` ou `mt-4`. Proibido campos `h-8` ou `text-[12px]` — são muito pequenos e prejudicam a legibilidade.
 
 ### Estilização
@@ -341,6 +345,64 @@ postgres:16-alpine (5432) → api:8080 → frontend:5173
 | `frontend/src/styles/design-tokens.css` | Tokens CSS para mockups HTML |
 
 ---
+
+## Última Sessão — 11/09/2026
+
+### Decisão — Regime de cobrança (definição da forma de pagamento)
+
+- **Análise de mercado** (Simples Dental, Open Dental, Clinicorp): nenhum sistema define forma de pagamento no agendamento; o padrão é *combinado no orçamento → cobrança gerada na finalização da consulta → forma real escolhida no recebimento*.
+- **Decisão:** manter o modelo pós-realização já induzido pelo sistema. Forma de pagamento **nunca** é definida no agendamento.
+- **Schema (V1 editado in-place — sistema sem produção, sem migration V3):**
+  - `installment.intended_payment_method` agora é **nullable** (NULL = cobrança avulsa, sem orçamento aprovado; a forma real é escolhida no recebimento).
+  - `quote` ganhou o combinado estruturado: `planned_payment_method` (FK payment_method, nullable), `planned_installments SMALLINT NOT NULL DEFAULT 1`, `entrance_amount NUMERIC(10,2) NOT NULL DEFAULT 0`.
+- **Seed (V2 editado in-place):** Quote 1 passa a ter combinado (Cartão de Crédito, 3 parcelas, entrada R$ 205,00); comentário de installments documenta o nullable.
+- **API OpenAPI:** `Quote`/`QuoteInput`/`QuotePatch` expõem `plannedPaymentMethod`/`plannedInstallments`/`entranceAmount`; `Installment.intendedPaymentMethod` nullable + descrição; descrição do `POST /billings/{billingId}/installments` atualizada (método pretendido escolhido no ato da geração do plano).
+- **Docs:** `MINI-WORLD.md` ganhou a subseção "Regime de cobrança" na seção Financeiro.
+- **Frontend:** sem alteração — `NovoOrcamentoDialog` já captura forma/entrada/parcelas e mapeia nos novos campos quando a API client existir.
+
+### Ajuste — Data no modal de Detalhes da Consulta (`DD/MM/AAAA`)
+
+- **`pages/agenda/components/DetalhesConsultaDialog.tsx`** — campo **Data** exibia a data crua em ISO (`YYYY-MM-DD`); agora formata via novo helper local `isoToBr` (mesma convenção de `BoletosPage`/`OrcamentosTab`/`AdiarVencimentoDialog`).
+- A correção vale para os 3 usos do dialog: Agenda, AgendamentosTab do Paciente e AgendamentosTab do Dentista.
+- Lint: ✅ · Build: ✅
+
+### Ajuste — "Próxima consulta recomendada" vira campo `type="date"`
+
+- **`pages/agenda/atendimento/AtendimentoPage.tsx`** — o campo de retorno saiu de input textual com `maskDataBR` (DD/MM/AAAA) para **`Input type="date"`** (ISO), com ícone de calendário nativo à direita — fiel ao padrão de Emissão/Vencimento do `financeiro/NovaDespesaDialog` (mesma classe: `h-10 border-[1.5px] bg-[var(--gray-50)] px-3 text-[13px]`).
+- Removido o import de `maskDataBR` (ficou sem uso; `maskDataBR` permanece exportado em `atendimento/shared.ts`).
+- Estado `retorno` agora guarda ISO (`YYYY-MM-DD`) — nada o consumia além do próprio input; quando a API client existir, o payload já sai no formato correto.
+- Lint: ✅ · Build: ✅
+
+### Decisão — Entrada do orçamento vira crédito do paciente (Opção B / unearned)
+
+- **Buraco identificado na análise de fluxo (assumindo backend completo):** o payment da entrada (pago na aprovação do orçamento, semanas antes da consulta) não tinha onde ancorar — `payment` exige `installment`, que exige `billing`, que só nasce na finalização.
+- **Opções avaliadas:** A (cobrança de entrada gerada na aprovação, estilo Simples Dental) vs B (crédito do paciente, estilo *unearned* do Open Dental). **Escolhida: B** — mantém a decisão "cobrança só nasce na finalização" intacta, é imune à dupla contagem por construção e resolve no_show/cancelamento com entrada paga (crédito reaproveitável).
+- **Schema (V1 editado in-place):**
+  - `payment_type` ganhou o valor `credit`.
+  - `payment` ganhou `patient_id` (obrigatório quando type=credit — sem parcela vinculada, precisa saber de quem é) e `quote_id` (origem do crédito; FK declarada via ALTER após a criação de quote, que vem depois de payment no arquivo).
+- **Seed (V2):** payment 3 — crédito de R$ 205 (entrada do orçamento 1, paciente 4, aguardando alocação).
+- **API:** `Payment.type` inclui `credit` (+ `patientId`/`quoteId`/`allocatedAmount`/`unallocatedAmount` computados); novo `POST /payments` (receita avulsa ou crédito; credit exige `patientId`) + `PaymentStandaloneInput`; tag Billing documenta a **auto-alocação de créditos às parcelas na geração da billing (FIFO por vencimento)**.
+- **Docs:** `MINI-WORLD.md` — linha "Entrada (crédito)" no regime de cobrança + regra de sobrevivência do crédito.
+- **Não muda:** máquina de estados da Billing; frontend (UI de créditos do paciente é backlog para a API client).
+- **Fila (um de cada vez):** Plano item 3 (`billing.quote_id` — vínculo orçamento↔cobrança) e Plano item 2 (`appointment_procedure.quote_procedure_id` — baixa do orçamento).
+
+### UX/Decisão — Rota do recebimento no balcão + modal simplificado (à vista)
+
+- **Cenário:** dentista finaliza → paciente senta no balcão → recepcionista cobra. A recepcionista está na **Agenda**, não no financeiro.
+- **Rota primária:** Agenda → consulta **Realizada** → botão **"Registrar pagamento"** no `DetalhesConsultaDialog` (o estado `realizada` antes não tinha ações). Resolução determinística: `billing.appointment_id` é UNIQUE (1:1) — novo **`GET /appointments/{id}/billing`**. Rotas secundárias: aba Financeiro do paciente e Financeiro → A Receber (já existentes).
+- **Modal simplificado:** `RegistrarPagamentoDialog` ganhou **modo simples quando `installments.length === 1`** — card único ("Pagamento à vista — parcela única": vencimento + combinado + valor) no lugar da tabela de parcelas/seleção; as regras (desconto/acréscimo, banner forma ≠ combinado, múltiplas formas, comprovante) permanecem as mesmas — **mesmo componente, dois layouts**.
+- **Buraco de API resolvido:** pagar à vista numa billing **sem plano de parcelas** — antes exigiria gerar o plano e depois pagar. Novo **`POST /billings/{billingId}/payments`**: sem plano → cria implicitamente plano de 1 parcela + Payment numa única transação; com plano → aplica FIFO às parcelas mais antigas em aberto. Créditos do paciente (type=credit) são aplicados antes do valor informado.
+- **Frontend (mock):** valor/combinado da consulta são mockados (`MOCK_APPT_TOTAL = 320`, combinado "Cartão de Débito") — virão da billing quando a API client existir; o botão deve ser gated para manager/receptionist quando houver auth.
+- Lint: ✅ · Build: ✅
+
+### Ajuste — Campo "Data do pagamento" por forma removido + padrão de campos de data
+
+- **`RegistrarPagamentoDialog.tsx`** — removido o campo **"Data do pagamento"** do modo Múltiplas Formas: não é necessário (um registro de pagamento é um evento único no balcão — todas as formas acontecem no mesmo instante; se as datas diferem, são recebimentos separados). O modelo de dados reforça: `payment.date_time NOT NULL DEFAULT NOW()` e `PaymentInput` da spec não aceita data. Removida a propriedade `data` de `PaymentForma` (interface, `updateForma`, payload) — o card de cada forma ficou com **Tipo + Valor** (grid 2 colunas).
+- **`BoletosPage.tsx`** — filtros "Vencimento de"/"até" saíram de texto puro (`placeholder="DD/MM/AAAA"`) para **`<input type="date">`** (ícone nativo à direita; classe `FILTER_DATE_CLASS` sem `appearance-none` para preservar o ícone); estado em ISO com novo helper `isoDateToNumber` (a tabela de boletos mantém exibição em DD/MM/AAAA).
+- **`atendimento/shared.ts`** — removido `maskDataBR` (ficou sem uso desde o campo de retorno virar `type="date"`).
+- **AGENTS.md (Formulários)** — padrão obrigatório documentado: input de data sempre `type="date"` (ícone nativo, ISO); exibição sempre DD/MM/AAAA via `isoToBr`; proibido input textual com máscara manual.
+- **Se necessário no futuro:** recebimento retroativo vira **um único** campo "Data do pagamento" no nível do dialog (default hoje) — nunca por forma.
+- Lint: ✅ · Build: ✅
 
 ## Última Sessão — 09/09/2026
 
