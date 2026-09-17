@@ -1,23 +1,8 @@
 import type { Appointment, AppointmentStatus } from "@/types/appointment";
 import type { DentistAgenda } from "@/pages/agenda/types";
 
-export const MOCK_PATIENTS = [
-  "Kauê V. Gatti",
-  "Fernanda R. Souza",
-  "Maria S. Pereira",
-  "Ana Lucia M.",
-  "Roberto C. Lima",
-  "Carla Mendes",
-  "Bruno Tavares",
-  "Marina T. Souza",
-  "Paulo Henrique",
-  "Juliana Costa",
-  "Ricardo Oliveira",
-  "Larissa Santos",
-  "Thiago Ferreira",
-  "Amanda Nunes",
-  "Gabriel Silva",
-];
+// A lista de nomes de pacientes (comboboxes) e o registro de pacientes
+// cadastrados em runtime vivem em `@/pages/patients/mock-data`.
 
 export const MOCK_DENTISTS: DentistAgenda[] = [
   {

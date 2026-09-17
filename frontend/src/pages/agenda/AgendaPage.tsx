@@ -78,6 +78,7 @@ export default function AgendaPage() {
   const handleSaveAppointment = useCallback(
     (data: {
       patientName: string;
+      patientId?: string;
       dentistId: string;
       date: string;
       startTime: string;
@@ -95,7 +96,9 @@ export default function AgendaPage() {
 
       const newAppt: Appointment = {
         id: `appt-new-${Date.now()}`,
-        patientId: `pat-${data.patientName.toLowerCase().replace(/\s/g, "-")}`,
+        patientId:
+          data.patientId ??
+          `pat-${data.patientName.toLowerCase().replace(/\s/g, "-")}`,
         patientName: data.patientName,
         dentistId: data.dentistId,
         dentistName: dentist?.name || "",

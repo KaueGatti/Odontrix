@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Search, X } from "lucide-react";
+import { Search, UserPlus, X } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -12,7 +12,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { DentistAgenda } from "../types";
-import { MOCK_PATIENTS } from "../mock-data";
+import {
+  addMockPatient,
+  findMockPatientByName,
+  listMockPatientNames,
+  type MockPatientInput,
+} from "@/pages/patients/mock-data";
+import { NovoPacienteDialog } from "@/pages/patients/dialogs/NovoPacienteDialog";
 
 interface NovaConsultaDialogProps {
   open: boolean;
@@ -23,6 +29,8 @@ interface NovaConsultaDialogProps {
   selectedTime?: string;
   onSave: (data: {
     patientName: string;
+    /** Id do paciente quando ele consta no registro (seed ou cadastro rápido). */
+    patientId?: string;
     dentistId: string;
     date: string;
     startTime: string;
@@ -60,6 +68,7 @@ export function NovaConsultaDialog({
   const [notes, setNotes] = useState("");
   const [searchValue, setSearchValue] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [novoPacienteOpen, setNovoPacienteOpen] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -72,6 +81,7 @@ export function NovaConsultaDialog({
       setType("consulta");
       setNotes("");
       setSearchValue("");
+      setNovoPacienteOpen(false);
     }
   }, [open, selectedDentistId, selectedDate, selectedTime]);
 
@@ -85,16 +95,22 @@ export function NovaConsultaDialog({
     return () => document.removeEventListener("click", handleClickOutside);
   }, []);
 
-  const filteredPatients = MOCK_PATIENTS.filter(
+  // Relê o registro a cada render para que um paciente criado pelo cadastro
+  // rápido já apareça nas próximas buscas.
+  const filteredPatients = listMockPatientNames().filter(
     (name) =>
       name.toLowerCase().includes(searchValue.toLowerCase()) &&
       name !== patientName
   );
 
+  const typedName = searchValue.trim();
+  const suggestions = patientName ? [patientName] : filteredPatients.slice(0, 8);
+
   function handleSave() {
     if (!patientName || !dentistId || !date || !startTime) return;
     onSave({
       patientName,
+      patientId: findMockPatientByName(patientName)?.id,
       dentistId,
       date,
       startTime,
@@ -105,9 +121,23 @@ export function NovaConsultaDialog({
     onOpenChange(false);
   }
 
+  /** Abre o cadastro rápido mantendo o texto digitado (usado como nome). */
+  function handleOpenNewPatient() {
+    setShowSuggestions(false);
+    setNovoPacienteOpen(true);
+  }
+
+  function handleNewPatientSaved(payload: MockPatientInput) {
+    const patient = addMockPatient(payload);
+    setPatientName(patient.fullName);
+    setSearchValue("");
+    setNovoPacienteOpen(false);
+  }
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[560px]">
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-[560px]">
         <DialogHeader>
           <DialogTitle>Novo Agendamento</DialogTitle>
           <DialogDescription>
@@ -148,17 +178,23 @@ export function NovaConsultaDialog({
                 </button>
               )}
               {showSuggestions && (searchValue || !patientName) && (
-                <div className="absolute left-0 right-0 top-10 z-20 max-h-[200px] overflow-auto rounded-[10px] border border-border bg-card shadow-[0_12px_28px_rgba(15,32,80,0.12)]">
-                  {(patientName ? [patientName] : filteredPatients).length ===
-                  0 ? (
+                <div className="absolute left-0 right-0 top-10 z-20 max-h-[240px] overflow-auto rounded-[10px] border border-border bg-card shadow-[0_12px_28px_rgba(15,32,80,0.12)]">
+                  {/* Cadastro rápido com o nome digitado — sempre a 1ª opção */}
+                  {!patientName && typedName && (
+                    <div
+                      onClick={handleOpenNewPatient}
+                      className="flex cursor-pointer items-center gap-2 border-b border-[var(--gray-100)] p-[10px_12px] text-[13.5px] font-semibold text-[var(--blue)] hover:bg-[rgba(79,126,247,0.07)]"
+                    >
+                      <UserPlus className="h-3.5 w-3.5 shrink-0" />
+                      Cadastrar &quot;{typedName}&quot;
+                    </div>
+                  )}
+                  {suggestions.length === 0 ? (
                     <div className="p-[10px] text-[13px] italic text-[var(--gray-400)]">
                       Nenhum paciente encontrado
                     </div>
                   ) : (
-                    (patientName
-                      ? [patientName]
-                      : filteredPatients.slice(0, 5)
-                    ).map((name) => (
+                    suggestions.map((name) => (
                       <div
                         key={name}
                         onClick={() => {
@@ -273,7 +309,17 @@ export function NovaConsultaDialog({
             Salvar
           </Button>
         </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+
+      {/* Cadastro rápido aberto pela opção "Cadastrar «nome digitado»" do
+          combobox de paciente — mantém este dialog aberto por baixo. */}
+      <NovoPacienteDialog
+        open={novoPacienteOpen}
+        onOpenChange={setNovoPacienteOpen}
+        initialFullName={typedName}
+        onSave={handleNewPatientSaved}
+      />
+    </>
   );
 }

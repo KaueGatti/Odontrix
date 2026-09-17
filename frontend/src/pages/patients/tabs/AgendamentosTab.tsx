@@ -84,6 +84,7 @@ export function AgendamentosTab() {
 
   function handleSave(data: {
     patientName: string;
+    patientId?: string;
     dentistId: string;
     date: string;
     startTime: string;
@@ -101,7 +102,9 @@ export function AgendamentosTab() {
 
     const newAppt: PatientAppointment = {
       id: `appt-new-${Date.now()}`,
-      patientId: `pat-${data.patientName.toLowerCase().replace(/\s/g, "-")}`,
+      patientId:
+        data.patientId ??
+        `pat-${data.patientName.toLowerCase().replace(/\s/g, "-")}`,
       patientName: data.patientName,
       dentistId: data.dentistId,
       dentistName: dentist?.name || "",
