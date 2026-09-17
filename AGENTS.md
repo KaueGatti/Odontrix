@@ -1,5 +1,10 @@
 # Odontrix — Sistema de Gestão para Clínicas Odontológicas
 
+Este projeto segue regras específicas descritas nos arquivos abaixo.
+Leia todos antes de iniciar qualquer tarefa:
+
+- [WORKFLOW.md](./WORKFLOW.md) — fluxo obrigatório de git worktrees e merge
+
 ## Stack
 
 | Camada | Tecnologia |
