@@ -323,7 +323,8 @@ export function DetalhesConsultaDialog({
       </DialogContent>
       </Dialog>
 
-      {/* Recebimento no balcão (mock) — abre a partir da consulta Realizada.
+      {/* Recebimento no balcão (mock) — abre a partir da consulta com status
+          "Atendido" (chave "realizada").
           Valor/combinado mockados; virão da Billing quando a API client existir. */}
       <RegistrarPagamentoDialog
         open={pagamentoOpen}
