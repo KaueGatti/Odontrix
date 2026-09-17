@@ -247,9 +247,10 @@ export function DetalhesConsultaDialog({
                   onClick={handleVerFicha}
                   title="Ver ficha do paciente"
                   aria-label="Ver ficha do paciente"
-                  className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-primary"
+                  className="inline-flex cursor-pointer items-center gap-1 self-center text-[13px] font-medium text-[var(--blue)] transition-colors hover:text-[var(--blue-dark)] hover:underline"
                 >
-                  <ExternalLink className="h-4 w-4" />
+                  Ver ficha
+                  <ExternalLink className="h-3.5 w-3.5" />
                 </button>
               </div>
               <Badge variant={getStatusBadgeVariant(appointment.status)}>
