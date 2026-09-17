@@ -133,8 +133,9 @@ export function generateMockAppointments(
  * O estado das consultas vive dentro da AgendaPage, mas a tela de atendimento
  * (/agenda/atendimento/:id) precisa ler e atualizar uma consulta ao longo da
  * navegação. A AgendaPage sincroniza a lista aqui (syncMockAppointments) a cada
- * mudança, e status definidos fora dela (ex: "realizada" ao finalizar o
- * atendimento) são preservados via statusOverrides e reaplicados quando a
+ * mudança, e status definidos fora dela (ex: "realizada" — exibida como
+ * "Atendido" — ao finalizar o atendimento) são preservados via statusOverrides
+ * e reaplicados quando a
  * AgendaPage regenera os dados mockados.
  */
 const appointmentRegistry = new Map<string, Appointment>();

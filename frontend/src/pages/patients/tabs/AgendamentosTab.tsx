@@ -19,11 +19,11 @@ interface PatientAppointment extends Appointment {
 }
 
 const MOCK_APPOINTMENTS: PatientAppointment[] = [
-  { id: "1", patientId: "pat-kaue", patientName: "Kauê Vinícius Gatti", dentistId: "marcos", dentistName: "Dr. Marcos Silva", date: "2026-07-28", startTime: "14:00", endTime: "14:50", durationMin: 50, createdBy: "Kamily Vitória", status: "confirmada", type: "consulta" },
-  { id: "2", patientId: "pat-kaue", patientName: "Kauê Vinícius Gatti", dentistId: "camila", dentistName: "Dra. Camila Freitas", date: "2026-08-10", startTime: "09:00", endTime: "09:30", durationMin: 30, createdBy: "Kamily Vitória", status: "agendada", type: "retorno" },
-  { id: "3", patientId: "pat-kaue", patientName: "Kauê Vinícius Gatti", dentistId: "camila", dentistName: "Dra. Camila Freitas", date: "2026-02-10", startTime: "11:00", endTime: "12:30", durationMin: 90, createdBy: "Kamily Vitória", status: "realizada", type: "procedimento" },
-  { id: "4", patientId: "pat-kaue", patientName: "Kauê Vinícius Gatti", dentistId: "marcos", dentistName: "Dr. Marcos Silva", date: "2026-01-14", startTime: "15:30", endTime: "16:20", durationMin: 50, createdBy: "Fernanda Souza", status: "cancelada", type: "consulta" },
-  { id: "5", patientId: "pat-kaue", patientName: "Kauê Vinícius Gatti", dentistId: "marcos", dentistName: "Dr. Marcos Silva", date: "2025-12-02", startTime: "08:30", endTime: "09:00", durationMin: 30, createdBy: "Kamily Vitória", status: "nao_compareceu", type: "retorno" },
+  { id: "1", patientId: "pat-kaue", patientName: "Kauê Vinícius Gatti", dentistId: "marcos", dentistName: "Dr. Marcos Silva", date: "2026-07-28", startTime: "14:00", endTime: "14:50", durationMin: 50, createdBy: "Kamily Vitória", status: "confirmada", type: "consulta", notes: "Paciente confirmou presença por WhatsApp." },
+  { id: "2", patientId: "pat-kaue", patientName: "Kauê Vinícius Gatti", dentistId: "camila", dentistName: "Dra. Camila Freitas", date: "2026-08-10", startTime: "09:00", endTime: "09:30", durationMin: 30, createdBy: "Kamily Vitória", status: "agendada", type: "retorno", notes: "Retorno para avaliação da contenção." },
+  { id: "3", patientId: "pat-kaue", patientName: "Kauê Vinícius Gatti", dentistId: "camila", dentistName: "Dra. Camila Freitas", date: "2026-02-10", startTime: "11:00", endTime: "12:30", durationMin: 90, createdBy: "Kamily Vitória", status: "realizada", type: "procedimento", notes: "Procedimento concluído sem intercorrências." },
+  { id: "4", patientId: "pat-kaue", patientName: "Kauê Vinícius Gatti", dentistId: "marcos", dentistName: "Dr. Marcos Silva", date: "2026-01-14", startTime: "15:30", endTime: "16:20", durationMin: 50, createdBy: "Fernanda Souza", status: "cancelada", type: "consulta", notes: "Cancelado a pedido do paciente." },
+  { id: "5", patientId: "pat-kaue", patientName: "Kauê Vinícius Gatti", dentistId: "marcos", dentistName: "Dr. Marcos Silva", date: "2025-12-02", startTime: "08:30", endTime: "09:00", durationMin: 30, createdBy: "Kamily Vitória", status: "nao_compareceu", type: "retorno", notes: "Paciente não compareceu e não justificou ausência." },
 ];
 
 function getBadgeVariant(status: Appointment["status"]): "neutral" | "info" | "success" | "warning" | "error" {
@@ -38,16 +38,6 @@ function getBadgeVariant(status: Appointment["status"]): "neutral" | "info" | "s
   };
   return map[status];
 }
-
-const TYPE_LABELS: Record<string, string> = {
-  consulta: "Consulta",
-  retorno: "Retorno",
-  procedimento: "Procedimento",
-  emergencia: "Emergência",
-  avaliacao: "Avaliação",
-  implante: "Implante",
-  manutencao: "Manutenção",
-};
 
 function formatDate(dateStr: string): string {
   const [y, m, d] = dateStr.split("-");
@@ -147,11 +137,9 @@ export function AgendamentosTab() {
           <table className="w-full text-[13px]">
             <thead>
               <tr className="border-b border-border">
-                <th className="px-6 pb-3 pt-4 text-left text-[10px] font-bold uppercase tracking-[0.05em] text-muted-foreground">Data / Hora</th>
-                <th className="px-6 pb-3 pt-4 text-left text-[10px] font-bold uppercase tracking-[0.05em] text-muted-foreground">Dentista</th>
-                <th className="px-6 pb-3 pt-4 text-left text-[10px] font-bold uppercase tracking-[0.05em] text-muted-foreground">Tipo</th>
-                <th className="px-6 pb-3 pt-4 text-left text-[10px] font-bold uppercase tracking-[0.05em] text-muted-foreground">Duração</th>
-                <th className="px-6 pb-3 pt-4 text-left text-[10px] font-bold uppercase tracking-[0.05em] text-muted-foreground">Quem agendou</th>
+                <th className="px-6 pb-3 pt-4 text-left text-[10px] font-bold uppercase tracking-[0.05em] text-muted-foreground">Data e Horário</th>
+                <th className="px-6 pb-3 pt-4 text-left text-[10px] font-bold uppercase tracking-[0.05em] text-muted-foreground">Profissional</th>
+                <th className="px-6 pb-3 pt-4 text-left text-[10px] font-bold uppercase tracking-[0.05em] text-muted-foreground">Observação</th>
                 <th className="px-6 pb-3 pt-4 text-left text-[10px] font-bold uppercase tracking-[0.05em] text-muted-foreground">Status</th>
                 <th className="px-6 pb-3 pt-4 text-right text-[10px] font-bold uppercase tracking-[0.05em] text-muted-foreground" />
               </tr>
@@ -160,12 +148,17 @@ export function AgendamentosTab() {
               {displayed.map((appt) => (
                 <tr key={appt.id} className="border-b border-border/50 last:border-b-0">
                   <td className="px-6 py-3 font-semibold text-foreground">
-                    {formatDate(appt.date)} {appt.startTime}
+                    {formatDate(appt.date)} {appt.startTime} – {appt.endTime}
                   </td>
                   <td className="px-6 py-3 text-muted-foreground">{appt.dentistName}</td>
-                  <td className="px-6 py-3 text-foreground">{TYPE_LABELS[appt.type] || appt.type}</td>
-                  <td className="px-6 py-3 text-muted-foreground">{appt.durationMin} min</td>
-                  <td className="px-6 py-3 text-muted-foreground">{appt.createdBy}</td>
+                  <td className="px-6 py-3">
+                    <span
+                      className="block max-w-[220px] truncate text-muted-foreground"
+                      title={appt.notes || undefined}
+                    >
+                      {appt.notes || "—"}
+                    </span>
+                  </td>
                   <td className="px-6 py-3">
                     {appt.status === "nao_compareceu" ? (
                       <span className="inline-flex items-center gap-1.5 rounded-full border border-destructive/30 px-2.5 py-1 text-[11px] font-semibold leading-none text-destructive">
@@ -191,7 +184,7 @@ export function AgendamentosTab() {
               ))}
               {appointments.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="px-6 py-8 text-center text-[13px] text-muted-foreground">
+                  <td colSpan={5} className="px-6 py-8 text-center text-[13px] text-muted-foreground">
                     Nenhum agendamento encontrado.
                   </td>
                 </tr>
