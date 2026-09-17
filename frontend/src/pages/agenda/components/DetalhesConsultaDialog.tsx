@@ -13,7 +13,7 @@ import type { Appointment, AppointmentStatus } from "@/types/appointment";
 import { APPOINTMENT_STATUS_LABELS } from "@/types/appointment";
 import { getStatusBadgeVariant } from "../mock-data";
 import { useNavigate } from "react-router";
-import { Eye } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 import { RegistrarPagamentoDialog } from "@/pages/patients/tabs/dialogs/RegistrarPagamentoDialog";
 
 /**
@@ -238,9 +238,20 @@ export function DetalhesConsultaDialog({
         <div className="space-y-4">
           <div className="rounded-[10px] border border-border bg-[var(--gray-50)] p-4">
             <div className="mb-3 flex items-center justify-between">
-              <span className="text-[17px] font-bold text-[var(--gray-900)]">
-                {appointment.patientName}
-              </span>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[17px] font-bold text-[var(--gray-900)]">
+                  {appointment.patientName}
+                </span>
+                <button
+                  type="button"
+                  onClick={handleVerFicha}
+                  title="Ver ficha do paciente"
+                  aria-label="Ver ficha do paciente"
+                  className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-primary"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                </button>
+              </div>
               <Badge variant={getStatusBadgeVariant(appointment.status)}>
                 {APPOINTMENT_STATUS_LABELS[appointment.status]}
               </Badge>
@@ -311,11 +322,7 @@ export function DetalhesConsultaDialog({
           )}
         </div>
 
-        <DialogFooter className="sm:justify-between">
-          <Button variant="outline" onClick={handleVerFicha} className="gap-1.5">
-            <Eye className="h-3.5 w-3.5" />
-            Ver ficha do paciente
-          </Button>
+        <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Fechar
           </Button>
