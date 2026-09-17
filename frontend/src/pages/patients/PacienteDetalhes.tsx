@@ -34,6 +34,8 @@ const MOCK_PATIENT: Patient = {
   active: true,
   createdAt: "2026-04-25T00:00:00Z",
   referralSource: { id: 1, description: "Indicação de paciente" },
+  referralType: { id: 1, description: "Paciente", requiresReferrer: true },
+  referredByName: "Ana Costa",
   address: {
     cep: "13500-000",
     street: "Rua das Palmeiras",
@@ -84,6 +86,17 @@ export default function PacienteDetalhesPage() {
                 <span>Data de Nascimento: {formatDate(patient.birthDate)}</span>
                 <span>·</span>
                 <span>Celular: {patient.cellPhone}</span>
+                {patient.referredByName && (
+                  <>
+                    <span>·</span>
+                    <span>
+                      Indicado por: {patient.referredByName}
+                      {patient.referralType
+                        ? ` (${patient.referralType.description})`
+                        : ""}
+                    </span>
+                  </>
+                )}
               </div>
             </div>
           </div>

@@ -9,6 +9,8 @@ tags:
     description: Responsável financeiro/legal (obrigatório para pacientes menores de idade)
   - name: Referral Sources
     description: Origem do paciente (tabela de apoio)
+  - name: Referral Types
+    description: Tipo de indicação — quem indicou o paciente (tabela de apoio)
   - name: Attachment Types
     description: Tipos de anexo (tabela de apoio)
 
@@ -530,6 +532,108 @@ paths:
           $ref: '../common.yaml#/components/responses/Forbidden'
 
   # ============================================================
+  # REFERRAL TYPES (tabela de apoio — quem indicou o paciente)
+  # ============================================================
+
+  /referral-types:
+    get:
+      tags: [Referral Types]
+      summary: Lista tipos de indicação
+      x-required-roles: [manager, receptionist]
+      parameters:
+        - $ref: '../common.yaml#/components/parameters/PageParam'
+        - $ref: '../common.yaml#/components/parameters/LimitParam'
+      responses:
+        '200':
+          description: Lista de tipos de indicação
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ReferralType'
+                  meta:
+                    $ref: '../common.yaml#/components/schemas/PaginationMeta'
+        '401':
+          $ref: '../common.yaml#/components/responses/Unauthorized'
+
+    post:
+      tags: [Referral Types]
+      summary: Cria um novo tipo de indicação
+      x-required-roles: [manager]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReferralTypeInput'
+      responses:
+        '201':
+          description: Tipo de indicação criado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ReferralType'
+        '422':
+          $ref: '../common.yaml#/components/responses/ValidationError'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+
+  /referral-types/{id}:
+    parameters:
+      - $ref: '#/components/parameters/ReferralTypeId'
+    get:
+      tags: [Referral Types]
+      summary: Busca um tipo de indicação pelo ID
+      x-required-roles: [manager, receptionist]
+      responses:
+        '200':
+          description: Tipo de indicação encontrado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ReferralType'
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+
+    patch:
+      tags: [Referral Types]
+      summary: Edita ou inativa um tipo de indicação
+      x-required-roles: [manager]
+      description: Não há exclusão — apenas inativação via "active:false".
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReferralTypeInput'
+      responses:
+        '200':
+          description: Tipo de indicação atualizado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ReferralType'
+        '404':
+          $ref: '../common.yaml#/components/responses/NotFound'
+        '422':
+          $ref: '../common.yaml#/components/responses/ValidationError'
+        '403':
+          $ref: '../common.yaml#/components/responses/Forbidden'
+
+  # ============================================================
   # ATTACHMENT TYPES (tabela de apoio)
   # ============================================================
 
@@ -669,6 +773,13 @@ components:
       schema:
         type: integer
 
+    ReferralTypeId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+
     AttachmentTypeId:
       name: id
       in: path
@@ -710,6 +821,15 @@ components:
           $ref: '../common.yaml#/components/schemas/Address'
         referralSourceId:
           type: integer
+        referralTypeId:
+          type: integer
+          nullable: true
+          description: Tipo de indicação (quem indicou) — ver ReferralType.requiresReferrer
+        referredByName:
+          type: string
+          nullable: true
+          example: "Ana Costa"
+          description: Nome de quem indicou o paciente — obrigatório quando o tipo exige (requiresReferrer=true)
         active:
           type: boolean
         responsibleId:
@@ -767,6 +887,12 @@ components:
           $ref: '../common.yaml#/components/schemas/Address'
         referralSourceId:
           type: integer
+        referralTypeId:
+          type: integer
+          nullable: true
+        referredByName:
+          type: string
+          nullable: true
         responsibleId:
           type: integer
           nullable: true
@@ -798,6 +924,12 @@ components:
           $ref: '../common.yaml#/components/schemas/Address'
         referralSourceId:
           type: integer
+        referralTypeId:
+          type: integer
+          nullable: true
+        referredByName:
+          type: string
+          nullable: true
         responsibleId:
           type: integer
           nullable: true
@@ -819,6 +951,8 @@ components:
         planId:
           type: integer
         referralSourceId:
+          type: integer
+        referralTypeId:
           type: integer
         hasOverdueBalance:
           type: boolean
@@ -955,6 +1089,35 @@ components:
       properties:
         description:
           type: string
+        active:
+          type: boolean
+          default: true
+
+    ReferralType:
+      type: object
+      properties:
+        id:
+          type: integer
+        description:
+          type: string
+          example: "Dentista"
+        requiresReferrer:
+          type: boolean
+          description: >
+            Quando true, o paciente vinculado a este tipo exige referredByName
+            preenchido com o nome de quem indicou.
+        active:
+          type: boolean
+
+    ReferralTypeInput:
+      type: object
+      required: [description]
+      properties:
+        description:
+          type: string
+        requiresReferrer:
+          type: boolean
+          default: false
         active:
           type: boolean
           default: true

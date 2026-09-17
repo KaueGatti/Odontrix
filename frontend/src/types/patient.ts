@@ -1,6 +1,6 @@
 /**
  * Tipos derivados de V1__create-database.sql
- * (tabelas: patient, address, responsible, referral_source)
+ * (tabelas: patient, address, responsible, referral_source, referral_type)
  */
 
 export interface Address {
@@ -25,6 +25,13 @@ export interface ReferralSource {
   description: string;
 }
 
+/** Tipo de indicação — classifica QUEM indicou o paciente (tabela referral_type) */
+export interface ReferralType {
+  id: number;
+  description: string;
+  requiresReferrer: boolean;
+}
+
 export interface Patient {
   id: number;
   fullName: string;
@@ -37,6 +44,10 @@ export interface Patient {
   birthDate: string;
   address: Address;
   referralSource: ReferralSource;
+  /** Opcional — quando informado, `referredByName` é obrigatório se requiresReferrer = true */
+  referralType?: ReferralType;
+  /** Nome de quem indicou o paciente */
+  referredByName?: string;
   active: boolean;
   responsible?: Responsible;
   createdAt: string;
