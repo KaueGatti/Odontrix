@@ -50,6 +50,17 @@ INSERT INTO referral_source (id, description, active) VALUES
     (4, 'Outro', TRUE);
 SELECT setval('referral_source_id_seq', 4);
 
+-- Tipo de indicação: classifica QUEM indicou o paciente.
+-- requires_referrer = TRUE obriga informar patient.referred_by_name.
+INSERT INTO referral_type (id, description, requires_referrer, active) VALUES
+    (1, 'Paciente', TRUE, TRUE),
+    (2, 'Dentista', TRUE, TRUE),
+    (3, 'Médico', TRUE, TRUE),
+    (4, 'Amigo / Familiar', TRUE, TRUE),
+    (5, 'Influenciador / Rede social', TRUE, TRUE),
+    (6, 'Outro', FALSE, TRUE);
+SELECT setval('referral_type_id_seq', 6);
+
 INSERT INTO attachment_type (id, description, active) VALUES
     (1, 'Radiografia', TRUE),
     (2, 'Foto intraoral', TRUE),
@@ -153,12 +164,14 @@ SELECT setval('responsible_id_seq', 1);
 -- ------------------------------------------------------------
 -- PATIENTS
 -- ------------------------------------------------------------
-INSERT INTO patient (id, full_name, cpf, rg, landline_phone, cell_phone, emergency_phone, email, birth_date, address_id, referral_source_id, active, responsible_id, plan_id, plan_started_at) VALUES
-    (1, 'Maria da Silva',   '111.111.111-11', NULL, '(19) 3222-1111', '(19) 99222-1111', '(19) 99333-1111', 'maria.silva@example.com',   '1985-04-12', 2, 1, TRUE, NULL, 1, CURRENT_DATE - INTERVAL '60 days'),
-    (2, 'João Souza',       '222.222.222-22', NULL, '(19) 3222-2222', '(19) 99222-2222', '(19) 99333-2222', 'joao.souza@example.com',    '1990-08-23', 3, 2, TRUE, NULL, NULL, NULL),
-    (3, 'Ana Costa',        NULL, '33.222.111-3', '(19) 3222-3333', '(19) 99222-3333', '(19) 99333-3333', NULL,                        (CURRENT_DATE - INTERVAL '10 years')::date, 4, 3, TRUE, 1, NULL, NULL),
-    (4, 'Carlos Pereira',   '444.444.444-44', NULL, '(19) 3222-4444', '(19) 99222-4444', '(19) 99333-4444', 'carlos.pereira@example.com','1978-01-30', 5, 1, TRUE, NULL, 2, CURRENT_DATE - INTERVAL '30 days'),
-    (5, 'Beatriz Lima',     '555.555.555-55', NULL, '(19) 3222-5555', '(19) 99222-5555', '(19) 99333-5555', 'beatriz.lima@example.com',  '1995-11-05', 6, 4, TRUE, NULL, NULL, NULL);
+-- referral_type_id / referred_by_name: quem indicou o paciente
+-- (referred_by_name obrigatório quando referral_type.requires_referrer = TRUE)
+INSERT INTO patient (id, full_name, cpf, rg, landline_phone, cell_phone, emergency_phone, email, birth_date, address_id, referral_source_id, active, responsible_id, plan_id, plan_started_at, referral_type_id, referred_by_name) VALUES
+    (1, 'Maria da Silva',   '111.111.111-11', NULL, '(19) 3222-1111', '(19) 99222-1111', '(19) 99333-1111', 'maria.silva@example.com',   '1985-04-12', 2, 1, TRUE, NULL, 1, CURRENT_DATE - INTERVAL '60 days', 1, 'Ana Costa'),
+    (2, 'João Souza',       '222.222.222-22', NULL, '(19) 3222-2222', '(19) 99222-2222', '(19) 99333-2222', 'joao.souza@example.com',    '1990-08-23', 3, 2, TRUE, NULL, NULL, NULL, NULL, NULL),
+    (3, 'Ana Costa',        NULL, '33.222.111-3', '(19) 3222-3333', '(19) 99222-3333', '(19) 99333-3333', NULL,                        (CURRENT_DATE - INTERVAL '10 years')::date, 4, 3, TRUE, 1, NULL, NULL, NULL, NULL),
+    (4, 'Carlos Pereira',   '444.444.444-44', NULL, '(19) 3222-4444', '(19) 99222-4444', '(19) 99333-4444', 'carlos.pereira@example.com','1978-01-30', 5, 1, TRUE, NULL, 2, CURRENT_DATE - INTERVAL '30 days', 2, 'Eduardo Ramalho'),
+    (5, 'Beatriz Lima',     '555.555.555-55', NULL, '(19) 3222-5555', '(19) 99222-5555', '(19) 99333-5555', 'beatriz.lima@example.com',  '1995-11-05', 6, 4, TRUE, NULL, NULL, NULL, NULL, NULL);
 SELECT setval('patient_id_seq', 5);
 
 -- ------------------------------------------------------------
