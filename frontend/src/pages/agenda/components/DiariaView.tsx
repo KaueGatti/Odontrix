@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 import type { Appointment } from "@/types/appointment";
 import type { DentistAgenda, FilterState } from "../types";
 import { AppointmentCard } from "./AppointmentCard";
@@ -15,12 +16,22 @@ interface DiariaViewProps {
 
 const START_HOUR = 8;
 const END_HOUR = 19;
-const HOUR_HEIGHT = 60;
+const HOUR_HEIGHT = 60; // px por hora
+const SLOT_MIN = 15;
+const SLOT_HEIGHT = HOUR_HEIGHT / 4; // 15px por slot de 15 min
 const TOTAL_HOURS = END_HOUR - START_HOUR;
+const TOTAL_SLOTS = TOTAL_HOURS * 4;
 
 function timeToMinutes(time: string): number {
   const [h, m] = time.split(":").map(Number);
   return h * 60 + m;
+}
+
+function slotLabel(minutesFromOpen: number): string {
+  const total = START_HOUR * 60 + minutesFromOpen;
+  const h = Math.floor(total / 60);
+  const m = total % 60;
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 }
 
 export function DiariaView({
@@ -33,7 +44,7 @@ export function DiariaView({
 }: DiariaViewProps) {
   const [hoveredSlot, setHoveredSlot] = useState<{
     dentistId: string;
-    hour: number;
+    time: string;
   } | null>(null);
 
   const visibleDentists = useMemo(() => {
@@ -60,9 +71,9 @@ export function DiariaView({
     });
   }, [appointments, currentDate, filters, dentists]);
 
-  const hours = useMemo(
-    () =>
-      Array.from({ length: TOTAL_HOURS }, (_, i) => START_HOUR + i),
+  // Slots de 15 min: 0 (08:00) a (TOTAL_SLOTS - 1) * 15 (18:45).
+  const slots = useMemo(
+    () => Array.from({ length: TOTAL_SLOTS }, (_, i) => i * SLOT_MIN),
     []
   );
 
@@ -118,14 +129,26 @@ export function DiariaView({
             gridTemplateColumns: `56px repeat(${numDentistCols}, 1fr)`,
           }}
         >
-          {hours.map((hour) => (
-            <div key={hour} style={{ gridColumn: "1 / -1" }}>
+          {slots.map((minutes) => {
+            const isHour = minutes % 60 === 0;
+            const time = slotLabel(minutes);
+
+            return (
               <div
-                className="flex items-start"
-                style={{ height: `${HOUR_HEIGHT}px` }}
+                key={minutes}
+                className="flex items-stretch"
+                style={{ height: `${SLOT_HEIGHT}px`, gridColumn: "1 / -1" }}
               >
-                <div className="w-[56px] pt-[2px] text-[11px] text-[var(--gray-400)]">
-                  {hour}:00
+                {/* Rótulo de horário: hora inteira destacada, quartos menores */}
+                <div
+                  className={cn(
+                    "w-[56px] flex-shrink-0 pt-[1px] leading-none",
+                    isHour
+                      ? "text-[11px] font-medium text-[var(--gray-500)]"
+                      : "text-[9px] text-[var(--gray-300)]"
+                  )}
+                >
+                  {time}
                 </div>
                 <div
                   className="flex-1"
@@ -137,25 +160,26 @@ export function DiariaView({
                   {visibleDentists.map((dentist) => {
                     const isHovered =
                       hoveredSlot?.dentistId === dentist.id &&
-                      hoveredSlot?.hour === hour;
+                      hoveredSlot?.time === time;
 
                     return (
                       <div
                         key={dentist.id}
-                        onClick={() => {
-                          const time = `${String(hour).padStart(2, "0")}:00`;
-                          onSlotClick(dentist.id, time);
-                        }}
+                        onClick={() => onSlotClick(dentist.id, time)}
                         onMouseEnter={() =>
                           setHoveredSlot({
                             dentistId: dentist.id,
-                            hour,
+                            time,
                           })
                         }
                         onMouseLeave={() => setHoveredSlot(null)}
-                        className="relative cursor-pointer border-l border-border transition-colors"
+                        className={cn(
+                          "relative cursor-pointer border-l border-border border-b transition-colors",
+                          isHour
+                            ? "border-b-[var(--gray-200)]"
+                            : "border-b-[var(--gray-100)]"
+                        )}
                         style={{
-                          height: `${HOUR_HEIGHT}px`,
                           background: isHovered
                             ? "rgba(79,126,247,0.05)"
                             : undefined,
@@ -165,13 +189,8 @@ export function DiariaView({
                   })}
                 </div>
               </div>
-
-              <div
-                className="h-[1px] bg-[var(--gray-200)]"
-                style={{ gridColumn: "1 / -1" }}
-              />
-            </div>
-          ))}
+            );
+          })}
 
           {filteredAppointments.map((appt) => {
             const dentist = dentists.find((d) => d.id === appt.dentistId);
