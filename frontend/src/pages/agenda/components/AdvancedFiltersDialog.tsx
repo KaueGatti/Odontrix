@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 import type { AppointmentStatus } from "@/types/appointment";
 import { APPOINTMENT_STATUS_LABELS } from "@/types/appointment";
 import type { DentistAgenda, FilterState } from "../types";
-import { MOCK_PATIENTS } from "../mock-data";
+import { listMockPatientNames } from "@/pages/patients/mock-data";
 
 interface AdvancedFiltersDialogProps {
   open: boolean;
@@ -69,7 +69,8 @@ export function AdvancedFiltersDialog({
     return () => document.removeEventListener("click", handleClickOutside);
   }, []);
 
-  const filteredPatients = MOCK_PATIENTS.filter(
+  // Inclui pacientes criados pelo cadastro rápido do agendamento.
+  const filteredPatients = listMockPatientNames().filter(
     (name) =>
       name.toLowerCase().includes(searchValue.toLowerCase()) &&
       !draft.patientNames.includes(name)

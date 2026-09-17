@@ -362,7 +362,7 @@ postgres:16-alpine (5432) → api:8080 → frontend:5173
 
 3. **Quem indicou o paciente** — hoje só existe `referralSource` ("Como nos conociste?", tabla `referral_source` → select em `DadosCadastraisTab`). Falta registrar **quem** fez a indicação (nome da pessoa/paciente). Decidir: texto livre vs FK a `patient`; exige schema (`patient`), `types/patient.ts`, OpenAPI e formulário/detalhe.
 
-4. **Cadastro de Paciente no Agendamento** — `NovaConsultaDialog` só busca entre `MOCK_PATIENTS` (nomes); adicionar registro inline de novo paciente (ou navegación ao cadastro com retorno ao dialog) sem sair do fluxo.
+4. **Cadastro de Paciente no Agendamento** — ✅ implementado em 16/09/2026 (`NovaConsultaDialog` deixou de buscar em `MOCK_PATIENTS` e passou a listar o registro compartilhado de `patients/mock-data.ts`, com a opção **`+ Cadastrar "«nome digitado»"`** sempre em primeiro lugar no combobox, abrindo o cadastro rápido (`NovoPacienteDialog`: nome + celular + responsável quando menor de idade).
 
 5. **Odontograma/Caras para procedimento do orçamento** — o `Odontograma` da finalización (`atendimento/components/Odontograma.tsx`) selecciona dentes FDI (32) mas **não faces**; `NovoOrcamentoDialog` não tem odontograma. Estender com selección por **faces** (mesial/distal/oclusal/vestibular/lingual/palatina…) e integrá-lo no orçamento (linhas de `ProcedureLine`); avaliar reuso em `ProcedimentosCard`.
 
@@ -383,6 +383,16 @@ postgres:16-alpine (5432) → api:8080 → frontend:5173
 - **`DiariaView.tsx` com grid de 15 em 15 min** — grade trocada de hora-em-hora para slots de 15 min (44 slots, 60px/hora mantidos — posicionamento das consultas inalterado); rótulos a cada 15 min no gutter (hora inteira destacada, quartos em texto 9px); **clique no slot com granularidade de 15 min** (`onSlotClick(dentistId, "HH:15"...)`) e hover highlight por slot.
 - **`Sidebar.tsx` recolhível** — largura expandida 194px → **184px** (−5%); recolhida 64px (logo + ícones, tooltips via `title`, copyright oculto); toggle `PanelLeftClose`/`PanelLeftOpen` no cabeçalho; grupo **Financeiro** com **ícone $ no cabeçalho (ícone + título + chevron)** e, recolhido, vira um único ícone $ que **expande a sidebar** ao clicar; estado ativo preservado nos dois modos (`navLinkCollapsedClass`).
 - Lint: ✅ (6 arquivos alterados, sem erros) · tsc: ✅ nenhum erro nos arquivos alterados (pré-existentes em outros módulos) · Build: ✅ (~1.006 kB)
+
+### Cadastro rápido de paciente no agendamento (item 4 ✅)
+
+- **`patients/mock-data.ts` (novo)** — a lista `MOCK_PATIENTS` saiu de `agenda/mock-data.ts` para cá e ganhou um registro em runtime (`patientRegistry`) no mesmo padrão do `appointmentRegistry`: `listMockPatientNames()` (seed + cadastrados), `addMockPatient()` (id `pat-<slug>` com sufixo em colisão) e `findMockPatientByName()`. Registro criado pelo cadastro rápido fica `incomplete: true` (sem CPF/RG, nascimento, endereço, telefone fixo/emergência e origem) e deve ser completado na ficha do paciente — mapeamento futuro direto para o `PatientInput` de `POST /patients`.
+- **`patients/dialogs/NovoPacienteDialog.tsx` + `lib/validations/cadastro-paciente-rapido.schema.ts` (novos)** — cadastro rápido com **Nome + Celular** e checkbox "Paciente é menor de idade ou incapaz" que revela a seção **Responsável** (nome + ao menos CPF ou RG, mesma regra do `superRefine` do cadastro completo). Máscaras via `withMask` (`maskTelefone`, `maskCPF`, `maskRG`), banner avisando que os demais dados ficam pendentes; aberto como dialog aninhado (o agendamento continua aberto por baixo).
+- **`NovaConsultaDialog.tsx`** — o combobox de paciente passou a listar `listMockPatientNames()` (8 sugestões) e exibe **sempre em primeiro lugar** a opção **`+ Cadastrar "«nome digitado»"`** (ícone `UserPlus`, azul) quando há texto digitado; ao salvar no cadastro rápido o paciente volta **já selecionado** e passa a aparecer nas buscas seguintes. O `onSave` agora envia `patientId` (opcional), resolvido no registro.
+- **`AgendaPage.tsx` / `patients/tabs/AgendamentosTab.tsx`** — `patientId: data.patientId ?? pat-<slug do nome>` na consulta criada.
+- **Propagação do registro** — `AdvancedFiltersDialog.tsx` e `NovoOrcamentoDialog.tsx` passaram a usar `listMockPatientNames()`, então o paciente cadastrado no agendamento aparece nos filtros avançados e no select de orçamentos (e o filtro por esse nome retorna a consulta criada).
+- **Fora do escopo (pendente)** — exibir o registro em `PacientesList` (hoje placeholder "Nenhum paciente encontrado") fica para o PR da lista real de pacientes, junto com `PacienteDetalhes` recebendo `useParams`; o formulário completo (`/pacientes/register`) continua sem persistência.
+- Lint: ✅ nenhum erro nos 9 arquivos tocados/criados (repo mantém 11 erros + 2 warnings pré-existentes em outros módulos) · tsc: ✅ 0 erros (`--ignoreDeprecations 6.0`; o TS5101 do `baseUrl` deprecado no TS 6 é pré-existente no tsconfig) · Build: ✅ (~1.013 kB)
 
 ## Última Sessão — 13/09/2026
 

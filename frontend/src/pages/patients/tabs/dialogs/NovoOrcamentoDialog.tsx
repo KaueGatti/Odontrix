@@ -22,7 +22,7 @@ import {
   parseMoneyToCents,
 } from "@/lib/masks";
 import { cn } from "@/lib/utils";
-import { MOCK_PATIENTS } from "@/pages/agenda/mock-data";
+import { listMockPatientNames } from "@/pages/patients/mock-data";
 
 type DiscountType = "currency" | "percent";
 
@@ -147,10 +147,12 @@ export function NovoOrcamentoDialog({
   const [procedures, setProcedures] = useState<ProcedureLine[]>([createRow()]);
 
   const selectedPatient = patientLocked ? patientName : patient;
+  // Inclui pacientes criados pelo cadastro rápido do agendamento.
+  const knownPatientNames = listMockPatientNames();
   const patientOptions =
-    patientName && !MOCK_PATIENTS.includes(patientName)
-      ? [patientName, ...MOCK_PATIENTS]
-      : MOCK_PATIENTS;
+    patientName && !knownPatientNames.includes(patientName)
+      ? [patientName, ...knownPatientNames]
+      : knownPatientNames;
 
   const isLocked = isExpiredIso(validUntil);
 
