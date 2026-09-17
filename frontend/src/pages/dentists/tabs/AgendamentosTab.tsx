@@ -5,7 +5,10 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import type { Appointment, AppointmentStatus } from "@/types/appointment";
 import { APPOINTMENT_STATUS_LABELS } from "@/types/appointment";
-import { DetalhesConsultaDialog } from "@/pages/agenda/components/DetalhesConsultaDialog";
+import {
+  DetalhesConsultaDialog,
+  type ConfirmActionOptions,
+} from "@/pages/agenda/components/DetalhesConsultaDialog";
 import { NovaConsultaDialog } from "@/pages/agenda/components/NovaConsultaDialog";
 import { ConfirmarAcaoDialog } from "@/pages/agenda/components/ConfirmarAcaoDialog";
 import type { DentistAgenda } from "@/pages/agenda/types";
@@ -122,26 +125,33 @@ function formatDate(dateStr: string): string {
 }
 
 export function AgendamentosTab({ dentistId: _dentistId }: AgendamentosTabProps) {
-  const [appointments] = useState(MOCK_APPOINTMENTS);
+  const [appointments, setAppointments] = useState(MOCK_APPOINTMENTS);
 
   const [detailOpen, setDetailOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
 
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const [confirmTitle, setConfirmTitle] = useState("");
-  const [confirmDesc, setConfirmDesc] = useState("");
-  const [confirmCb, setConfirmCb] = useState<() => void>(() => {});
+  const [confirmAction, setConfirmAction] = useState<ConfirmActionOptions>({
+    title: "",
+    description: "",
+    onConfirm: () => {},
+  });
 
   const [newOpen, setNewOpen] = useState(false);
 
-  function handleStatusChange(_id: string, _newStatus: AppointmentStatus, _motivo?: string) {
-    console.log("Status change:", _id, _newStatus, _motivo);
+  function handleStatusChange(id: string, newStatus: AppointmentStatus, _motivo?: string) {
+    setAppointments((prev) =>
+      prev.map((a) => (a.id === id ? { ...a, status: newStatus } : a))
+    );
+    // Mantém o modal de detalhes aberto refletindo o novo status.
+    setSelectedAppointment((prev) =>
+      prev?.id === id ? { ...prev, status: newStatus } : prev
+    );
+    console.log("Status change:", id, newStatus, _motivo);
   }
 
-  function handleConfirmAction(title: string, description: string, onConfirm: () => void) {
-    setConfirmTitle(title);
-    setConfirmDesc(description);
-    setConfirmCb(() => onConfirm);
+  function handleConfirmAction(options: ConfirmActionOptions) {
+    setConfirmAction(options);
     setConfirmOpen(true);
   }
 
@@ -261,10 +271,13 @@ export function AgendamentosTab({ dentistId: _dentistId }: AgendamentosTabProps)
       <ConfirmarAcaoDialog
         open={confirmOpen}
         onOpenChange={setConfirmOpen}
-        title={confirmTitle}
-        description={confirmDesc}
-        onConfirm={() => {
-          confirmCb();
+        title={confirmAction.title}
+        description={confirmAction.description}
+        requiresMotivo={confirmAction.requiresMotivo}
+        confirmLabel={confirmAction.confirmLabel}
+        confirmVariant={confirmAction.confirmVariant}
+        onConfirm={(motivo) => {
+          confirmAction.onConfirm(motivo);
           setConfirmOpen(false);
         }}
       />

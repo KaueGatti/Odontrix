@@ -6,7 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import type { Appointment, AppointmentStatus } from "@/types/appointment";
 import { APPOINTMENT_STATUS_LABELS } from "@/types/appointment";
-import { DetalhesConsultaDialog } from "@/pages/agenda/components/DetalhesConsultaDialog";
+import {
+  DetalhesConsultaDialog,
+  type ConfirmActionOptions,
+} from "@/pages/agenda/components/DetalhesConsultaDialog";
 import { NovaConsultaDialog } from "@/pages/agenda/components/NovaConsultaDialog";
 import { ConfirmarAcaoDialog } from "@/pages/agenda/components/ConfirmarAcaoDialog";
 import { MOCK_DENTISTS } from "@/pages/agenda/mock-data";
@@ -59,9 +62,11 @@ export function AgendamentosTab() {
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
 
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const [confirmTitle, setConfirmTitle] = useState("");
-  const [confirmDesc, setConfirmDesc] = useState("");
-  const [confirmCb, setConfirmCb] = useState<() => void>(() => {});
+  const [confirmAction, setConfirmAction] = useState<ConfirmActionOptions>({
+    title: "",
+    description: "",
+    onConfirm: () => {},
+  });
 
   const [newOpen, setNewOpen] = useState(false);
 
@@ -76,12 +81,14 @@ export function AgendamentosTab() {
     setAppointments((prev) =>
       prev.map((a) => (a.id === id ? { ...a, status: newStatus } : a))
     );
+    // Mantém o modal de detalhes aberto refletindo o novo status.
+    setSelectedAppointment((prev) =>
+      prev?.id === id ? { ...prev, status: newStatus } : prev
+    );
   }
 
-  function handleConfirmAction(title: string, description: string, onConfirm: () => void) {
-    setConfirmTitle(title);
-    setConfirmDesc(description);
-    setConfirmCb(() => onConfirm);
+  function handleConfirmAction(options: ConfirmActionOptions) {
+    setConfirmAction(options);
     setConfirmOpen(true);
   }
 
@@ -227,10 +234,13 @@ export function AgendamentosTab() {
       <ConfirmarAcaoDialog
         open={confirmOpen}
         onOpenChange={setConfirmOpen}
-        title={confirmTitle}
-        description={confirmDesc}
-        onConfirm={() => {
-          confirmCb();
+        title={confirmAction.title}
+        description={confirmAction.description}
+        requiresMotivo={confirmAction.requiresMotivo}
+        confirmLabel={confirmAction.confirmLabel}
+        confirmVariant={confirmAction.confirmVariant}
+        onConfirm={(motivo) => {
+          confirmAction.onConfirm(motivo);
           setConfirmOpen(false);
         }}
       />
