@@ -42,6 +42,18 @@ CREATE TABLE referral_source
 );
 
 -- ------------------------------------------------------------
+-- REFERRAL TYPE (tipo de indicação — quem indicou o paciente)
+-- requires_referrer = TRUE exige preencher patient.referred_by_name
+-- ------------------------------------------------------------
+CREATE TABLE referral_type
+(
+    id                SERIAL PRIMARY KEY,
+    description       VARCHAR(50) NOT NULL,
+    requires_referrer BOOLEAN     NOT NULL DEFAULT FALSE,
+    active            BOOLEAN     NOT NULL DEFAULT TRUE
+);
+
+-- ------------------------------------------------------------
 -- ATTACHMENT TYPE
 -- ------------------------------------------------------------
 CREATE TABLE attachment_type
@@ -191,6 +203,8 @@ CREATE TABLE patient
     birth_date         DATE         NOT NULL,
     address_id         INT          NOT NULL REFERENCES address (id),
     referral_source_id INT          NOT NULL REFERENCES referral_source (id),
+    referral_type_id   INT REFERENCES referral_type (id),
+    referred_by_name   VARCHAR(150),
     active             BOOLEAN      NOT NULL DEFAULT TRUE,
     responsible_id     INT REFERENCES responsible (id),
     plan_id            INT REFERENCES dental_plan (id),
@@ -843,6 +857,7 @@ CREATE INDEX idx_unavailability_dentist ON unavailability (dentist_id, start_dat
 CREATE INDEX idx_unavailability_end ON unavailability (end_date);
 CREATE INDEX idx_address_city ON address (city);
 CREATE INDEX idx_patient_address ON patient (address_id);
+CREATE INDEX idx_patient_referral_type ON patient (referral_type_id);
 CREATE INDEX idx_dentist_user ON dentist (user_id);
 CREATE INDEX idx_quote_patient ON quote (patient_id);
 CREATE INDEX idx_quote_created_by ON quote (created_by);

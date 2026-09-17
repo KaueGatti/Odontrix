@@ -15,6 +15,7 @@ import {
     type CadastroPacienteFormInput,
     type CadastroPacienteFormValues,
 } from "@/lib/validations/cadastro-paciente.schema.ts";
+import {REFERRAL_TYPES, requiresReferrerFor} from "@/lib/referral-types";
 
 // TODO: substituir pela lista real vinda da API (tabela referral_source)
 const REFERRAL_SOURCES = [
@@ -38,6 +39,7 @@ export function DadosCadastraisTab({patient}: DadosCadastraisTabProps) {
         register,
         handleSubmit,
         watch,
+        setValue,
         formState: {errors, isSubmitting},
     } = useForm<CadastroPacienteFormInput, unknown, CadastroPacienteFormValues>({
         resolver: zodResolver(cadastroPacienteSchema),
@@ -59,6 +61,8 @@ export function DadosCadastraisTab({patient}: DadosCadastraisTabProps) {
             number: patient.address.number,
             complement: patient.address.complement ?? "",
             referralSourceId: String(patient.referralSource.id),
+            referralTypeId: patient.referralType ? String(patient.referralType.id) : "",
+            referredByName: patient.referredByName ?? "",
             hasResponsible: !!patient.responsible,
             responsibleFullName: patient.responsible?.fullName ?? "",
             responsibleCpf: patient.responsible?.cpf ?? "",
@@ -67,6 +71,16 @@ export function DadosCadastraisTab({patient}: DadosCadastraisTabProps) {
     });
 
     const hasResponsible = watch("hasResponsible");
+    const referralTypeId = watch("referralTypeId");
+    const requiresReferrer = requiresReferrerFor(referralTypeId);
+
+    // Ao trocar para um tipo de indicação que não exige identificar quem
+    // indicou, limpa o nome para não persistir um dado órfão.
+    const handleReferralTypeChange = (value: string) => {
+        if (!requiresReferrerFor(value)) {
+            setValue("referredByName", "");
+        }
+    };
 
     const onSubmit = async (data: CadastroPacienteFormValues) => {
         // TODO: integrar com o endpoint real de atualização de paciente
@@ -325,13 +339,55 @@ export function DadosCadastraisTab({patient}: DadosCadastraisTabProps) {
                             aria-invalid={!!errors.referralSourceId}
                             {...register("referralSourceId")}
                         >
-                            {REFERRAL_SOURCES.map((source) => (
-                                <option key={source.id} value={source.id}>
-                                    {source.description}
+{REFERRAL_SOURCES.map((source) => (
+                            <option key={source.id} value={source.id}>
+                                {source.description}
+                            </option>
+                        ))}
+                        </Select>
+                    </div>
+
+                    <div className="flex flex-col">
+                        <Label htmlFor="referralTypeId" className="mb-1.5 block">
+                            Tipo de indicação
+                        </Label>
+                        <Select
+                            id="referralTypeId"
+                            className="max-w-xs"
+                            {...register("referralTypeId", {
+                                onChange: (event) => handleReferralTypeChange(event.target.value),
+                            })}
+                        >
+                            <option value="">Não informado</option>
+                            {REFERRAL_TYPES.map((type) => (
+                                <option key={type.id} value={type.id}>
+                                    {type.description}
                                 </option>
                             ))}
                         </Select>
+                        <p className="mt-1.5 text-[12px] text-muted-foreground">
+                            Quem indicou o paciente — o tipo “Outro” não exige o nome.
+                        </p>
                     </div>
+                    {requiresReferrer && (
+                        <div className="flex flex-col">
+                            <Label htmlFor="referredByName" className="mb-1.5 block">
+                                Quem indicou? <span className="text-destructive">*</span>
+                            </Label>
+                            <Input
+                                id="referredByName"
+                                className="max-w-xs"
+                                placeholder="Ex: Ana Costa, Dr. Eduardo Ramalho"
+                                aria-invalid={!!errors.referredByName}
+                                {...register("referredByName")}
+                            />
+                            {errors.referredByName && (
+                                <p className="mt-1.5 text-xs text-destructive">
+                                    {errors.referredByName.message}
+                                </p>
+                            )}
+                        </div>
+                    )}
                     <label className="flex items-center gap-2.5 pb-2.5 text-[13px] text-foreground">
                         <input
                             type="checkbox"

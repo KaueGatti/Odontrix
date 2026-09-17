@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { requiresReferrerFor } from "@/lib/referral-types";
+
 export const cadastroPacienteSchema = z
     .object({
         // ---- Dados pessoais ----
@@ -26,6 +28,14 @@ export const cadastroPacienteSchema = z
 
         // ---- Outros ----
         referralSourceId: z.string().min(1, "Selecione uma opção"),
+        referralTypeId: z.string().optional().or(z.literal("")),
+        referredByName: z
+            .string()
+            .optional()
+            .transform((value) => {
+                const trimmed = value?.trim() ?? "";
+                return trimmed.length > 0 ? trimmed : undefined;
+            }),
 
         // ---- Responsável (obrigatório apenas se marcado) ----
         hasResponsible: z.boolean().default(false),
@@ -39,6 +49,16 @@ export const cadastroPacienteSchema = z
                 code: "custom",
                 message: "Informe ao menos o CPF ou o RG",
                 path: ["cpf"],
+            });
+        }
+
+        // Tipo de indicação que exige identificar quem indicou
+        // (ex.: Paciente, Dentista, Médico) — ver tabela referral_type
+        if (requiresReferrerFor(data.referralTypeId) && !data.referredByName) {
+            ctx.addIssue({
+                code: "custom",
+                message: "Informe quem indicou o paciente",
+                path: ["referredByName"],
             });
         }
 
