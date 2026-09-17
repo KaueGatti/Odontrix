@@ -1,69 +1,89 @@
-import { useState, useRef, useEffect, useMemo } from "react";
-import { Search, X } from "lucide-react";
+// Seções Especialidade e Paciente desativadas temporariamente — imports
+// (react hooks, ícones e mocks) comentados junto com o código que os usa.
+// import { useState, useRef, useEffect } from "react";
+// import { Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { DentistAgenda, FilterState } from "../types";
-import { SPECIALTIES } from "../types";
-import { MOCK_PATIENTS } from "../mock-data";
+import type { Appointment } from "@/types/appointment";
+import type { DentistAgenda, FilterState, ViewMode } from "../types";
+// import { SPECIALTIES } from "../types";
+// import { MOCK_PATIENTS } from "../mock-data";
+import { MiniCalendar } from "./MiniCalendar";
 
 interface AgendaFiltersProps {
   filters: FilterState;
   dentists: DentistAgenda[];
   onFilterChange: (filters: FilterState) => void;
+  currentDate: Date;
+  appointments: Appointment[];
+  onSelectDate: (date: Date) => void;
+  onMonthChange?: (date: Date) => void;
+  viewMode: ViewMode;
 }
 
 export function AgendaFilters({
   filters,
   dentists,
   onFilterChange,
+  currentDate,
+  appointments,
+  onSelectDate,
+  onMonthChange,
+  viewMode,
 }: AgendaFiltersProps) {
-  const [searchValue, setSearchValue] = useState("");
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const searchRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  // Seção Paciente desativada — estado/refs do campo de busca comentados.
+  // const [searchValue, setSearchValue] = useState("");
+  // const [showSuggestions, setShowSuggestions] = useState(false);
+  // const searchRef = useRef<HTMLDivElement>(null);
+  // const inputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
-        setShowSuggestions(false);
-      }
-    }
-    document.addEventListener("click", handleClickOutside);
-    return () => document.removeEventListener("click", handleClickOutside);
-  }, []);
+  // useEffect(() => {
+  //   function handleClickOutside(e: MouseEvent) {
+  //     if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
+  //       setShowSuggestions(false);
+  //     }
+  //   }
+  //   document.addEventListener("click", handleClickOutside);
+  //   return () => document.removeEventListener("click", handleClickOutside);
+  // }, []);
 
-  const filteredPatients = MOCK_PATIENTS.filter(
-    (name) =>
-      name.toLowerCase().includes(searchValue.toLowerCase()) &&
-      !filters.patientNames.includes(name)
-  );
+  // const filteredPatients = MOCK_PATIENTS.filter(
+  //   (name) =>
+  //     name.toLowerCase().includes(searchValue.toLowerCase()) &&
+  //     !filters.patientNames.includes(name)
+  // );
 
-  const visibleDentists = useMemo(() => {
-    if (filters.specialties.length === 0) return dentists;
-    return dentists.filter((d) => filters.specialties.includes(d.specialty));
-  }, [dentists, filters.specialties]);
+  // Seção Especialidade desativada — filtro de dentistas por especialidade
+  // removido do cálculo; exibe todos os dentistas enquanto a seção estiver comentada.
+  // const visibleDentists = useMemo(() => {
+  //   if (filters.specialties.length === 0) return dentists;
+  //   return dentists.filter((d) => filters.specialties.includes(d.specialty));
+  // }, [dentists, filters.specialties]);
+  const visibleDentists = dentists;
 
-  function addPatient(name: string) {
-    onFilterChange({
-      ...filters,
-      patientNames: [...filters.patientNames, name],
-    });
-    setSearchValue("");
-    setShowSuggestions(false);
-  }
+  // Seção Paciente desativada — handlers comentados.
+  // function addPatient(name: string) {
+  //   onFilterChange({
+  //     ...filters,
+  //     patientNames: [...filters.patientNames, name],
+  //   });
+  //   setSearchValue("");
+  //   setShowSuggestions(false);
+  // }
 
-  function removePatient(name: string) {
-    onFilterChange({
-      ...filters,
-      patientNames: filters.patientNames.filter((n) => n !== name),
-    });
-  }
+  // function removePatient(name: string) {
+  //   onFilterChange({
+  //     ...filters,
+  //     patientNames: filters.patientNames.filter((n) => n !== name),
+  //   });
+  // }
 
-  function toggleSpecialty(spec: string) {
-    const newSpecs = filters.specialties.includes(spec)
-      ? filters.specialties.filter((s) => s !== spec)
-      : [...filters.specialties, spec];
-    onFilterChange({ ...filters, specialties: newSpecs });
-  }
+  // Seção Especialidade desativada temporariamente — toggle comentado.
+  // function toggleSpecialty(spec: string) {
+  //   const newSpecs = filters.specialties.includes(spec)
+  //     ? filters.specialties.filter((s) => s !== spec)
+  //     : [...filters.specialties, spec];
+  //   onFilterChange({ ...filters, specialties: newSpecs });
+  // }
 
   function toggleDentist(id: string) {
     const ids = filters.dentistIds.includes(id)
@@ -74,6 +94,21 @@ export function AgendaFilters({
 
   return (
     <div className="w-[228px] flex-shrink-0 overflow-y-auto border-r border-border bg-card px-[18px] py-5">
+      {/* Mini-calendário (jump-to-date) no lugar da seção Especialidade.
+          Sempre visível: clica numa data para saltar a agenda mantendo a vista. */}
+      <div className="mb-[18px]">
+        <MiniCalendar
+          selected={currentDate}
+          onSelect={onSelectDate}
+          onMonthChange={onMonthChange}
+          appointments={appointments}
+          viewMode={viewMode}
+        />
+      </div>
+
+      {/* Seção Especialidade desativada temporariamente — substituída pelo
+          mini-calendário acima. Reativar junto com SPECIALTIES, toggleSpecialty
+          e o filtro de visibleDentists.
       <div className="mb-[18px]">
         <div className="mb-[10px] flex items-center justify-between text-[10.5px] font-bold tracking-[0.06em] text-[var(--gray-500)]">
           ESPECIALIDADE
@@ -95,7 +130,13 @@ export function AgendaFilters({
           ))}
         </div>
       </div>
+      */}
 
+      {/* Seção Paciente desativada temporariamente — busca por nome + chips
+          de filtro. Reativar junto com os estados/handlers comentados acima
+          (searchValue, showSuggestions, searchRef/inputRef, useEffect de
+          click-outside, filteredPatients, addPatient/removePatient) e os
+          imports comentados (Search, X, MOCK_PATIENTS).
       <div className="mb-[18px]">
         <div className="mb-[10px] flex items-center justify-between text-[10.5px] font-bold tracking-[0.06em] text-[var(--gray-500)]">
           PACIENTE
@@ -163,6 +204,7 @@ export function AgendaFilters({
           </div>
         )}
       </div>
+      */}
 
       <div className="mb-[10px] text-[10.5px] font-bold tracking-[0.06em] text-[var(--gray-500)]">
         DENTISTAS
@@ -203,11 +245,13 @@ export function AgendaFilters({
         </div>
       ))}
 
+      {/* Estado vazio da seção Especialidade — comentado junto com a seção.
       {visibleDentists.length === 0 && (
         <div className="mt-[14px] rounded-[10px] border border-border bg-[var(--gray-50)] p-[9px_11px] text-[11px] text-[var(--gray-500)]">
           Nenhum dentista encontrado para a especialidade selecionada.
         </div>
       )}
+      */}
 
       <div className="mt-[14px] rounded-[10px] border border-border bg-[var(--gray-50)] p-[9px_11px] text-[11px] text-[var(--gray-500)]">
         Mostrando quem atende hoje.

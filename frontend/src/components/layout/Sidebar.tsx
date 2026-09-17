@@ -7,7 +7,7 @@ import {
     Settings,
     type LucideIcon, Stethoscope, User, SlidersVertical, CircleDollarSign, TrendingUp,
     TrendingDown,
-    ChevronRight, Receipt,
+    ChevronRight, Receipt, PanelLeftClose, PanelLeftOpen,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils.ts";
@@ -52,6 +52,10 @@ const NAV_GROUPS: NavGroupConfig[] = [
     },
 ];
 
+/** Larguras da sidebar: expandida (−5% dos 194px anteriores) e recolhida. */
+const SIDEBAR_EXPANDED_W = "w-[184px]";
+const SIDEBAR_COLLAPSED_W = "w-16";
+
 function navLinkClass({ isActive }: { isActive: boolean }) {
     return cn(
         "flex items-center gap-2.5 rounded-sm px-2.5 py-2 text-[12.5px] font-medium text-white/55 transition-colors",
@@ -61,11 +65,29 @@ function navLinkClass({ isActive }: { isActive: boolean }) {
     );
 }
 
-function NavItemLink({ to, label, icon: Icon }: NavItem) {
+/** Classe para o modo recolhido: ícone centralizado, tooltip nativo. */
+function navLinkCollapsedClass({ isActive }: { isActive: boolean }) {
+    return cn(
+        "flex items-center justify-center rounded-sm p-2 text-white/55 transition-colors",
+        "hover:bg-white/[0.06] hover:text-white/85",
+        isActive &&
+        "bg-white/10 text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.1)] hover:bg-white/10 hover:text-white",
+    );
+}
+
+interface NavItemLinkProps extends NavItem {
+    collapsed?: boolean;
+}
+
+function NavItemLink({ to, label, icon: Icon, collapsed = false }: NavItemLinkProps) {
     return (
-        <NavLink to={to} className={navLinkClass}>
+        <NavLink
+            to={to}
+            title={collapsed ? label : undefined}
+            className={collapsed ? navLinkCollapsedClass : navLinkClass}
+        >
             <Icon className="h-4 w-4 flex-shrink-0" />
-            {label}
+            {!collapsed && label}
         </NavLink>
     );
 }
@@ -85,9 +107,10 @@ function CollapsibleNavGroup({ label, items, defaultOpen = false }: NavGroupConf
                 type="button"
                 onClick={() => setIsOpen((prev) => !prev)}
                 aria-expanded={isOpen}
-                className="flex items-center justify-between px-2.5 pt-3 pb-1 text-[10.5px] font-semibold tracking-wide text-white/35 uppercase transition-colors hover:text-white/60"
+                className="flex items-center gap-1.5 px-2.5 pt-3 pb-1 text-[10.5px] font-semibold tracking-wide text-white/35 uppercase transition-colors hover:text-white/60"
             >
-                <span>{label}</span>
+                <CircleDollarSign className="h-3.5 w-3.5 flex-shrink-0" />
+                <span className="flex-1 text-left">{label}</span>
                 <ChevronRight
                     className={cn(
                         "h-3 w-3 flex-shrink-0 transition-transform duration-200",
@@ -113,44 +136,95 @@ function CollapsibleNavGroup({ label, items, defaultOpen = false }: NavGroupConf
 }
 
 export function Sidebar() {
+    const [collapsed, setCollapsed] = useState(false);
+
     return (
-        <aside className="flex w-[216px] flex-shrink-0 flex-col bg-[linear-gradient(180deg,var(--blue-dark)_0%,var(--blue-mid)_100%)] px-4 py-6.5">
-            <div className="mb-10 flex items-center gap-2.5 px-1.5">
-                <img src="../../../public/logo.png" alt="logo" className="w-8" />
-                <div>
-                    <div className="text-[13px] font-semibold text-white">
-                        Odontrix
+        <aside
+            className={cn(
+                "flex flex-shrink-0 flex-col overflow-hidden bg-[linear-gradient(180deg,var(--blue-dark)_0%,var(--blue-mid)_100%)] transition-[width] duration-200 ease-in-out",
+                collapsed ? SIDEBAR_COLLAPSED_W : SIDEBAR_EXPANDED_W,
+                collapsed ? "items-center px-2 py-6.5" : "px-4 py-6.5",
+            )}
+        >
+            {/* Cabeçalho: logo + toggle de recolhimento */}
+            <div
+                className={cn(
+                    "mb-10 flex w-full items-center",
+                    collapsed ? "flex-col gap-2.5" : "gap-2.5 px-1.5",
+                )}
+            >
+                <img src="../../../public/logo.png" alt="logo" className="w-8 flex-shrink-0" />
+                {!collapsed && (
+                    <div className="min-w-0 flex-1">
+                        <div className="text-[13px] font-semibold text-white">
+                            Odontrix
+                        </div>
+                        <div className="text-[10px] font-normal text-white/40">
+                            Gestão de Clínicas
+                        </div>
                     </div>
-                    <div className="text-[10px] font-normal text-white/40">
-                        Gestão de Clínicas
-                    </div>
-                </div>
+                )}
+                <button
+                    type="button"
+                    onClick={() => setCollapsed((prev) => !prev)}
+                    aria-label={collapsed ? "Expandir sidebar" : "Recolher sidebar"}
+                    title={collapsed ? "Expandir sidebar" : "Recolher sidebar"}
+                    className={cn(
+                        "flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-sm text-white/40 transition-colors hover:bg-white/[0.06] hover:text-white/85",
+                        collapsed && "order-first",
+                    )}
+                >
+                    {collapsed ? (
+                        <PanelLeftOpen className="h-4 w-4" />
+                    ) : (
+                        <PanelLeftClose className="h-4 w-4" />
+                    )}
+                </button>
             </div>
 
-            <nav className="flex flex-col gap-0.5">
+            <nav className={cn("flex flex-col gap-0.5", collapsed && "w-full items-center")}>
                 {TOP_NAV_ITEMS.map((item) => (
-                    <NavItemLink key={item.to} {...item} />
+                    <NavItemLink key={item.to} {...item} collapsed={collapsed} />
                 ))}
 
-                {NAV_GROUPS.map((group) => (
-                    <CollapsibleNavGroup key={group.label} {...group} />
-                ))}
+                {collapsed ? (
+                    /* Recolhido: o grupo Financeiro vira um único ícone ($).
+                       Clicar expande a sidebar com o grupo aberto. */
+                    <button
+                        type="button"
+                        onClick={() => setCollapsed(false)}
+                        title="Financeiro"
+                        className="flex items-center justify-center rounded-sm p-2 text-white/55 transition-colors hover:bg-white/[0.06] hover:text-white/85"
+                    >
+                        <CircleDollarSign className="h-4 w-4 flex-shrink-0" />
+                    </button>
+                ) : (
+                    NAV_GROUPS.map((group) => (
+                        <CollapsibleNavGroup key={group.label} {...group} />
+                    ))
+                )}
 
                 {BOTTOM_NAV_ITEMS.map((item) => (
-                    <NavItemLink key={item.to} {...item} />
+                    <NavItemLink key={item.to} {...item} collapsed={collapsed} />
                 ))}
             </nav>
 
             <div className="flex-1" />
 
-            <NavLink to="configuracoes" className={navLinkClass}>
+            <NavLink
+                to="configuracoes"
+                title={collapsed ? "Configurações" : undefined}
+                className={collapsed ? navLinkCollapsedClass : navLinkClass}
+            >
                 <Settings className="h-4 w-4 flex-shrink-0" />
-                Configurações
+                {!collapsed && "Configurações"}
             </NavLink>
 
-            <div className="px-1.5 pt-2.5 text-[10.5px] text-white/25">
-                © {new Date().getFullYear()} Odontrix
-            </div>
+            {!collapsed && (
+                <div className="px-1.5 pt-2.5 text-[10.5px] text-white/25">
+                    © {new Date().getFullYear()} Odontrix
+                </div>
+            )}
         </aside>
     );
 }

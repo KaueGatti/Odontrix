@@ -1,6 +1,5 @@
-import { useState, useMemo, useCallback, useEffect } from "react";
-import { addMonths, subMonths, format, addDays, subDays, addWeeks, subWeeks, startOfWeek, endOfWeek } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { useState, useCallback, useEffect } from "react";
+import { format } from "date-fns";
 import type { Appointment, AppointmentStatus } from "@/types/appointment";
 import type { ViewMode, FilterState } from "./types";
 import {
@@ -16,7 +15,10 @@ import { MensalView } from "./components/MensalView";
 import { SemanalView } from "./components/SemanalView";
 import { DiariaView } from "./components/DiariaView";
 import { NovaConsultaDialog } from "./components/NovaConsultaDialog";
-import { DetalhesConsultaDialog } from "./components/DetalhesConsultaDialog";
+import {
+  DetalhesConsultaDialog,
+  type ConfirmActionOptions,
+} from "./components/DetalhesConsultaDialog";
 import { ConfirmarAcaoDialog } from "./components/ConfirmarAcaoDialog";
 import { AdvancedFiltersDialog } from "./components/AdvancedFiltersDialog";
 
@@ -58,43 +60,12 @@ export default function AgendaPage() {
   const [selectedAppointment, setSelectedAppointment] =
     useState<Appointment | null>(null);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
-  const [confirmAction, setConfirmAction] = useState<{
-    title: string;
-    description: string;
-    onConfirm: () => void;
-  }>({ title: "", description: "", onConfirm: () => {} });
+  const [confirmAction, setConfirmAction] = useState<ConfirmActionOptions>({
+    title: "",
+    description: "",
+    onConfirm: () => {},
+  });
   const [advancedFiltersOpen, setAdvancedFiltersOpen] = useState(false);
-
-  const headerTitle = useMemo(() => {
-    if (viewMode === "mes") {
-      return format(currentDate, "MMMM 'de' yyyy", { locale: ptBR });
-    }
-    if (viewMode === "semana") {
-      const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 });
-      const weekEnd = endOfWeek(currentDate, { weekStartsOn: 0 });
-      return `${format(weekStart, "d'/'MM", { locale: ptBR })} — ${format(weekEnd, "d'/'MM'/'yyyy", { locale: ptBR })}`;
-    }
-    return format(currentDate, "EEEE', 'd' de 'MMMM' de 'yyyy", {
-      locale: ptBR,
-    });
-  }, [viewMode, currentDate]);
-
-  const handlePrev = useCallback(() => {
-    if (viewMode === "mes") setCurrentDate((d) => subMonths(d, 1));
-    else if (viewMode === "semana") setCurrentDate((d) => subWeeks(d, 1));
-    else setCurrentDate((d) => subDays(d, 1));
-  }, [viewMode]);
-
-  const handleNext = useCallback(() => {
-    if (viewMode === "mes") setCurrentDate((d) => addMonths(d, 1));
-    else if (viewMode === "semana") setCurrentDate((d) => addWeeks(d, 1));
-    else setCurrentDate((d) => addDays(d, 1));
-  }, [viewMode]);
-
-  const handleToday = useCallback(() => {
-    setCurrentDate(today);
-    setViewMode("mes");
-  }, [today]);
 
   const handleNewAppointment = useCallback(
     (dentistId?: string, time?: string, date?: string) => {
@@ -152,6 +123,10 @@ export default function AgendaPage() {
       setAppointments((prev) =>
         prev.map((a) => (a.id === id ? { ...a, status: newStatus } : a))
       );
+      // Mantém o modal de detalhes aberto refletindo o novo status.
+      setSelectedAppointment((prev) =>
+        prev?.id === id ? { ...prev, status: newStatus } : prev
+      );
       // Persiste imediatamente no registro compartilhado — a navegação para a
       // tela de atendimento pode acontecer antes do useEffect sincronizar.
       setMockAppointmentStatus(id, newStatus);
@@ -159,37 +134,59 @@ export default function AgendaPage() {
     []
   );
 
-  const handleConfirmAction = useCallback(
-    (title: string, description: string, onConfirm: () => void) => {
-      setConfirmAction({ title, description, onConfirm });
-      setConfirmDialogOpen(true);
-    },
-    []
-  );
+  const handleConfirmAction = useCallback((options: ConfirmActionOptions) => {
+    setConfirmAction(options);
+    setConfirmDialogOpen(true);
+  }, []);
 
   const handleDayClick = useCallback((date: Date) => {
     setCurrentDate(date);
     setViewMode("dia");
   }, []);
 
+  // Mini-calendário: clique num dia —
+  // • Dia/Semana: apenas muda o dia/semana selecionada (mantém a vista).
+  // • Mês: muda para a vista Dia (clique em dia => dia específico).
+  const handleSelectDate = useCallback(
+    (date: Date) => {
+      setCurrentDate(date);
+      if (viewMode === "mes") {
+        setViewMode("dia");
+      }
+    },
+    [viewMode]
+  );
+
+  // Mini-calendário: setas de mês no modo "Mês" — move o mês selecionado da
+  // agenda (mesmo dia, clampado ao último dia do mês) mantendo a vista Mensal.
+  const handleMonthChange = useCallback((date: Date) => {
+    setCurrentDate(date);
+  }, []);
+
   return (
-    <div className="flex h-full flex-col">
-      <AgendaHeader
-        title={headerTitle}
+    <div className="flex h-full overflow-hidden">
+      {/* Sidebar (mini-calendário + filtros): coluna esquerda com 100% de altura,
+          ocupando também o espaço onde ficava a navegação do header. A seleção
+          de data/semana/mês acontece apenas pelo mini-calendário. */}
+      <AgendaFilters
+        filters={filters}
+        dentists={MOCK_DENTISTS}
+        onFilterChange={setFilters}
+        currentDate={currentDate}
+        appointments={appointments}
+        onSelectDate={handleSelectDate}
+        onMonthChange={handleMonthChange}
         viewMode={viewMode}
-        onViewModeChange={setViewMode}
-        onPrev={handlePrev}
-        onNext={handleNext}
-        onToday={handleToday}
-        onNewAppointment={() => handleNewAppointment()}
       />
 
-      <div className="flex flex-1 overflow-hidden">
-        <AgendaFilters
-          filters={filters}
-          dentists={MOCK_DENTISTS}
-          onFilterChange={setFilters}
+      <div className="flex min-w-0 flex-1 flex-col">
+        <AgendaHeader
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
+          onNewAppointment={() => handleNewAppointment()}
         />
+
+        <div className="flex flex-1 overflow-hidden">
 
         {viewMode === "mes" ? (
           <MensalView
@@ -207,10 +204,14 @@ export default function AgendaPage() {
             currentDate={currentDate}
             appointments={appointments}
             dentists={MOCK_DENTISTS}
-            onDayClick={handleDayClick}
+            filters={filters}
             onAppointmentClick={handleAppointmentClick}
-            onAddAppointment={(date) =>
-              handleNewAppointment(undefined, undefined, format(date, "yyyy-MM-dd"))
+            onSlotClick={(date, time) =>
+              handleNewAppointment(
+                undefined,
+                time,
+                format(date, "yyyy-MM-dd")
+              )
             }
           />
         ) : (
@@ -225,6 +226,7 @@ export default function AgendaPage() {
             }
           />
         )}
+        </div>
       </div>
 
       <NovaConsultaDialog
@@ -250,6 +252,9 @@ export default function AgendaPage() {
         onOpenChange={setConfirmDialogOpen}
         title={confirmAction.title}
         description={confirmAction.description}
+        requiresMotivo={confirmAction.requiresMotivo}
+        confirmLabel={confirmAction.confirmLabel}
+        confirmVariant={confirmAction.confirmVariant}
         onConfirm={confirmAction.onConfirm}
       />
 
