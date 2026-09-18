@@ -356,19 +356,9 @@ postgres:16-alpine (5432) → api:8080 → frontend:5173
 > Lista de pendencias/mudanças acordadas para a próxima sessão. Apenas documentação —
 > os detalhes de implementação serão definidos no momento de implementar cada item.
 
-1. **Calendário na Agenda para melhor visualização** — ✅ implementado em 16/09/2026 (`MiniCalendar` na coluna de filtros da Agenda; comportamento por vista: Dia altera o dia, Semana altera a semana, Mês muda a visão ao clicar num dia e as setas de mês movem o mês selecionado).
-
-2. **Paciente > Agendamentos: Data e Horário, Profissional, Observação, Status** — reformular `patients/tabs/AgendamentosTab.tsx`: hoje a tabela mostra Tipo / Duração / Creado por (relegar ou remover) e status "Realizada"; mostrar **Data e Horário** como intervalo (`12:00 – 12:30`, usar `startTime` + `endTime`), **Profissional**, **Observação** (`Appointment.notes` já existe em `types/appointment.ts`) e **Status** com **"Atendido"** no lugar de "Realizada" (confirmar se o rename é global via `APPOINTMENT_STATUS_LABELS` ou só na vista do paciente).
-
-3. **Quem indicou o paciente** — hoje só existe `referralSource` ("Como nos conociste?", tabla `referral_source` → select em `DadosCadastraisTab`). Falta registrar **quem** fez a indicação (nome da pessoa/paciente). Decidir: texto livre vs FK a `patient`; exige schema (`patient`), `types/patient.ts`, OpenAPI e formulário/detalhe.
-
-4. **Cadastro de Paciente no Agendamento** — ✅ implementado em 16/09/2026 (`NovaConsultaDialog` deixou de buscar em `MOCK_PATIENTS` e passou a listar o registro compartilhado de `patients/mock-data.ts`, com a opção **`+ Cadastrar "«nome digitado»"`** sempre em primeiro lugar no combobox, abrindo o cadastro rápido (`NovoPacienteDialog`: nome + celular + responsável quando menor de idade).
-
 5. **Odontograma/Caras para procedimento do orçamento** — o `Odontograma` da finalización (`atendimento/components/Odontograma.tsx`) selecciona dentes FDI (32) mas **não faces**; `NovoOrcamentoDialog` não tem odontograma. Estender com selección por **faces** (mesial/distal/oclusal/vestibular/lingual/palatina…) e integrá-lo no orçamento (linhas de `ProcedureLine`); avaliar reuso em `ProcedimentosCard`.
 
 6. **Consultas e Procedimentos Realizados (Plano e Ficha), Procedimentos do Orçamento Aprovado, Baixa nos Procedimentos e Registrar Atendimento Avulso** — construir o fluxo clínico completo em torno de `patients/tabs/ConsultasProcedimentosTab.tsx` (hoje mock): consultas/procedimentos realizados em vistas **Plano** (por consulta) e **Ficha** (histórico do paciente); visualizar os procedimentos pendentes do orçamento aprovado; **baixa** (marcar como realizado) ao finalizar a consulta — `appointment_procedure.quote_procedure_id` (Plano item 2 já agendado); e **registrar atendimento avulso** (procedimento/servicio sem orçamento aprovado).
-
-7. **Acesso à ficha do paciente pela agenda** — adicionar link/botão "Ver ficha" → `/pacientes/:id` (detalhes) em `DetalhesConsultaDialog` e/ou nas cards da agenda.
 
 8. **Pagamento antes do check-in. Não liberar check-in caso o paciente possua pendências em aberto** — regra de negocio: bloquear o check-in se o paciente tem pendências em aberto. Backend: `POST /appointments/{id}/check-in` → `409 problem+json` (RFC 7807); frontend: aviso em `DetalhesConsultaDialog` + derivar a "Registrar pagamento" (já disponível no modal). Definir o que conta como pendência (toda / só vencida / limiar de tolerancia).
 
