@@ -8,7 +8,7 @@ import type { Patient } from "@/types/patient";
 import { DadosCadastraisTab } from "./tabs/DadosCadastraisTab";
 import { DocumentosTab } from "./tabs/DocumentosTab";
 import { AgendamentosTab } from "./tabs/AgendamentosTab";
-import { ConsultasProcedimentosTab } from "./tabs/ConsultasProcedimentosTab";
+import { PlanoFichaTab } from "./tabs/PlanoFichaTab";
 import { OrcamentosTab } from "./tabs/OrcamentosTab";
 import { FinanceiroTab } from "./tabs/FinanceiroTab";
 
@@ -16,7 +16,7 @@ const TABS = [
   { id: "dados-cadastrais", label: "Dados Cadastrais" },
   { id: "documentos", label: "Documentos" },
   { id: "agendamentos", label: "Agendamentos" },
-  { id: "consultas-procedimentos", label: "Consultas e Procedimentos" },
+  { id: "plano-ficha", label: "Plano e Ficha" },
   { id: "orcamentos", label: "Orçamentos" },
   { id: "financeiro", label: "Financeiro" },
 ] as const;
@@ -128,8 +128,8 @@ export default function PacienteDetalhesPage() {
           <Tabs.Content value="agendamentos">
             <AgendamentosTab />
           </Tabs.Content>
-          <Tabs.Content value="consultas-procedimentos">
-            <ConsultasProcedimentosTab />
+          <Tabs.Content value="plano-ficha">
+            <PlanoFichaTab />
           </Tabs.Content>
           <Tabs.Content value="orcamentos">
             <OrcamentosTab />
