@@ -7,26 +7,22 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { NovoOrcamentoDialog } from "./dialogs/NovoOrcamentoDialog";
 import { formatMoney } from "@/lib/masks";
+import {
+  addQuote,
+  getQuotesByPatient,
+  updateQuote,
+  type QuoteRecord,
+  type QuoteStatus,
+} from "../plano-ficha-mock-data";
 
-export interface QuoteRecord {
-  id: number;
-  description: string;
-  totalValue: number;
-  validUntil: string; // DD/MM/YYYY
-  createdBy: string;
-  status: "approved" | "draft" | "sent" | "rejected" | "expired";
-}
+/**
+ * TODO: substituir pelo paciente vindo da API (useParams) — mock único
+ * (mesmo paciente da ficha `PacienteDetalhes`).
+ */
+const PATIENT_ID = "1";
 
-const MOCK_QUOTES: QuoteRecord[] = [
-  { id: 1, description: "Profilaxia 04/25", totalValue: 100, validUntil: "01/04/2027", createdBy: "Kamily Vitória", status: "approved" },
-  { id: 2, description: "Canal dente 36", totalValue: 500, validUntil: "10/04/2027", createdBy: "Kamily Vitória", status: "draft" },
-  { id: 3, description: "Restauração 02/25", totalValue: 220, validUntil: "12/02/2025", createdBy: "Kamily Vitória", status: "sent" },
-  { id: 4, description: "Clareamento", totalValue: 400, validUntil: "05/01/2025", createdBy: "Kamily Vitória", status: "rejected" },
-  { id: 5, description: "Clareamento", totalValue: 400, validUntil: "05/01/2025", createdBy: "Kamily Vitória", status: "expired" },
-];
-
-function getBadgeVariant(status: QuoteRecord["status"]): "neutral" | "info" | "success" | "warning" | "error" {
-  const map: Record<QuoteRecord["status"], "neutral" | "info" | "success" | "warning" | "error"> = {
+function getBadgeVariant(status: QuoteStatus): "neutral" | "info" | "success" | "warning" | "error" {
+  const map: Record<QuoteStatus, "neutral" | "info" | "success" | "warning" | "error"> = {
     approved: "success",
     draft: "neutral",
     sent: "info",
@@ -36,7 +32,7 @@ function getBadgeVariant(status: QuoteRecord["status"]): "neutral" | "info" | "s
   return map[status];
 }
 
-const STATUS_LABELS: Record<QuoteRecord["status"], string> = {
+const STATUS_LABELS: Record<QuoteStatus, string> = {
   approved: "Aprovado",
   draft: "Rascunho",
   sent: "Enviado",
@@ -95,9 +91,18 @@ function isoToBr(iso: string): string {
 }
 
 export function OrcamentosTab() {
-  const [quotes, setQuotes] = useState<QuoteRecord[]>(MOCK_QUOTES);
+  const [quotes, setQuotes] = useState<QuoteRecord[]>(() =>
+    getQuotesByPatient(PATIENT_ID).map((q) => ({ ...q, items: q.items.map((i) => ({ ...i })) })),
+  );
   const [isNewOpen, setNewOpen] = useState(false);
   const [selectedQuote, setSelectedQuote] = useState<QuoteRecord | null>(null);
+
+  /** Recopia o registry para o estado (mock em runtime é mutável). */
+  const syncFromRegistry = () => {
+    setQuotes(
+      getQuotesByPatient(PATIENT_ID).map((q) => ({ ...q, items: q.items.map((i) => ({ ...i })) })),
+    );
+  };
 
   const handleNew = () => {
     setSelectedQuote(null);
@@ -114,37 +119,46 @@ export function OrcamentosTab() {
     if (!open) setSelectedQuote(null);
   };
 
-  const handleSave = (data: { description: string; validUntilIso: string; status: QuoteRecord["status"]; totalValue: number }) => {
+  const handleSave = (data: {
+    description: string;
+    validUntilIso: string;
+    status: QuoteRecord["status"];
+    totalValue: number;
+    items: {
+      procedureName: string;
+      toothFdi: number | null;
+      unitPrice: number;
+      discount: number;
+      quantity: number;
+      finalPrice: number;
+    }[];
+  }) => {
     const validUntilBr = isoToBr(data.validUntilIso) || new Date().toLocaleDateString("pt-BR");
     if (selectedQuote) {
-      const effectiveTotal = data.totalValue !== 0 ? data.totalValue : selectedQuote.totalValue;
-      setQuotes((prev) =>
-        prev.map((q) =>
-          q.id === selectedQuote.id
-            ? {
-                ...q,
-                description: data.description || q.description,
-                validUntil: validUntilBr,
-                status: data.status,
-                totalValue: effectiveTotal,
-              }
-            : q,
-        ),
-      );
+      updateQuote(PATIENT_ID, selectedQuote.id, {
+        description: data.description || selectedQuote.description,
+        validUntil: validUntilBr,
+        status: data.status,
+        totalValue: data.totalValue !== 0 ? data.totalValue : selectedQuote.totalValue,
+        // Sem linhas preenchidas, mantém os itens atuais (e as baixas já feitas).
+        items: data.items.length
+          ? data.items.map((item, idx) => ({
+              ...item,
+              id: `q${selectedQuote.id}-edit-${idx + 1}`,
+              realized: false,
+            }))
+          : null,
+      });
     } else {
-      const nextId = Math.max(0, ...quotes.map((q) => q.id)) + 1;
-      setQuotes((prev) => [
-        ...prev,
-        {
-          id: nextId,
-          description: data.description || "Novo orçamento",
-          validUntil: validUntilBr,
-          createdBy: "Kamily Vitória",
-          status: data.status,
-          totalValue: data.totalValue,
-        },
-      ]);
+      addQuote(PATIENT_ID, {
+        description: data.description || "Novo orçamento",
+        validUntil: validUntilBr,
+        createdBy: "Kamily Vitória",
+        totalValue: data.totalValue,
+        items: data.items,
+      });
     }
+    syncFromRegistry();
     setNewOpen(false);
     setSelectedQuote(null);
   };

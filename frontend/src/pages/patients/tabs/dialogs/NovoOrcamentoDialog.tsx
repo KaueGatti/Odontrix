@@ -52,7 +52,21 @@ interface NovoOrcamentoDialogProps {
   patientName: string;
   patientLocked?: boolean;
   quote?: QuoteView | null;
-  onSave?: (data: { description: string; validUntilIso: string; status: QuoteStatus; totalValue: number }) => void;
+  onSave?: (data: {
+    description: string;
+    validUntilIso: string;
+    status: QuoteStatus;
+    totalValue: number;
+    /** Linhas de procedimento — alimentam os itens (quote_procedure) do orçamento. */
+    items: {
+      procedureName: string;
+      toothFdi: number | null;
+      unitPrice: number;
+      discount: number;
+      quantity: number;
+      finalPrice: number;
+    }[];
+  }) => void;
 }
 
 const MOCK_PROCEDURES = [
@@ -258,8 +272,22 @@ export function NovoOrcamentoDialog({
     if (isLocked) return;
     const totalValue = total;
     const effectiveStatus: QuoteStatus = status;
+    const items = procedures
+      .filter((p) => p.procedureName)
+      .map((p) => {
+        const unit = parseCurrency(p.unitValue);
+        const discount = lineDiscount(p);
+        return {
+          procedureName: p.procedureName,
+          toothFdi: null,
+          unitPrice: unit,
+          discount: Math.round(discount * 100) / 100,
+          quantity: p.quantity,
+          finalPrice: Math.round((unit - discount) * p.quantity * 100) / 100,
+        };
+      });
     if (onSave) {
-      onSave({ description, validUntilIso: validUntil, status: effectiveStatus, totalValue });
+      onSave({ description, validUntilIso: validUntil, status: effectiveStatus, totalValue, items });
     } else {
       onOpenChange(false);
     }
