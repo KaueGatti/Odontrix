@@ -1,9 +1,13 @@
 import { cn } from "@/lib/utils";
+import { TOOTH_ARTWORK } from "./toothArtwork";
 
 /**
- * Odontograma gráfico em notação FDI (32 dentes), fiel ao mockup:
- * quadrantes separados por um vão central, dentes desenhados em SVG
- * (coroa + raiz) e inferiores espelhados verticalmente.
+ * Odontograma gráfico em notação FDI (32 dentes). Cada dente usa a arte
+ * vetorial AUTO-GERADA a partir de public/fdi-*.png (scripts/tooth-svg/
+ * trace.mjs, com verificação de IoU contra os pixels), com contorno
+ * anatômico próprio por tipo de dente: arcada superior com a coroa voltada
+ * para baixo e inferior para cima (convenção de prontuário odontológico),
+ * quadrantes separados por um vão central.
  */
 
 const UPPER_RIGHT = [18, 17, 16, 15, 14, 13, 12, 11];
@@ -27,13 +31,10 @@ function Tooth({
   lower: boolean;
   onToggle: (n: number) => void;
 }) {
-  const rootCls = selected
-    ? "fill-[#c8d7fb] stroke-[#3d64c9]"
-    : "fill-[#eceef2] stroke-[#c9cdd6]";
-  const crownCls = selected
-    ? "fill-[#4F7EF7] stroke-[#3d64c9]"
-    : "fill-[#f5f6f9] stroke-[#aab0bd]";
-  const detailCls = selected ? "fill-white/85" : "fill-[#aab0bd]/55";
+  const art = TOOTH_ARTWORK[num];
+  const silCls = selected ? "fill-[#4F7EF7]" : "fill-[#f5f6f9]";
+  const shadeCls = selected ? "fill-white/80" : "fill-[#aab0bd]/45";
+  const inkCls = selected ? "fill-[#3d64c9]" : "fill-[#aab0bd]";
 
   return (
     <button
@@ -43,26 +44,33 @@ function Tooth({
       aria-pressed={selected}
       className={cn(
         "flex w-[25px] flex-shrink-0 cursor-pointer select-none flex-col items-center",
-        "[&:hover_.t-c]:stroke-[#4F7EF7]",
+        "[&:hover_.t-c]:fill-[#4F7EF7]",
         lower && "flex-col-reverse"
       )}
     >
       <svg
-        viewBox="0 0 20 28"
+        viewBox={art.viewBox}
         className="block h-7 w-5 overflow-visible"
         aria-hidden="true"
       >
         <path
-          className={cn("transition-colors", rootCls)}
-          strokeWidth={1}
-          d="M4 11 L4 22 C4 24.6 5.6 26.6 7.6 26.6 C9.4 26.6 9.7 24 10 21.4 C10.3 24 10.6 26.6 12.4 26.6 C14.4 26.6 16 24.6 16 22 L16 11 Z"
+          className={cn("transition-colors", silCls)}
+          fillRule="evenodd"
+          d={art.silhouette}
         />
+        {art.shades.map((d, i) => (
+          <path
+            key={i}
+            className={cn("transition-colors", shadeCls)}
+            fillRule="evenodd"
+            d={d}
+          />
+        ))}
         <path
-          className={cn("t-c transition-colors", crownCls)}
-          strokeWidth={1.1}
-          d="M4.2 11.5 C2.8 11.5 2.2 9.8 2.8 7.6 C3.4 5 4.6 2.6 6.6 1.6 C8.2 0.9 11.8 0.9 13.4 1.6 C15.4 2.6 16.6 5 17.2 7.6 C17.8 9.8 17.2 11.5 15.8 11.5 Z"
+          className={cn("t-c transition-colors", inkCls)}
+          fillRule="evenodd"
+          d={art.outline}
         />
-        <ellipse className={detailCls} cx="10" cy="6" rx="3.2" ry="1.7" />
       </svg>
       <span
         className={cn(
