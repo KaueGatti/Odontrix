@@ -121,7 +121,7 @@ function FacePanel({
 }) {
   const art = TOOTH_ARTWORK[num];
   return (
-    <div className="w-[220px] rounded-[10px] border-[1.5px] border-border bg-[var(--gray-50)] px-4 pb-3 pt-3.5">
+    <div className="flex w-[220px] flex-col rounded-[10px] border-[1.5px] border-border bg-[var(--gray-50)] px-4 pb-3 pt-3.5">
       <div className="flex items-baseline justify-between">
         <span className="text-[12.5px] font-semibold text-[var(--gray-900)]">
           Dente {num}
@@ -142,7 +142,7 @@ function FacePanel({
       <div className="mt-2 flex justify-center">
         <svg
           viewBox={art.viewBox}
-          className="block h-24 w-16 overflow-visible"
+          className="block h-20 w-14 overflow-visible"
           aria-hidden="true"
         >
           <path className="fill-[#4F7EF7]" fillRule="evenodd" d={art.silhouette} />
@@ -156,7 +156,7 @@ function FacePanel({
       <div className="mt-2.5 text-[10px] font-semibold uppercase tracking-[0.05em] text-[var(--gray-500)]">
         Faces do dente
       </div>
-      <div className="mt-1.5 flex flex-wrap gap-1">
+      <div className="mt-1.5 mb-2 flex flex-wrap gap-1">
         {TOOTH_FACES.map(({ key, short, label }) => {
           const on = faces.includes(key);
           return (
@@ -180,7 +180,7 @@ function FacePanel({
           );
         })}
       </div>
-      <p className="mt-2 text-[10px] leading-snug text-muted-foreground">
+      <p className="mt-auto text-[10px] leading-snug text-muted-foreground">
         {faces.length === 0
           ? "Nenhuma face marcada — o procedimento considera o dente inteiro."
           : `Faces marcadas: ${faces.join(" · ")}`}
@@ -227,8 +227,8 @@ export function Odontograma({
           .join(", ")}`;
 
   return (
-    <div className="inline-flex flex-wrap items-start gap-3 [zoom:1.15]">
-      <div className="rounded-[10px] border-[1.5px] border-border bg-white px-4 pb-3 pt-3.5">
+    <div className="inline-flex flex-wrap items-stretch gap-3 [zoom:1.15]">
+      <div className="flex flex-col rounded-[10px] border-[1.5px] border-border bg-white px-4 pb-3 pt-3.5">
         <div className="mb-1.5 flex text-[9px] font-semibold tracking-[0.03em] text-muted-foreground">
           <span className="w-[199px] text-center">Superior direito</span>
           <span className="w-2.5" />
@@ -283,13 +283,13 @@ export function Odontograma({
           ))}
         </div>
 
-        <div className="mt-1.5 flex text-[9px] font-semibold tracking-[0.03em] text-muted-foreground">
+        <div className="mb-2.5 mt-1.5 flex text-[9px] font-semibold tracking-[0.03em] text-muted-foreground">
           <span className="w-[199px] text-center">Inferior direito</span>
           <span className="w-2.5" />
           <span className="w-[199px] text-center">Inferior esquerdo</span>
         </div>
 
-        <div className="mt-2.5 flex items-center gap-2.5 border-t border-dashed border-border pt-2.5 text-[10px] text-muted-foreground">
+        <div className="mt-auto flex items-center gap-2.5 border-t border-dashed border-border pt-2.5 text-[10px] text-muted-foreground">
           <span className="flex items-center gap-1">
             <span className="inline-block h-3 w-3 rounded-[3px] border border-[#aab0bd] bg-[#f5f6f9]" />
             Não selecionado

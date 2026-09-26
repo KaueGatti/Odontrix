@@ -343,7 +343,7 @@ export function NovoOrcamentoDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-h-[95vh] max-w-6xl flex-col overflow-hidden p-0 gap-0 sm:max-w-6xl">
+      <DialogContent className="flex max-h-[95vh] max-w-7xl flex-col overflow-hidden p-0 gap-0 sm:max-w-7xl">
         {/* Acessibilidade: título real fica no layout, mas mantemos header sr-only para Radix */}
         <DialogHeader className="sr-only">
           <DialogTitle>Orçamento</DialogTitle>
