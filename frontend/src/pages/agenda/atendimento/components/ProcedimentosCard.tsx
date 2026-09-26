@@ -8,8 +8,8 @@ import { MoneyInput } from "@/components/ui/money-input";
 import { cn } from "@/lib/utils";
 import { formatMoneyFromCents } from "@/lib/masks";
 import { CARD_CLASS, FIELD_LABEL_CLASS, SEC_LABEL_CLASS } from "../shared";
-import type { ProcedimentoRealizado } from "../types";
-import {Odontograma} from "@/pages/agenda/atendimento/components/Odontograma.tsx";
+import type { ProcedimentoRealizado, ToothFace } from "../types";
+import { Odontograma } from "./Odontograma";
 
 /** Catálogo de procedimentos com preço padrão (mock, igual ao mockup). */
 const CATALOGO: { nome: string; precoCents: number }[] = [
@@ -42,6 +42,7 @@ export function ProcedimentosCard({
   const [nome, setNome] = useState("");
   const [obs, setObs] = useState("");
   const [dentes, setDentes] = useState<number[]>([]);
+  const [facesByTooth, setFacesByTooth] = useState<Record<number, ToothFace[]>>({});
   const [valorCents, setValorCents] = useState(0);
   const [descontoCents, setDescontoCents] = useState(0);
 
@@ -51,21 +52,45 @@ export function ProcedimentosCard({
     setDentes((prev) =>
       prev.includes(dente) ? prev.filter((d) => d !== dente) : [...prev, dente]
     );
+    // Remove faces do dente (seleção ou desmarcação — o mapa só vale para selecionados).
+    setFacesByTooth((prev) => {
+      if (!prev[dente]) return prev;
+      const next = { ...prev };
+      delete next[dente];
+      return next;
+    });
+  }
+
+  function toggleFace(dente: number, face: ToothFace) {
+    setFacesByTooth((prev) => {
+      const cur = prev[dente] ?? [];
+      return {
+        ...prev,
+        [dente]: cur.includes(face)
+          ? cur.filter((f) => f !== face)
+          : [...cur, face],
+      };
+    });
   }
 
   function resetPanel() {
     setNome("");
     setObs("");
     setDentes([]);
+    setFacesByTooth({});
     setValorCents(0);
     setDescontoCents(0);
   }
 
   function handleAdd() {
     if (!nome) return;
+    const faces = Object.fromEntries(
+      Object.entries(facesByTooth).filter(([, fs]) => fs.length > 0)
+    ) as Record<number, ToothFace[]>;
     onAdd({
       nome,
       dentes,
+      ...(Object.keys(faces).length > 0 ? { faces } : {}),
       valorCents,
       descontoCents,
       valorFinalCents,
@@ -145,10 +170,16 @@ export function ProcedimentosCard({
             <Label className={FIELD_LABEL_CLASS}>
               Dente(s) envolvido(s){" "}
               <span className="font-normal text-muted-foreground/70">
-                — notação FDI, opcional
+                — clique no dente para selecionar; clique de novo para marcar
+                faces
               </span>
             </Label>
-            <Odontograma selecionados={dentes} onToggle={toggleDente}/>
+            <Odontograma
+              selecionados={dentes}
+              onToggle={toggleDente}
+              faces={facesByTooth}
+              onToggleFace={toggleFace}
+            />
           </div>
 
           <div className="mb-3 grid grid-cols-3 gap-3">
@@ -231,14 +262,18 @@ export function ProcedimentosCard({
                   {p.dentes.length === 0 ? (
                     <span className="text-muted-foreground">—</span>
                   ) : (
-                    p.dentes.map((d) => (
-                      <span
-                        key={d}
-                        className="mr-0.5 inline-block rounded-[10px] border border-primary/20 bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary"
-                      >
-                        {d}
-                      </span>
-                    ))
+                    p.dentes.map((d) => {
+                      const fs = p.faces?.[d];
+                      return (
+                        <span
+                          key={d}
+                          className="mr-0.5 inline-block rounded-[10px] border border-primary/20 bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary"
+                        >
+                          {d}
+                          {fs && fs.length > 0 ? ` · ${fs.join("")}` : null}
+                        </span>
+                      );
+                    })
                   )}
                 </td>
                 <td className={TD_CLASS}>
