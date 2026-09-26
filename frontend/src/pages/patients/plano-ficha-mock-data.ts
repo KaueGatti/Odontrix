@@ -15,13 +15,17 @@
  * para as tabelas do schema (V1__create-database.sql).
  */
 
+import type { ToothFace } from "@/pages/agenda/atendimento/types";
+
 export type QuoteStatus = "approved" | "draft" | "sent" | "rejected" | "expired";
 
 export interface QuoteProcedureItem {
   id: string;
   procedureName: string;
-  /** Dente FDI único do item (padrão atual do diálogo de orçamento). */
-  toothFdi: number | null;
+  /** Dentes FDI envolvidos no item (vazio = procedimento geral). */
+  teeth: number[];
+  /** Faces marcadas por dente (chave FDI). Vazio/ausente = dente inteiro. */
+  faces?: Record<number, ToothFace[]>;
   unitPrice: number;
   discount: number;
   quantity: number;
@@ -38,6 +42,8 @@ export interface QuoteRecord {
   id: number;
   description: string;
   totalValue: number;
+  /** Total já pago pelo paciente (entradas/parcelas pagas — mock; virá dos payments/installments da API). */
+  paidTotal?: number;
   /** DD/MM/AAAA */
   validUntil: string;
   createdBy: string;
@@ -50,6 +56,8 @@ export interface RealizadoRecord {
   procedureName: string;
   /** Dentes FDI envolvidos (vazio = procedimento geral). */
   teeth: number[];
+  /** Faces marcadas por dente (chave FDI). Vazio/ausente = dente inteiro. */
+  faces?: Record<number, ToothFace[]>;
   /** DD/MM/AAAA */
   date: string;
   dentistName: string;
@@ -69,13 +77,14 @@ const QUOTE_SEED: QuoteRecord[] = [
     id: 1,
     description: "Profilaxia 04/25",
     totalValue: 1220,
+    paidTotal: 470,
     validUntil: "01/04/2027",
     createdBy: "Kamily Vitória",
     status: "approved",
     items: [
-      { id: "q1-1", procedureName: "Profilaxia", toothFdi: null, unitPrice: 120, discount: 0, quantity: 1, finalPrice: 120, realized: true, realizedAt: "10/02/2026", realizedBy: "r-seed-1" },
-      { id: "q1-2", procedureName: "Restauração em resina", toothFdi: 36, unitPrice: 350, discount: 0, quantity: 1, finalPrice: 350, realized: false },
-      { id: "q1-3", procedureName: "Canal (Endodontia)", toothFdi: 46, unitPrice: 750, discount: 0, quantity: 1, finalPrice: 750, realized: false },
+      { id: "q1-1", procedureName: "Profilaxia", teeth: [], unitPrice: 120, discount: 0, quantity: 1, finalPrice: 120, realized: true, realizedAt: "10/02/2026", realizedBy: "r-seed-1" },
+      { id: "q1-2", procedureName: "Restauração em resina", teeth: [36], unitPrice: 350, discount: 0, quantity: 1, finalPrice: 350, realized: false },
+      { id: "q1-3", procedureName: "Canal (Endodontia)", teeth: [46], unitPrice: 750, discount: 0, quantity: 1, finalPrice: 750, realized: false },
     ],
   },
   { id: 2, description: "Canal dente 36", totalValue: 500, validUntil: "10/04/2027", createdBy: "Kamily Vitória", status: "draft", items: [] },
@@ -131,14 +140,21 @@ export function getRealizadosByPatient(patientId: string): RealizadoRecord[] {
  * Baixa: registra a execução de um item do orçamento aprovado.
  * Marca o item como realizado e cria o registro de histórico vinculado
  * (futuro `appointment_procedure` com `quote_procedure_id`).
+ * `date` (DD/MM/AAAA) é a data da execução — quando omitido, hoje.
  */
-export function registerBaixa(patientId: string, item: QuoteProcedureItem, dentistName: string): RealizadoRecord {
+export function registerBaixa(
+  patientId: string,
+  item: QuoteProcedureItem,
+  dentistName: string,
+  date?: string,
+): RealizadoRecord {
   const realizados = getRealizadosByPatient(patientId);
   const record: RealizadoRecord = {
     id: `r-runtime-${realizadosSeq++}`,
     procedureName: item.procedureName,
-    teeth: item.toothFdi ? [item.toothFdi] : [],
-    date: hojeBr(),
+    teeth: [...item.teeth],
+    faces: item.faces ? { ...item.faces } : undefined,
+    date: date || hojeBr(),
     dentistName,
     origin: "orcamento",
     value: item.finalPrice,
@@ -154,12 +170,13 @@ export function registerBaixa(patientId: string, item: QuoteProcedureItem, denti
 /** Atendimento avulso: procedimento realizado sem orçamento aprovado. */
 export function registerAvulso(
   patientId: string,
-  input: { procedureName: string; teeth: number[]; date: string; dentistName: string; value: number },
+  input: { procedureName: string; teeth: number[]; faces?: Record<number, ToothFace[]>; date: string; dentistName: string; value: number },
 ): RealizadoRecord {
   const record: RealizadoRecord = {
     id: `r-runtime-${realizadosSeq++}`,
     procedureName: input.procedureName,
     teeth: input.teeth,
+    faces: input.faces ? { ...input.faces } : undefined,
     date: input.date || hojeBr(),
     dentistName: input.dentistName,
     origin: "avulso",
@@ -192,6 +209,7 @@ export function addQuote(
     createdBy: input.createdBy,
     status: "draft",
     totalValue: input.totalValue,
+    paidTotal: 0,
     items: input.items.map((item, idx) => ({
       realized: false,
       ...item,

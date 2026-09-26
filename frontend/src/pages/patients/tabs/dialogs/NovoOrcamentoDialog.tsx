@@ -22,6 +22,8 @@ import {
   parseMoneyToCents,
 } from "@/lib/masks";
 import { cn } from "@/lib/utils";
+import { Odontograma } from "@/pages/agenda/atendimento/components/Odontograma";
+import type { ToothFace } from "@/pages/agenda/atendimento/types";
 import { listMockPatientNames } from "@/pages/patients/mock-data";
 
 type DiscountType = "currency" | "percent";
@@ -29,6 +31,10 @@ type DiscountType = "currency" | "percent";
 interface ProcedureLine {
   id: number;
   procedureName: string;
+  /** Dentes FDI selecionados no odontograma da linha (vazio = geral). */
+  teeth: number[];
+  /** Faces marcadas por dente (chave FDI). */
+  faces: Record<number, ToothFace[]>;
   unitValue: string;
   discountValue: string;
   discountType: DiscountType;
@@ -60,7 +66,8 @@ interface NovoOrcamentoDialogProps {
     /** Linhas de procedimento — alimentam os itens (quote_procedure) do orçamento. */
     items: {
       procedureName: string;
-      toothFdi: number | null;
+      teeth: number[];
+      faces?: Record<number, ToothFace[]>;
       unitPrice: number;
       discount: number;
       quantity: number;
@@ -152,6 +159,8 @@ export function NovoOrcamentoDialog({
   const createRow = (): ProcedureLine => ({
     id: idRef.current++,
     procedureName: "",
+    teeth: [],
+    faces: {},
     unitValue: "",
     discountValue: "",
     discountType: "percent",
@@ -225,6 +234,41 @@ export function NovoOrcamentoDialog({
     setProcedures((prev) => prev.map((p) => (p.id === id ? { ...p, ...patch } : p)));
   };
 
+  /** Linha com o odontograma expandido (seleção de dentes + faces). */
+  const [teethLineId, setTeethLineId] = useState<number | null>(null);
+
+  const toggleLineTooth = (lineId: number, dente: number) => {
+    if (isLocked) return;
+    setProcedures((prev) =>
+      prev.map((p) => {
+        if (p.id !== lineId) return p;
+        const teeth = p.teeth.includes(dente)
+          ? p.teeth.filter((t) => t !== dente)
+          : [...p.teeth, dente];
+        const faces = { ...p.faces };
+        delete faces[dente];
+        return { ...p, teeth, faces };
+      }),
+    );
+  };
+
+  const toggleLineFace = (lineId: number, dente: number, face: ToothFace) => {
+    if (isLocked) return;
+    setProcedures((prev) =>
+      prev.map((p) => {
+        if (p.id !== lineId) return p;
+        const cur = p.faces[dente] ?? [];
+        return {
+          ...p,
+          faces: {
+            ...p.faces,
+            [dente]: cur.includes(face) ? cur.filter((f) => f !== face) : [...cur, face],
+          },
+        };
+      }),
+    );
+  };
+
   const removeRow = (id: number) => {
     if (isLocked) return;
     setProcedures((prev) => prev.filter((p) => p.id !== id));
@@ -277,9 +321,13 @@ export function NovoOrcamentoDialog({
       .map((p) => {
         const unit = parseCurrency(p.unitValue);
         const discount = lineDiscount(p);
+        const faces = Object.fromEntries(
+          Object.entries(p.faces).filter(([t, fs]) => p.teeth.includes(Number(t)) && fs.length > 0),
+        ) as Record<number, ToothFace[]>;
         return {
           procedureName: p.procedureName,
-          toothFdi: null,
+          teeth: p.teeth,
+          ...(Object.keys(faces).length > 0 ? { faces } : {}),
           unitPrice: unit,
           discount: Math.round(discount * 100) / 100,
           quantity: p.quantity,
@@ -435,7 +483,7 @@ export function NovoOrcamentoDialog({
             </h3>
 
             {/* Header da tabela */}
-            <div className="mt-1 grid grid-cols-[1.5fr_0.85fr_0.9fr_0.45fr_0.85fr_1.2fr_28px] gap-1.5 rounded-md bg-slate-50 px-2 py-1.5">
+            <div className="mt-1 grid grid-cols-[1.5fr_0.85fr_0.9fr_0.45fr_0.85fr_1.2fr_100px_28px] gap-1.5 rounded-md bg-slate-50 px-2 py-1.5">
               <span className="text-[12px] font-bold uppercase tracking-[0.05em] text-primary">
                 Procedimento
               </span>
@@ -454,6 +502,9 @@ export function NovoOrcamentoDialog({
               <span className="text-[12px] font-bold uppercase tracking-[0.05em] text-primary">
                 Observação
               </span>
+              <span className="text-center text-[12px] font-bold uppercase tracking-[0.05em] text-primary">
+                Dentes
+              </span>
               <span />
             </div>
 
@@ -462,10 +513,16 @@ export function NovoOrcamentoDialog({
               {procedures.map((p) => {
                 const unit = parseCurrency(p.unitValue);
                 const lineTotal = (unit - lineDiscount(p)) * p.quantity;
+                const teethSummary = p.teeth
+                  .map((t) => {
+                    const fs = p.faces[t];
+                    return fs && fs.length > 0 ? `${t}·${fs.join("")}` : `${t}`;
+                  })
+                  .join(", ");
                 return (
+                  <div key={p.id}>
                   <div
-                    key={p.id}
-                    className="grid grid-cols-[1.5fr_0.85fr_0.9fr_0.45fr_0.85fr_1.2fr_28px] items-center gap-1.5"
+                    className="grid grid-cols-[1.5fr_0.85fr_0.9fr_0.45fr_0.85fr_1.2fr_100px_28px] items-center gap-1.5"
                   >
                     <Select
                       aria-label="Procedimento"
@@ -562,6 +619,24 @@ export function NovoOrcamentoDialog({
 
                     <button
                       type="button"
+                      aria-label="Dentes e faces do procedimento"
+                      disabled={isLocked}
+                      onClick={() => setTeethLineId(teethLineId === p.id ? null : p.id)}
+                      title={teethSummary || "Selecionar dentes e faces"}
+                      className={cn(
+                        "inline-flex h-7 max-w-[100px] items-center justify-center overflow-hidden rounded-[8px] border px-1.5 text-[10px] font-semibold transition-colors",
+                        p.teeth.length
+                          ? "border-primary/30 bg-primary/5 text-primary"
+                          : "border-input bg-muted text-muted-foreground hover:border-primary/40 hover:text-primary",
+                        teethLineId === p.id && "border-primary/50 bg-primary/10",
+                        isLocked && "opacity-60",
+                      )}
+                    >
+                      <span className="truncate">{teethSummary || "Dentes"}</span>
+                    </button>
+
+                    <button
+                      type="button"
                       aria-label="Remover procedimento"
                       disabled={isLocked}
                       onClick={() => removeRow(p.id)}
@@ -569,6 +644,18 @@ export function NovoOrcamentoDialog({
                     >
                       <X className="h-3 w-3" />
                     </button>
+                  </div>
+
+                  {teethLineId === p.id && !isLocked && (
+                    <div className="mt-1.5 rounded-[10px] border border-border bg-[var(--gray-50)] p-2">
+                      <Odontograma
+                        selecionados={p.teeth}
+                        onToggle={(n) => toggleLineTooth(p.id, n)}
+                        faces={p.faces}
+                        onToggleFace={(d, f) => toggleLineFace(p.id, d, f)}
+                      />
+                    </div>
+                  )}
                   </div>
                 );
               })}

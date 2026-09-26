@@ -18,6 +18,11 @@ import type { ToothFace } from "../types";
  * dente já selecionado apenas o foca (para marcar faces M/D/O·I/V/L·P no
  * painel); clicar no dente focado o desmarca. Sem faces marcadas, o
  * procedimento considera o dente inteiro.
+ *
+ * Escala geral: `zoom: 1.15` na raiz (+15% sobre o tamanho base — dentes,
+ * painel, tipografia e espaçamentos crescem juntos; `zoom`, ao contrário de
+ * `transform: scale`, também amplia a caixa de layout, preservando o fluxo
+ * dos contêineres pais).
  */
 
 const UPPER_RIGHT = [18, 17, 16, 15, 14, 13, 12, 11];
@@ -151,7 +156,7 @@ function FacePanel({
       <div className="mt-2.5 text-[10px] font-semibold uppercase tracking-[0.05em] text-[var(--gray-500)]">
         Faces do dente
       </div>
-      <div className="mt-1.5 flex flex-wrap gap-1.5">
+      <div className="mt-1.5 flex flex-wrap gap-1">
         {TOOTH_FACES.map(({ key, short, label }) => {
           const on = faces.includes(key);
           return (
@@ -163,7 +168,8 @@ function FacePanel({
               aria-pressed={on}
               onClick={() => onToggleFace(num, key)}
               className={cn(
-                "h-6 min-w-[32px] cursor-pointer rounded-full border px-2 text-[10.5px] font-semibold transition-colors",
+                "h-6 min-w-[32px] cursor-pointer rounded-full border px-1 text-[10.5px] font-semibold" +
+                  " transition-colors",
                 on
                   ? "border-[#3d64c9] bg-primary text-white"
                   : "border-border bg-white text-[var(--gray-700)] hover:border-primary hover:text-primary"
@@ -221,7 +227,7 @@ export function Odontograma({
           .join(", ")}`;
 
   return (
-    <div className="inline-flex flex-wrap items-start gap-3">
+    <div className="inline-flex flex-wrap items-start gap-3 [zoom:1.15]">
       <div className="rounded-[10px] border-[1.5px] border-border bg-white px-4 pb-3 pt-3.5">
         <div className="mb-1.5 flex text-[9px] font-semibold tracking-[0.03em] text-muted-foreground">
           <span className="w-[199px] text-center">Superior direito</span>
@@ -229,7 +235,7 @@ export function Odontograma({
           <span className="w-[199px] text-center">Superior esquerdo</span>
         </div>
 
-        <div className="flex items-end gap-px">
+        <div className="flex items-end">
           {UPPER_RIGHT.map((num) => (
             <Tooth
               key={num}
@@ -253,7 +259,7 @@ export function Odontograma({
           ))}
         </div>
 
-        <div className="mt-2.5 flex items-start gap-px">
+        <div className="mt-2.5 flex items-start">
           {LOWER_RIGHT.map((num) => (
             <Tooth
               key={num}

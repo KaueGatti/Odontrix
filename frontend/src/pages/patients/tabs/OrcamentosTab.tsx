@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Eye, Plus } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { NovoOrcamentoDialog } from "./dialogs/NovoOrcamentoDialog";
 import { formatMoney } from "@/lib/masks";
+import type { ToothFace } from "@/pages/agenda/atendimento/types";
 import {
   addQuote,
   getQuotesByPatient,
@@ -90,12 +91,35 @@ function isoToBr(iso: string): string {
   return `${d.padStart(2, "0")}/${m.padStart(2, "0")}/${y}`;
 }
 
-export function OrcamentosTab() {
+export function OrcamentosTab({
+  initialQuoteId = null,
+  onConsumeQuote,
+}: {
+  /** Orçamento a abrir automaticamente (navegação vinda do modal de cobrança). */
+  initialQuoteId?: number | null;
+  /** Notifica o pai para limpar o state de navegação após o consumo. */
+  onConsumeQuote?: () => void;
+} = {}) {
   const [quotes, setQuotes] = useState<QuoteRecord[]>(() =>
     getQuotesByPatient(PATIENT_ID).map((q) => ({ ...q, items: q.items.map((i) => ({ ...i })) })),
   );
   const [isNewOpen, setNewOpen] = useState(false);
   const [selectedQuote, setSelectedQuote] = useState<QuoteRecord | null>(null);
+
+  /** Abre o visualizador do orçamento indicado pela navegação (uma vez por montagem). */
+  const consumedInitialQuoteRef = useRef(false);
+  useEffect(() => {
+    if (consumedInitialQuoteRef.current) return;
+    consumedInitialQuoteRef.current = true;
+    if (initialQuoteId != null) {
+      const target = getQuotesByPatient(PATIENT_ID).find((q) => q.id === initialQuoteId);
+      if (target) {
+        setSelectedQuote(target);
+        setNewOpen(true);
+      }
+    }
+    onConsumeQuote?.();
+  }, [initialQuoteId, onConsumeQuote]);
 
   /** Recopia o registry para o estado (mock em runtime é mutável). */
   const syncFromRegistry = () => {
@@ -126,7 +150,8 @@ export function OrcamentosTab() {
     totalValue: number;
     items: {
       procedureName: string;
-      toothFdi: number | null;
+      teeth: number[];
+      faces?: Record<number, ToothFace[]>;
       unitPrice: number;
       discount: number;
       quantity: number;

@@ -1,5 +1,7 @@
 import { useMemo, useState } from "react";
-import { Banknote, Check, X } from "lucide-react";
+import { useNavigate } from "react-router";
+import { Banknote, Check, ExternalLink, ReceiptText, X } from "lucide-react";
+import * as Tabs from "@radix-ui/react-tabs";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,6 +19,9 @@ import {
   type PaymentInstallment,
 } from "./RegistrarPagamentoDialog";
 import { formatMoney, formatMoneyPlain } from "@/lib/masks";
+import { getQuotesByPatient } from "../../plano-ficha-mock-data";
+import { DetalheBoletoDialog } from "@/pages/boletos/components/DetalheBoletoDialog";
+import type { Boleto } from "@/pages/boletos/types";
 
 interface CobrancaDialogProps {
   open: boolean;
@@ -24,6 +29,8 @@ interface CobrancaDialogProps {
   quoteDescription: string;
   quoteTotal: number;
   patientName: string;
+  /** Orçamento vinculado (null = cobrança avulsa/manual, sem orçamento). */
+  quoteId?: number | null;
 }
 
 interface InstallmentRow {
@@ -33,6 +40,8 @@ interface InstallmentRow {
   pago: string;
   combinado: string;
   forma: string;
+  /** Boleto gerado para a parcela (ausente = sem boleto → ícone de pagamento). */
+  boletoId?: string;
   status: "pending" | "overdue" | "paid";
 }
 
@@ -43,8 +52,38 @@ const INITIAL_ROWS: InstallmentRow[] = Array.from({ length: 10 }, (_, i) => ({
   pago: "",
   combinado: "PIX",
   forma: "",
+  boletoId: i + 1 === 2 ? "boleto-p2" : i + 1 === 5 ? "boleto-p5" : undefined,
   status: i + 1 === 2 ? "overdue" : "pending",
 }));
+
+/**
+ * Mock: boletos gerados por parcela (mapeia `boleto.installment_id` do schema).
+ * `paciente` é preenchido com a prop `patientName` ao abrir o detalhe.
+ * Quando a API existir, este mapa é descartável.
+ */
+const BOLETOS_PARCELA: Record<string, Omit<Boleto, "paciente">> = {
+  "boleto-p2": {
+    id: "boleto-p2",
+    parcela: "Parcela 2/10",
+    nossoNumero: "00012405",
+    valorCents: 40000,
+    vencimento: "30/05/2025",
+    emitidoEm: "05/05/2025",
+    registradoEm: "06/05/2025",
+    linhaDigitable: "34191.79001 01043.510047 91020.150008 8 96540000040000",
+    status: "overdue",
+  },
+  "boleto-p5": {
+    id: "boleto-p5",
+    parcela: "Parcela 5/10",
+    nossoNumero: "00012408",
+    valorCents: 40000,
+    vencimento: "30/05/2025",
+    emitidoEm: "05/05/2025",
+    linhaDigitable: "34191.79001 01043.510047 91020.150008 8 96540000040000",
+    status: "issued",
+  },
+};
 
 function parseInstallmentValue(raw: string): number {
   const cleaned = raw.replace(/R\$\s?/gi, "").replace(/\./g, "").replace(",", ".");
@@ -52,17 +91,41 @@ function parseInstallmentValue(raw: string): number {
   return Number.isFinite(n) ? n : 0;
 }
 
+/** Pill das tabs internas (mesmo estilo das tabs da ficha do paciente). */
+const TAB_TRIGGER_CLASS =
+  "rounded-full border-[1.5px] border-border bg-background px-3.5 py-1.5 text-[12px] font-medium text-muted-foreground transition-all hover:border-border/80 hover:text-foreground data-[state=active]:border-primary data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-[0_6px_16px_rgba(79,126,247,0.32)]";
+
+/** TODO: substituir pelo paciente vindo da API (useParams) — mock único. */
+const PATIENT_ID = "1";
+
 export function CobrancaDialog({
   open,
   onOpenChange,
   quoteDescription,
   quoteTotal,
   patientName,
+  quoteId = null,
 }: CobrancaDialogProps) {
+  const navigate = useNavigate();
+  const [tab, setTab] = useState<"parcelas" | "procedimentos">("parcelas");
   const [rows, setRows] = useState<InstallmentRow[]>(INITIAL_ROWS);
   const [selected, setSelected] = useState<Set<number>>(new Set([4]));
   const [paymentOpen, setPaymentOpen] = useState(false);
   const [paymentInstallments, setPaymentInstallments] = useState<PaymentInstallment[]>([]);
+  const [boletoOpen, setBoletoOpen] = useState(false);
+  const [boletoDetalhe, setBoletoDetalhe] = useState<Boleto | null>(null);
+
+  /** Orçamento vinculado (mock: registry por paciente — virá da API). */
+  const orcamento = useMemo(
+    () => (quoteId != null ? (getQuotesByPatient(PATIENT_ID).find((q) => q.id === quoteId) ?? null) : null),
+    [quoteId],
+  );
+
+  /** Fecha o modal e navega para a ficha do paciente (tab Orçamentos) com o orçamento vinculado aberto. */
+  function handleVerOrcamento() {
+    onOpenChange(false);
+    navigate("/pacientes/details", { state: { tab: "orcamentos", quoteId } });
+  }
 
   const toggle = (id: number) => {
     const row = rows.find((r) => r.id === id);
@@ -107,6 +170,14 @@ export function CobrancaDialog({
       { id: r.id, dueDate: r.dueDate, value: parseInstallmentValue(r.value) },
     ]);
     setPaymentOpen(true);
+  }
+
+  /** Abre o detalhe do boleto da parcela (paciente preenchido pela prop). */
+  function openBoleto(r: InstallmentRow) {
+    const mock = r.boletoId ? BOLETOS_PARCELA[r.boletoId] : undefined;
+    if (!mock) return;
+    setBoletoDetalhe({ ...mock, paciente: patientName });
+    setBoletoOpen(true);
   }
 
   function openLotePayment() {
@@ -180,8 +251,20 @@ export function CobrancaDialog({
               <div className="grid grid-cols-[1.55fr_0.9fr] gap-3">
                 <div className="flex flex-col gap-1">
                   <span className="text-[11px] text-muted-foreground">Origem da Cobrança</span>
-                  <span className="text-[12px] font-medium leading-snug text-foreground">
+                  <span className="flex flex-wrap items-center gap-x-2 text-[12px] font-medium leading-snug text-foreground">
                     {quoteDescription || "—"}
+                    {quoteId != null && (
+                      <button
+                        type="button"
+                        onClick={handleVerOrcamento}
+                        title="Ver orçamento vinculado"
+                        aria-label="Ver orçamento vinculado"
+                        className="inline-flex cursor-pointer items-center gap-1 self-center text-[12px] font-medium text-[var(--blue)] transition-colors hover:text-[var(--blue-dark)] hover:underline"
+                      >
+                        Ver orçamento
+                        <ExternalLink className="h-3.5 w-3.5" />
+                      </button>
+                    )}
                   </span>
                 </div>
                 <div className="flex flex-col gap-1">
@@ -245,31 +328,49 @@ export function CobrancaDialog({
             </div>
           </div>
 
-          {/* DIREITA — PARCELAS */}
+          {/* DIREITA — PARCELAS / PROCEDIMENTOS */}
           <div className="flex min-h-0 flex-col overflow-hidden bg-white p-4">
-            {/* Header parcelas — design system igual ao modal ORÇAMENTO (PROCEDIMENTOS) */}
-            <div className="mb-3 flex shrink-0 items-center justify-between gap-3">
-              <h3 className="text-[18px] font-bold tracking-tight text-muted-foreground">PARCELAS</h3>
-              <Button
-                type="button"
-                size="sm"
-                variant="default"
-                disabled={selected.size === 0}
-                title={
-                  selected.size === 0
-                    ? "Selecione ao menos uma parcela para registrar pagamento em lote"
-                    : undefined
-                }
-                onClick={openLotePayment}
-                className="shrink-0 gap-1.5 disabled:opacity-50"
-              >
-                <Banknote className="h-3.5 w-3.5" />
-                Registrar pagamento em lote
-              </Button>
-            </div>
+            <Tabs.Root
+              value={tab}
+              onValueChange={(v) => setTab(v as "parcelas" | "procedimentos")}
+              className="flex min-h-0 flex-1 flex-col overflow-hidden"
+            >
+              {/* Header tabs — pill do design system (igual às tabs da ficha do paciente) */}
+              <div className="mb-3 flex shrink-0 items-center justify-between gap-3">
+                <Tabs.List className="flex gap-2">
+                  <Tabs.Trigger value="parcelas" className={TAB_TRIGGER_CLASS}>
+                    Parcelas
+                  </Tabs.Trigger>
+                  {quoteId != null && (
+                    <Tabs.Trigger value="procedimentos" className={TAB_TRIGGER_CLASS}>
+                      Procedimentos
+                    </Tabs.Trigger>
+                  )}
+                </Tabs.List>
+                {tab === "parcelas" && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="default"
+                    disabled={selected.size === 0}
+                    title={
+                      selected.size === 0
+                        ? "Selecione ao menos uma parcela para registrar pagamento em lote"
+                        : undefined
+                    }
+                    onClick={openLotePayment}
+                    className="shrink-0 gap-1.5 disabled:opacity-50"
+                  >
+                    <Banknote className="h-3.5 w-3.5" />
+                    Registrar pagamento em lote
+                  </Button>
+                )}
+              </div>
 
-            {/* Tabela */}
-            <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[8px] border border-border">
+              {/* PARCELAS */}
+              <Tabs.Content value="parcelas" className="flex min-h-0 flex-1 flex-col overflow-hidden focus-visible:outline-none">
+                {/* Tabela */}
+                <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[8px] border border-border">
               <div className="overflow-auto">
                 <table className="w-full text-left">
                   <thead className="sticky top-0 z-10 bg-[#f8f9fb]">
@@ -354,15 +455,27 @@ export function CobrancaDialog({
                             )}
                           </td>
                           <td className="px-1 py-1.5 text-center">
-                            <button
-                              type="button"
-                              aria-label={`Registrar pagamento da parcela ${r.id}`}
-                              disabled={r.status === "paid"}
-                              onClick={() => openSinglePayment(r)}
-                              className="inline-flex h-6 w-6 items-center justify-center rounded-[4px] border border-emerald-500 bg-white text-emerald-600 transition-colors hover:bg-emerald-50 disabled:cursor-not-allowed disabled:border-muted disabled:text-muted-foreground/40 disabled:hover:bg-white"
-                            >
-                              <Banknote className="h-3.5 w-3.5" />
-                            </button>
+                            {r.boletoId ? (
+                              <button
+                                type="button"
+                                aria-label={`Ver boleto da parcela ${r.id}`}
+                                title="Ver boleto"
+                                onClick={() => openBoleto(r)}
+                                className="inline-flex h-6 w-6 items-center justify-center rounded-[4px] border border-[#3b82f6] bg-white text-[#3b82f6] transition-colors hover:bg-[rgba(59,130,246,0.08)]"
+                              >
+                                <ReceiptText className="h-3.5 w-3.5" />
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                aria-label={`Registrar pagamento da parcela ${r.id}`}
+                                disabled={r.status === "paid"}
+                                onClick={() => openSinglePayment(r)}
+                                className="inline-flex h-6 w-6 items-center justify-center rounded-[4px] border border-emerald-500 bg-white text-emerald-600 transition-colors hover:bg-emerald-50 disabled:cursor-not-allowed disabled:border-muted disabled:text-muted-foreground/40 disabled:hover:bg-white"
+                              >
+                                <Banknote className="h-3.5 w-3.5" />
+                              </button>
+                            )}
                           </td>
                         </tr>
                       );
@@ -370,7 +483,65 @@ export function CobrancaDialog({
                   </tbody>
                 </table>
               </div>
-            </div>
+              </div>
+            </Tabs.Content>
+
+            {/* PROCEDIMENTOS — itens do orçamento vinculado (só quando a cobrança tem orçamento) */}
+            <Tabs.Content value="procedimentos" className="flex min-h-0 flex-1 flex-col overflow-hidden focus-visible:outline-none">
+              <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[8px] border border-border">
+                <div className="overflow-auto">
+                  <table className="w-full text-left">
+                    <thead className="sticky top-0 z-10 bg-[#f8f9fb]">
+                      <tr className="border-b border-border text-[11px] font-bold uppercase tracking-[0.04em] text-[#3b82f6]">
+                        <th className="px-3 py-2 font-bold">Procedimento</th>
+                        <th className="px-2 py-2 font-bold">Dente</th>
+                        <th className="px-2 py-2 text-right font-bold">Valor</th>
+                        <th className="px-2 py-2 font-bold">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border/40">
+                      {(orcamento?.items ?? []).map((item) => (
+                        <tr key={item.id} className="bg-white hover:bg-muted/20">
+                          <td className="px-3 py-1.5 text-[12px] font-medium text-foreground">{item.procedureName}</td>
+                          <td className="px-2 py-1.5 text-[12px] text-foreground">
+                            {item.teeth.length
+                              ? item.teeth
+                                  .map((t) => {
+                                    const fs = item.faces?.[t];
+                                    return fs && fs.length > 0 ? `${t}·${fs.join("")}` : `${t}`;
+                                  })
+                                  .join(", ")
+                              : "—"}
+                          </td>
+                          <td className="px-2 py-1.5 text-right text-[12px] text-foreground">
+                            {formatMoneyPlain(item.finalPrice)}
+                          </td>
+                          <td className="px-2 py-1.5">
+                            {item.realized ? (
+                              <span className="inline-flex rounded-full bg-[#e7f9ee] px-2.5 py-1 text-[10px] font-semibold leading-none text-[#16a34a]">
+                                Realizado
+                              </span>
+                            ) : (
+                              <span className="inline-flex rounded-full bg-[#ccfbf1] px-2.5 py-1 text-[10px] font-semibold leading-none text-[#115e59]">
+                                Pendente
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                      {(orcamento?.items.length ?? 0) === 0 && (
+                        <tr>
+                          <td colSpan={4} className="px-3 py-8 text-center text-[12px] text-muted-foreground">
+                            Nenhum procedimento neste orçamento.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </Tabs.Content>
+            </Tabs.Root>
           </div>
         </div>
 
@@ -380,6 +551,16 @@ export function CobrancaDialog({
           installments={paymentInstallments}
           combinadoOrcamento={combinadoOrcamento}
           onConfirm={handlePaymentConfirm}
+        />
+
+        {/* Detalhe do boleto da parcela — ações mock (integração futura com os dialogs da página de Boletos). */}
+        <DetalheBoletoDialog
+          open={boletoOpen}
+          onOpenChange={setBoletoOpen}
+          boleto={boletoDetalhe}
+          onRegistrarPagamento={(b) => console.log("Registrar pagamento do boleto (mock):", b.id)}
+          onAdiarVencimento={(b) => console.log("Adiar vencimento do boleto (mock):", b.id)}
+          onCancelar={(b) => console.log("Cancelar boleto (mock):", b.id)}
         />
 
       <DialogFooter className="shrink-0 !m-0 !border-0 bg-white px-5 py-3 rounded-b-[20px]">
