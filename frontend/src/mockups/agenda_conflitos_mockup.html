@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OdontoSys — Resolução de conflitos na Agenda (3 opções)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --blue:#4F7EF7; --blue-dark:#0f2050; --blue-mid:#1a3580;
+    --bg-2:#F8FAFC; --border:#E5E7EB; --text:#111827; --text-2:#6B7280;
+    --st-agendada-border:#6B7280; --st-agendada-text:#6B7280;
+    --st-confirmada-border:#3B82F6; --st-confirmada-text:#2563EB;
+    --st-atend-border:#F59E0B; --st-atend-text:#B45309;
+    --hour-h:60px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Inter',sans-serif;background:#fff;color:var(--text);padding:32px 40px 48px}
+  h1{font-size:24px;font-weight:700;letter-spacing:-.3px;margin-bottom:6px}
+  .page-sub{font-size:13px;color:var(--text-2);margin-bottom:28px}
+  .page-sub b{color:var(--text)}
+  .panels{display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start}
+  .panel{width:328px;border:1.5px solid var(--border);border-radius:14px;background:var(--bg-2);padding:16px;flex-shrink:0}
+  .panel-num{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--blue);background:rgba(79,126,247,.1);border-radius:999px;padding:3px 9px;margin-bottom:8px}
+  .panel-title{font-size:15px;font-weight:600;margin-bottom:3px}
+  .panel-desc{font-size:11.5px;line-height:1.55;color:var(--text-2);margin-bottom:14px;min-height:52px}
+  .panel-desc b{color:var(--text);font-weight:600}
+  .daycol{background:#fff;border:1px solid var(--border);border-radius:10px;overflow:hidden}
+  .day-head{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 0;border-bottom:1px solid var(--border);background:#fff}
+  .dow{font-size:10px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--text-2)}
+  .dom{font-size:15px;font-weight:700;width:26px;height:26px;border-radius:999px;display:flex;align-items:center;justify-content:center}
+  .today .dom{background:var(--blue);color:#fff}
+  .grid{position:relative;height:calc(var(--hour-h)*4);margin:6px 10px 10px 44px}
+  .gutter{position:absolute;left:-44px;top:0;width:40px}
+  .hlabel{position:absolute;left:0;transform:translateY(-6px);font-size:10px;font-weight:500;color:var(--text-2)}
+  .hlabel.q{transform:translateY(-4px);font-size:8px;color:#C4CBD4;font-weight:400}
+  .hline{position:absolute;left:0;right:0;height:1px;background:var(--border)}
+  .hline.q{background:#F1F5F9}
+  .card{position:absolute;border-radius:8px;padding:5px 7px;font-size:10.5px;line-height:1.25;cursor:pointer;transition:box-shadow .12s,transform .12s}
+  .card .name{font-weight:600;font-size:10.5px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .card .time{font-size:9px;color:var(--text-2);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .card .badge{display:inline-block;max-width:100%;border-radius:999px;padding:1px 5px;font-size:8.5px;font-weight:600;margin-top:3px}
+  .card.agendada{background:#EFF1F3;border:1px solid var(--st-agendada-border);border-left:3px solid var(--st-agendada-border)}
+  .card.confirmada{background:#EBF2FE;border:1px solid var(--st-confirmada-border);border-left:3px solid var(--st-confirmada-border)}
+  .card.atend{background:#FBF0DA;border:1px solid var(--st-atend-border);border-left:3px solid var(--st-atend-border)}
+  .card.agendada .badge{background:rgba(107,114,128,.12);color:var(--st-agendada-text)}
+  .card.confirmada .badge{background:rgba(59,130,246,.12);color:var(--st-confirmada-text)}
+  .card.atend .badge{background:rgba(245,158,11,.14);color:var(--st-atend-text)}
+  .opt1 .card:hover{box-shadow:0 6px 16px rgba(15,32,80,.18)}
+  .lane-guide{position:absolute;top:0;width:1px;background:#F1F5F9}
+  .opt2 .card:hover{transform:translateY(-2px) scale(1.02);z-index:30!important;box-shadow:0 8px 20px rgba(15,32,80,.22)}
+  .solid.agendada{background:#EFF1F3;border:1px solid #C6CBD3;border-left:3px solid var(--st-agendada-border)}
+  .solid.confirmada{background:#EBF2FE;border:1px solid #A9C6FB;border-left:3px solid var(--st-confirmada-border)}
+  .solid.atend{background:#FBF0DA;border:1px solid #EBC382;border-left:3px solid var(--st-atend-border)}
+  .overlap-count{position:absolute;font-size:8px;font-weight:700;color:#fff;background:var(--text);border-radius:999px;padding:1px 5px;z-index:20}
+  .chip{position:absolute;left:6px;right:6px;height:24px;border-radius:7px;display:flex;align-items:center;gap:6px;padding:0 8px;font-size:10px;cursor:pointer;transition:box-shadow .12s}
+  .chip:hover{box-shadow:0 4px 12px rgba(15,32,80,.18)}
+  .chip .dot{width:7px;height:7px;border-radius:999px;flex-shrink:0}
+  .chip .cname{font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .chip .ctime{margin-left:auto;font-size:9px;color:var(--text-2);flex-shrink:0}
+  .chip.agendada{background:#EFF1F3;border:1px solid var(--st-agendada-border)}
+  .chip.confirmada{background:#EBF2FE;border:1px solid var(--st-confirmada-border)}
+  .chip.atend{background:#FBF0DA;border:1px solid var(--st-atend-border)}
+  .chip.agendada .dot{background:var(--st-agendada-border)}
+  .chip.confirmada .dot{background:var(--st-confirmada-border)}
+  .chip.atend .dot{background:var(--st-atend-border)}
+  .cluster-tag{position:absolute;right:6px;font-size:8px;font-weight:600;color:var(--blue);background:rgba(79,126,247,.1);border-radius:4px;padding:1px 4px}
+  .footnote{margin-top:24px;font-size:11.5px;color:var(--text-2);line-height:1.6;border-top:1px solid var(--border);padding-top:14px;max-width:1060px}
+  .footnote b{color:var(--text)}
+</style>
+</head>
+<body>
+  <h1>Agenda — Resolução de conflitos entre consultas</h1>
+  <p class="page-sub">Cenário da tela: <b>SEG 28</b> — Marina T Souza (08:00–09:00 · confirmada) · Juliana Costa (08:30–09:30 · agendada) · Paulo Henrique (09:00–10:30 · em atendimento). Escala real da aplicação: <b>60px/hora</b>.</p>
+  <div class="panels">
+    <div class="panel">
+      <span class="panel-num">Opção 1</span>
+      <div class="panel-title">Sub-colunas lado a lado</div>
+      <div class="panel-desc">
+        Estilo <b>Google Calendar</b>: consultas que se cruzam formam um cluster e a coluna do
+        dia é dividida em sub-colunas (faixas). <b>Nenhuma sobreposição</b> — todos os cards
+        ficam 100% visíveis e clicáveis; em troca, os cards ficam mais estreitos.
+      </div>
+      <div class="daycol today">
+        <div class="day-head"><span class="dow">Seg</span><span class="dom">28</span></div>
+        <div class="grid opt1">
+          <div class="gutter">
+            <span class="hlabel" style="top:0">08:00</span>
+            <span class="hlabel q" style="top:15px">:15</span>
+            <span class="hlabel q" style="top:30px">:30</span>
+            <span class="hlabel q" style="top:45px">:45</span>
+            <span class="hlabel" style="top:60px">09:00</span>
+            <span class="hlabel q" style="top:75px">:15</span>
+            <span class="hlabel q" style="top:90px">:30</span>
+            <span class="hlabel q" style="top:105px">:45</span>
+            <span class="hlabel" style="top:120px">10:00</span>
+            <span class="hlabel q" style="top:135px">:15</span>
+            <span class="hlabel q" style="top:150px">:30</span>
+            <span class="hlabel q" style="top:165px">:45</span>
+            <span class="hlabel" style="top:180px">11:00</span>
+          </div>
+          <div class="hline" style="top:0"></div>
+          <div class="hline q" style="top:15px"></div>
+          <div class="hline q" style="top:30px"></div>
+          <div class="hline q" style="top:45px"></div>
+          <div class="hline" style="top:60px"></div>
+          <div class="hline q" style="top:75px"></div>
+          <div class="hline q" style="top:90px"></div>
+          <div class="hline q" style="top:105px"></div>
+          <div class="hline" style="top:120px"></div>
+          <div class="hline q" style="top:135px"></div>
+          <div class="hline q" style="top:150px"></div>
+          <div class="hline q" style="top:165px"></div>
+          <div class="hline" style="top:180px"></div>
+          <div class="lane-guide" style="left:calc(33.333% - 2px);top:0;height:150px"></div>
+          <div class="lane-guide" style="left:calc(66.666% - 2px);top:0;height:150px"></div>
+          <div class="card confirmada" style="left:2px;width:calc(33.333% - 6px);top:0;height:60px">
+            <div class="name">Marina T Souza</div>
+            <div class="time">08:00 – 09:00</div>
+            <span class="badge">Confirmada</span>
+          </div>
+          <div class="card agendada" style="left:calc(33.333% + 2px);width:calc(33.333% - 6px);top:30px;height:60px">
+            <div class="name">Juliana Costa</div>
+            <div class="time">08:30 – 09:30</div>
+            <span class="badge">Agendada</span>
+          </div>
+          <div class="card atend" style="left:calc(66.666% + 2px);width:calc(33.333% - 8px);top:60px;height:90px">
+            <div class="name">Paulo Henrique</div>
+            <div class="time">09:00 – 10:30</div>
+            <span class="badge">Em atendimento</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="panel">
+      <span class="panel-num">Opção 2</span>
+      <div class="panel-title">Fundo sólido + cascata</div>
+      <div class="panel-desc">
+        <b>Quick win</b>: fundos rgba viram cores sólidas (o card de cima cobre o de baixo sem
+        "vazar" cor). Cada consulta ocupa a <b>primeira faixa livre</b> da coluna (nunca a mesma de
+        uma consulta que se cruza) e o empilhamento segue a <b>ordem cronológica</b> — a mais recente
+        fica no topo. Badge «×3» sinaliza o conflito; <b>passe o mouse</b> para elevar e revelar.
+      </div>
+      <div class="daycol today">
+        <div class="day-head"><span class="dow">Seg</span><span class="dom">28</span></div>
+        <div class="grid opt2">
+          <div class="gutter">
+            <span class="hlabel" style="top:0">08:00</span>
+            <span class="hlabel q" style="top:15px">:15</span>
+            <span class="hlabel q" style="top:30px">:30</span>
+            <span class="hlabel q" style="top:45px">:45</span>
+            <span class="hlabel" style="top:60px">09:00</span>
+            <span class="hlabel q" style="top:75px">:15</span>
+            <span class="hlabel q" style="top:90px">:30</span>
+            <span class="hlabel q" style="top:105px">:45</span>
+            <span class="hlabel" style="top:120px">10:00</span>
+            <span class="hlabel q" style="top:135px">:15</span>
+            <span class="hlabel q" style="top:150px">:30</span>
+            <span class="hlabel q" style="top:165px">:45</span>
+            <span class="hlabel" style="top:180px">11:00</span>
+          </div>
+          <div class="hline" style="top:0"></div>
+          <div class="hline q" style="top:15px"></div>
+          <div class="hline q" style="top:30px"></div>
+          <div class="hline q" style="top:45px"></div>
+          <div class="hline" style="top:60px"></div>
+          <div class="hline q" style="top:75px"></div>
+          <div class="hline q" style="top:90px"></div>
+          <div class="hline q" style="top:105px"></div>
+          <div class="hline" style="top:120px"></div>
+          <div class="hline q" style="top:135px"></div>
+          <div class="hline q" style="top:150px"></div>
+          <div class="hline q" style="top:165px"></div>
+          <div class="hline" style="top:180px"></div>
+          <div class="card solid confirmada" style="left:6px;right:18px;top:0;height:60px;z-index:1">
+            <div class="name">Marina T Souza</div>
+            <div class="time">08:00 – 09:00</div>
+            <span class="badge">Confirmada</span>
+          </div>
+          <div class="card solid agendada" style="left:18px;right:6px;top:30px;height:60px;z-index:2">
+            <div class="name">Juliana Costa</div>
+            <div class="time">08:30 – 09:30</div>
+            <span class="badge">Agendada</span>
+          </div>
+          <div class="card solid atend" style="left:6px;right:18px;top:60px;height:90px;z-index:3">
+            <div class="name">Paulo Henrique</div>
+            <div class="time">09:00 – 10:30</div>
+            <span class="badge">Em atendimento</span>
+          </div>
+          <span class="overlap-count" style="top:2px;right:4px">×3</span>
+        </div>
+      </div>
+    </div>
+    <div class="panel">
+      <span class="panel-num">Opção 3</span>
+      <div class="panel-title">Chips compactos empilhados</div>
+      <div class="panel-desc">
+        Quando há conflito, os cards viram <b>chips de 1 linha</b> (dot do status + nome + hora)
+        empilhados em sequência, <b>sem sobreposição</b>. Clique abre os detalhes no dialog
+        existente. Máxima legibilidade mesmo em dias cheios.
+      </div>
+      <div class="daycol today">
+        <div class="day-head"><span class="dow">Seg</span><span class="dom">28</span></div>
+        <div class="grid">
+          <div class="gutter">
+            <span class="hlabel" style="top:0">08:00</span>
+            <span class="hlabel q" style="top:15px">:15</span>
+            <span class="hlabel q" style="top:30px">:30</span>
+            <span class="hlabel q" style="top:45px">:45</span>
+            <span class="hlabel" style="top:60px">09:00</span>
+            <span class="hlabel q" style="top:75px">:15</span>
+            <span class="hlabel q" style="top:90px">:30</span>
+            <span class="hlabel q" style="top:105px">:45</span>
+            <span class="hlabel" style="top:120px">10:00</span>
+            <span class="hlabel q" style="top:135px">:15</span>
+            <span class="hlabel q" style="top:150px">:30</span>
+            <span class="hlabel q" style="top:165px">:45</span>
+            <span class="hlabel" style="top:180px">11:00</span>
+          </div>
+          <div class="hline" style="top:0"></div>
+          <div class="hline q" style="top:15px"></div>
+          <div class="hline q" style="top:30px"></div>
+          <div class="hline q" style="top:45px"></div>
+          <div class="hline" style="top:60px"></div>
+          <div class="hline q" style="top:75px"></div>
+          <div class="hline q" style="top:90px"></div>
+          <div class="hline q" style="top:105px"></div>
+          <div class="hline" style="top:120px"></div>
+          <div class="hline q" style="top:135px"></div>
+          <div class="hline q" style="top:150px"></div>
+          <div class="hline q" style="top:165px"></div>
+          <div class="hline" style="top:180px"></div>
+          <span class="cluster-tag" style="top:0">3 simultâneas</span>
+          <div class="chip confirmada" style="top:14px">
+            <span class="dot"></span>
+            <span class="cname">Marina T Souza</span>
+            <span class="ctime">08:00 – 09:00</span>
+          </div>
+          <div class="chip agendada" style="top:42px">
+            <span class="dot"></span>
+            <span class="cname">Juliana Costa</span>
+            <span class="ctime">08:30 – 09:30</span>
+          </div>
+          <div class="chip atend" style="top:70px">
+            <span class="dot"></span>
+            <span class="cname">Paulo Henrique</span>
+            <span class="ctime">09:00 – 10:30</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="footnote">
+    <b>Notas de implementação</b> — todas as opções se aplicam às visões <b>Dia</b> (colunas = dentistas;
+    conflito = mesmo dentista com horários cruzados) e <b>Semana</b> (colunas = dias, conflito = qualquer
+    consulta no mesmo dia). A <b>Opção 1</b> substitui <code>left-[6px] right-[6px]</code> por
+    <code>left</code>/<code>width</code> calculados por cluster de sobreposição; a <b>Opção 2</b> altera
+    <code>getAppointmentStatusColor()</code> (cores sólidas) + offset horizontal e z-index; a <b>Opção 3</b>
+    colapsa o cluster em chips e delega os detalhes ao <code>DetalhesConsultaDialog</code> existente.
+  </div>
+</body>
+</html>

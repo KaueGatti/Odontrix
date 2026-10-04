@@ -483,9 +483,12 @@ export function NovoOrcamentoDialog({
             </h3>
 
             {/* Header da tabela */}
-            <div className="mt-1 grid grid-cols-[1.5fr_0.85fr_0.9fr_0.45fr_0.85fr_1.2fr_100px_28px] gap-1.5 rounded-md bg-slate-50 px-2 py-1.5">
+            <div className="mt-1 grid grid-cols-[1.5fr_100px_0.85fr_0.9fr_0.45fr_0.85fr_1.2fr_28px] gap-1.5 rounded-md bg-slate-50 px-2 py-1.5">
               <span className="text-[12px] font-bold uppercase tracking-[0.05em] text-primary">
                 Procedimento
+              </span>
+              <span className="text-center text-[12px] font-bold uppercase tracking-[0.05em] text-primary">
+                Dentes
               </span>
               <span className="text-[12px] font-bold uppercase tracking-[0.05em] text-primary">
                 Valor unit.
@@ -501,9 +504,6 @@ export function NovoOrcamentoDialog({
               </span>
               <span className="text-[12px] font-bold uppercase tracking-[0.05em] text-primary">
                 Observação
-              </span>
-              <span className="text-center text-[12px] font-bold uppercase tracking-[0.05em] text-primary">
-                Dentes
               </span>
               <span />
             </div>
@@ -522,7 +522,7 @@ export function NovoOrcamentoDialog({
                 return (
                   <div key={p.id}>
                   <div
-                    className="grid grid-cols-[1.5fr_0.85fr_0.9fr_0.45fr_0.85fr_1.2fr_100px_28px] items-center gap-1.5"
+                    className="grid grid-cols-[1.5fr_100px_0.85fr_0.9fr_0.45fr_0.85fr_1.2fr_28px] items-center gap-1.5"
                   >
                     <Select
                       aria-label="Procedimento"
@@ -538,6 +538,24 @@ export function NovoOrcamentoDialog({
                         </option>
                       ))}
                     </Select>
+
+                    <button
+                      type="button"
+                      aria-label="Dentes e faces do procedimento"
+                      disabled={isLocked}
+                      onClick={() => setTeethLineId(teethLineId === p.id ? null : p.id)}
+                      title={teethSummary || "Selecionar dentes e faces"}
+                      className={cn(
+                        "inline-flex h-7 max-w-[100px] items-center justify-center overflow-hidden rounded-[8px] border px-1.5 text-[10px] font-semibold transition-colors",
+                        p.teeth.length
+                          ? "border-primary/30 bg-primary/5 text-primary"
+                          : "border-input bg-muted text-muted-foreground hover:border-primary/40 hover:text-primary",
+                        teethLineId === p.id && "border-primary/50 bg-primary/10",
+                        isLocked && "opacity-60",
+                      )}
+                    >
+                      <span className="truncate">{teethSummary || "Dentes"}</span>
+                    </button>
 
                     <MoneyInput
                       aria-label="Valor unitário"
@@ -616,24 +634,6 @@ export function NovoOrcamentoDialog({
                       placeholder="Dente 2 com carie"
                       className={cn("h-7 rounded-[8px] px-1.5 text-[10px]", isLocked && "opacity-60")}
                     />
-
-                    <button
-                      type="button"
-                      aria-label="Dentes e faces do procedimento"
-                      disabled={isLocked}
-                      onClick={() => setTeethLineId(teethLineId === p.id ? null : p.id)}
-                      title={teethSummary || "Selecionar dentes e faces"}
-                      className={cn(
-                        "inline-flex h-7 max-w-[100px] items-center justify-center overflow-hidden rounded-[8px] border px-1.5 text-[10px] font-semibold transition-colors",
-                        p.teeth.length
-                          ? "border-primary/30 bg-primary/5 text-primary"
-                          : "border-input bg-muted text-muted-foreground hover:border-primary/40 hover:text-primary",
-                        teethLineId === p.id && "border-primary/50 bg-primary/10",
-                        isLocked && "opacity-60",
-                      )}
-                    >
-                      <span className="truncate">{teethSummary || "Dentes"}</span>
-                    </button>
 
                     <button
                       type="button"

@@ -182,37 +182,37 @@ export function getAppointmentStatusColor(status: Appointment["status"]): {
     { bg: string; border: string; text: string }
   > = {
     agendada: {
-      bg: "rgba(107,114,128,0.08)",
+      bg: "#F3F4F5",
       border: "#6B7280",
       text: "#6B7280",
     },
     confirmada: {
-      bg: "rgba(59,130,246,0.1)",
+      bg: "#EBF3FE",
       border: "#3B82F6",
       text: "#2563EB",
     },
     em_espera: {
-      bg: "rgba(245,158,11,0.1)",
+      bg: "#FEF5E7",
       border: "#F59E0B",
       text: "#D97706",
     },
     em_atendimento: {
-      bg: "rgba(245,158,11,0.15)",
+      bg: "#FEF0DA",
       border: "#F59E0B",
       text: "#B45309",
     },
     realizada: {
-      bg: "rgba(34,197,94,0.1)",
+      bg: "#E9F9EF",
       border: "#22C55E",
       text: "#16A34A",
     },
     cancelada: {
-      bg: "rgba(239,68,68,0.08)",
+      bg: "#FEF0F0",
       border: "#EF4444",
       text: "#DC2626",
     },
     nao_compareceu: {
-      bg: "rgba(239,68,68,0.08)",
+      bg: "#FEF0F0",
       border: "#EF4444",
       text: "#DC2626",
     },

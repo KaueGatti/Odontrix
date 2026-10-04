@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Odontrix — Opção A: odontograma anatômico próprio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --blue:#4F7EF7; --blue-dark:#3d64c9; --blue-light:#c8d7fb;
+    --text:#111827; --text-2:#6B7280;
+    --border:#E5E7EB; --bg-2:#F8FAFC; --gray-100:#F1F5F9;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Inter',sans-serif;background:#fff;color:var(--text);padding:32px 40px 48px}
+  h1{font-size:24px;font-weight:700;letter-spacing:-.3px;margin-bottom:6px}
+  h2{font-size:15px;font-weight:600;margin:34px 0 4px}
+  .page-sub{font-size:13px;color:var(--text-2);margin-bottom:26px;max-width:1080px;line-height:1.6}
+  .page-sub b{color:var(--text)}
+  .section-sub{font-size:12px;color:var(--text-2);margin-bottom:14px;line-height:1.55;max-width:1080px}
+  .section-sub b{color:var(--text)}
+
+  /* Card do odontograma */
+  .layout{display:flex;gap:22px;flex-wrap:wrap;align-items:flex-start}
+  .odo-card{border:1.5px solid var(--border);border-radius:10px;background:#fff;padding:14px 16px 10px}
+  .row{display:flex;align-items:flex-end;gap:1px;justify-content:center}
+  .row + .row{margin-top:4px;align-items:flex-start}
+  .gap{width:12px;flex-shrink:0}
+  .lbl-row{display:flex;font-size:9px;font-weight:600;letter-spacing:.03em;color:var(--text-2);justify-content:center;margin:2px 0 4px}
+
+  /* Dente */
+  .tooth{display:flex;flex-direction:column;align-items:center;width:30px;flex-shrink:0;user-select:none}
+  .tooth.lower{flex-direction:column-reverse}
+  .tooth svg{display:block;width:30px;height:45px;overflow:visible}
+  .art-crown{fill:#ffffff;stroke:#aab0bd;stroke-width:1.1;transition:fill .12s,stroke .12s}
+  .art-root{fill:#f1f3f7;stroke:#b9c0cc;stroke-width:1;transition:fill .12s,stroke .12s}
+  .art-detail{fill:none;stroke:#c9cdd6;stroke-width:.9;stroke-linecap:round}
+  .tooth:hover .art-crown{stroke:var(--blue)}
+  .tooth.whole .art-crown{fill:var(--blue);stroke:var(--blue-dark)}
+  .tooth.whole .art-root{fill:var(--blue-light);stroke:var(--blue-dark)}
+  .tooth.whole .art-detail{stroke:rgba(255,255,255,.75)}
+  .f-reg{fill:transparent;cursor:pointer;transition:fill .12s}
+  .f-reg:hover{fill:rgba(79,126,247,.18)}
+  .f-reg.sel{fill:rgba(79,126,247,.55)}
+  .num{font-size:9px;line-height:1;color:var(--text-2);cursor:pointer;padding:1px 2px;border-radius:4px;transition:color .12s,background .12s}
+  .tooth.upper .num{margin-top:3px}
+  .tooth.lower .num{margin-bottom:3px}
+  .num:hover{background:rgba(79,126,247,.1)}
+  .num.all{font-weight:700;color:var(--blue)}
+
+  /* Legenda / resumo */
+  .legend{display:flex;align-items:center;gap:10px;margin-top:10px;border-top:1px dashed var(--border);padding-top:10px;font-size:10px;color:var(--text-2);flex-wrap:wrap}
+  .legend .sw{display:inline-block;width:12px;height:12px;border-radius:3px}
+  .legend .sw.off{background:#fff;border:1px solid #aab0bd}
+  .legend .sw.face{background:rgba(79,126,247,.55);border:1px solid var(--blue-dark)}
+  .legend .sw.whole{background:var(--blue);border:1px solid var(--blue-dark)}
+  .legend .hint{margin-left:auto;font-size:10.5px}
+  .summary{display:flex;align-items:flex-start;gap:10px;margin-top:10px}
+  .summary-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text-2);padding-top:4px;flex-shrink:0}
+  .chips{display:flex;flex-wrap:wrap;gap:4px;min-height:24px}
+  .chip{display:inline-flex;align-items:center;gap:4px;border:1px solid rgba(79,126,247,.25);background:rgba(79,126,247,.08);color:var(--blue-dark);border-radius:999px;padding:2px 8px;font-size:11px;font-weight:600}
+  .chip .fx{font-weight:500;color:var(--blue);font-size:10px}
+  .chip-empty{font-size:11px;color:var(--text-2);padding-top:4px;font-style:italic}
+  .clear-btn{border:1.5px solid var(--border);background:#fff;color:var(--text);border-radius:10px;font-size:11.5px;font-weight:600;padding:5px 12px;cursor:pointer}
+  .clear-btn:hover{border-color:var(--blue);color:var(--blue)}
+
+  /* Painel de foco (zoom) */
+  .focus-card{border:1.5px solid var(--border);border-radius:14px;background:var(--bg-2);padding:14px 16px;width:250px}
+  .focus-title{font-size:12.5px;font-weight:600;margin-bottom:2px}
+  .focus-desc{font-size:11px;color:var(--text-2);line-height:1.5;margin-bottom:10px}
+  .focus-svg{display:flex;justify-content:center}
+  .focus-svg svg{width:150px;height:225px;overflow:visible}
+  .focus-svg text{font-size:8px;font-weight:700;fill:#6B7280;pointer-events:none}
+  .focus-svg text.on{fill:#fff}
+  .focus-faces{display:flex;flex-wrap:wrap;gap:4px;margin-top:10px;min-height:22px}
+
+  /* Galeria de templates */
+  .tpl-grid{display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start}
+  .tpl-card{border:1.5px solid var(--border);border-radius:14px;background:#fff;padding:12px 14px;width:150px;text-align:center}
+  .tpl-card svg{width:86px;height:129px;display:block;margin:0 auto}
+  .tpl-name{font-size:11.5px;font-weight:600;margin-top:8px}
+  .tpl-sub{font-size:10.5px;color:var(--text-2);line-height:1.45;margin-top:2px}
+  .footnote{margin-top:26px;font-size:11.5px;color:var(--text-2);line-height:1.6;border-top:1px solid var(--border);padding-top:14px;max-width:1080px}
+  .footnote b{color:var(--text)}
+</style>
+</head>
+<body>
+  <h1>Opção A — odontograma anatômico próprio</h1>
+  <p class="page-sub">
+    Contornos <b>anatômicos por tipo de dente</b> (incisivos, caninos, pré-molares e molares com cúspides,
+    bordas incisais e raízes na quantidade correta — baseados nas proporções clínicas documentadas na
+    literatura), desenhados em SVG próprio e integrados ao design system do Odontrix.
+    Clique nas <b>regiões da coroa</b> para marcar faces (o recorte respeita o contorno) e no
+    <b>número do dente</b> para marcar o dente inteiro. O painel ao lado mostra o dente em foco ampliado.
+  </p>
+
+  <h2>1 · Arcadas com contornos anatômicos + seleção por face</h2>
+  <p class="section-sub">
+    Faces canônicas: <b>M</b> mesial (voltada à linha média) · <b>D</b> distal · <b>O/I</b> oclusal/incisal (centro) ·
+    <b>V</b> vestibular · <b>L/P</b> lingual/palatina. A região selecionada é pintada em azul translúcido
+    <b>recortada pelo contorno real</b> da coroa.
+  </p>
+  <div class="layout">
+    <div class="odo-card">
+      <div class="lbl-row">Superior direito · Superior esquerdo</div>
+      <div class="row" id="row-upper"></div>
+      <div class="row" id="row-lower"></div>
+      <div class="lbl-row">Inferior direito · Inferior esquerdo</div>
+      <div class="legend">
+        <span><span class="sw off"></span> Não selecionado</span>
+        <span><span class="sw face"></span> Face</span>
+        <span><span class="sw whole"></span> Dente inteiro</span>
+        <span class="hint">coroa = face · número = dente · qualquer clique amplia ao lado</span>
+      </div>
+      <div class="summary">
+        <span class="summary-label">Selecionados</span>
+        <div class="chips" id="chips"></div>
+        <button type="button" class="clear-btn" id="clear">Limpar</button>
+      </div>
+    </div>
+    <div class="focus-card">
+      <div class="focus-title" id="focus-title">Dente em foco</div>
+      <div class="focus-desc" id="focus-desc">Clique num dente ou numa face para vê-lo ampliado aqui, com as faces rotuladas.</div>
+      <div class="focus-svg" id="focus-svg"></div>
+      <div class="focus-faces" id="focus-faces"></div>
+    </div>
+  </div>
+
+  <h2>2 · Templates anatômicos (um por tipo de dente)</h2>
+  <p class="section-sub">
+    Oito desenhos cobrem os 32 dentes: incisivo central, incisivo lateral, incisivo inferior, canino,
+    pré-molar de 2 raízes (1º superior), pré-molar de 1 raiz (2º superior e inferiores), molar superior (3 raízes)
+    e molar inferior (2 raízes). Proporções de coroa/raiz, cúspides e furcas seguem a anatomia dental.
+  </p>
+  <div class="tpl-grid" id="gallery"></div>
+
+  <p class="footnote">
+    <b>Notas de implementação (Opção A)</b> — componentes em <code>src/components/odontogram/</code>:
+    <code>templates.ts</code> (paths por tipo, detalhes de superfície e nº de raízes) e
+    <code>Odontograma.tsx</code> (arcadas, regiões de face com <code>clipPath</code> do próprio contorno,
+    painel de foco e hover realçando o contorno). Seleção tipada como <code>{ fdi, faces[] }</code>
+    (faces vazias = dente inteiro), alimentando o atendimento (<code>ProcedimentosCard</code>) e o
+    orçamento (<code>NovoOrcamentoDialog</code> → <code>quote_procedure_tooth</code> na migração V3).
+    Sem dependência nova — mesmos tokens do design system; os contornos podem ser refinados dente a dente
+    nesta fase de mockup até o nível de fidelidade desejado.
+  </p>
+
+  <script>
+  (function(){
+    /* ============================================================
+       Templates anatômicos — viewBox 0 0 44 66 (coroa no topo,
+       raízes abaixo). Coordenadas simétricas em torno de x=22.
+       ============================================================ */
+    const TPL = {
+      central: {
+        label: "Incisivo central superior", sub: "11 · 21 — 1 raiz", box: [10,4,34,34],
+        crown: "M10 11 C9.6 7.2 12.2 5 15.2 4.7 C18 4.4 26 4.4 28.8 4.7 C31.8 5 34.4 7.2 34 11 C33.6 15.4 33.2 20.6 32.4 25.2 C31.6 30 29.4 33.4 22 33.7 C14.6 33.4 12.4 30 11.6 25.2 C10.8 20.6 10.4 15.4 10 11 Z",
+        details: ["M12.4 8.6 C16.4 9.8 27.6 9.8 31.6 8.6", "M14.6 31.4 C17.4 32.6 26.6 32.6 29.4 31.4"],
+        roots: ["M16.6 33.7 C15.8 42 16.6 51 18.8 56.6 C19.7 59.2 21 60.6 22 60.6 C23 60.6 24.3 59.2 25.2 56.6 C27.4 51 28.2 42 27.4 33.7 Z"],
+      },
+      lateral: {
+        label: "Incisivo lateral superior", sub: "12 · 22 — 1 raiz", box: [12,5,32,34],
+        crown: "M12.4 12 C12.1 8 14.2 5.4 17 5 C19.6 4.7 24.4 4.7 27 5 C29.8 5.4 31.9 8 31.6 12 C31.3 16.8 31 21.8 30.2 26.2 C29.4 30.4 27.2 33.2 22 33.6 C16.8 33.2 14.6 30.4 13.8 26.2 C13 21.8 12.7 16.8 12.4 12 Z",
+        details: ["M14.6 9.4 C17.6 10.6 26.4 10.6 29.4 9.4"],
+        roots: ["M17.6 33.6 C17 42 17.8 51.2 19.8 56.8 C20.5 59.2 21.4 60.4 22 60.4 C22.6 60.4 23.5 59.2 24.2 56.8 C26.2 51.2 27 42 26.4 33.6 Z"],
+      },
+      incLower: {
+        label: "Incisivo inferior", sub: "31 · 32 · 41 · 42 — 1 raiz", box: [14,5,30,33],
+        crown: "M14.4 12 C14.1 8.4 15.9 6 18.3 5.6 C20 5.3 24 5.3 25.7 5.6 C28.1 6 29.9 8.4 29.6 12 C29.3 16.6 29 21.4 28.4 25.6 C27.7 29.6 25.9 32.2 22 32.5 C18.1 32.2 16.3 29.6 15.6 25.6 C15 21.4 14.7 16.6 14.4 12 Z",
+        details: ["M16.4 8.8 C18.4 9.8 25.6 9.8 27.6 8.8"],
+        roots: ["M18.4 32.5 C17.8 41 18.6 50.6 20.4 56.2 C21 58.6 21.6 59.8 22 59.8 C22.4 59.8 23 58.6 23.6 56.2 C25.4 50.6 26.2 41 25.6 32.5 Z"],
+      },
+      canine: {
+        label: "Canino", sub: "13 · 23 · 33 · 43 — 1 raiz longa", box: [12,4,32,34],
+        crown: "M22 4.4 C24.6 4.6 27 7.2 29 11.4 C31.2 16 32.4 21.2 32.2 26 C32 30 30.6 32.8 28 33.6 C25.4 33.9 18.6 33.9 16 33.6 C13.4 32.8 12 30 11.8 26 C11.6 21.2 12.8 16 15 11.4 C17 7.2 19.4 4.6 22 4.4 Z",
+        details: ["M15.4 12.6 C17.6 9.8 19.8 7.4 22 6.2 C24.2 7.4 26.4 9.8 28.6 12.6"],
+        roots: ["M16.8 33.6 C15.8 43.4 16.6 53 18.8 58.2 C19.8 60.4 21 61.6 22 61.6 C23 61.6 24.2 60.4 25.2 58.2 C27.4 53 28.2 43.4 27.2 33.6 Z"],
+      },
+      pm2r: {
+        label: "1º pré-molar superior", sub: "14 · 24 — 2 raízes", box: [11,5.6,33,34],
+        crown: "M13.4 10.6 C15.8 7.6 18.6 5.8 22 5.8 C25.4 5.8 28.2 7.6 30.6 10.6 C32.6 13.8 33.2 18.4 32.8 22.8 C32.4 28 30.6 32.4 27.6 33.6 C25 33.8 19 33.8 16.4 33.6 C13.4 32.4 11.6 28 11.2 22.8 C10.8 18.4 11.4 13.8 13.4 10.6 Z",
+        details: ["M20.6 6 C21 7.8 21.4 9.4 22 10.4 C22.6 9.4 23 7.8 23.4 6"],
+        roots: ["M15.6 33.6 C14 41.4 14.4 50 16.6 55.6 C17.5 58.2 18.8 59.6 20 59.4 C21.2 59 21.9 56.6 22 54 C22.1 56.6 22.8 59 24 59.4 C25.2 59.6 26.5 58.2 27.4 55.6 C29.6 50 30 41.4 28.4 33.6 Z"],
+      },
+      pm1r: {
+        label: "Demais pré-molares", sub: "15 · 25 · 35 · 45 — 1 raiz", box: [11.6,5.8,32.4,34],
+        crown: "M13.8 10.8 C16 7.8 18.8 6.2 22 6.2 C25.2 6.2 28 7.8 30.2 10.8 C32.2 13.8 32.6 18.2 32.4 22.4 C32 27.6 30.4 32.2 27.6 33.5 C25 33.7 19 33.7 16.4 33.5 C13.6 32.2 12 27.6 11.6 22.4 C11.4 18.2 11.8 13.8 13.8 10.8 Z",
+        details: ["M20.8 6.4 C21.2 8.2 21.5 9.6 22 10.6 C22.5 9.6 22.8 8.2 23.2 6.4"],
+        roots: ["M16.8 33.5 C15.8 42.6 16.6 52 18.8 57.2 C19.7 59.6 21 61 22 61 C23 61 24.3 59.6 25.2 57.2 C27.4 52 28.2 42.6 27.2 33.5 Z"],
+      },
+      molarUp: {
+        label: "Molar superior", sub: "16 · 17 · 18 · 26 · 27 · 28 — 3 raízes", box: [10,6,34,34],
+        crown: "M12.4 11.4 C14.8 8.4 17.8 6.6 21 6.4 C21.7 6.4 22.3 6.4 23 6.4 C26.2 6.6 29.2 8.4 31.6 11.4 C33.4 14.4 34 18.8 33.6 23.2 C33.2 28.6 31.4 32.6 28.4 33.8 C25 34 19 34 15.6 33.8 C12.6 32.6 10.8 28.6 10.4 23.2 C10 18.8 10.6 14.4 12.4 11.4 Z",
+        details: ["M16.8 7.4 C17.8 9.4 19 10.6 20.4 11 C21.2 9.4 21.6 8.2 22 7.2 C22.4 8.2 22.8 9.4 23.6 11 C25 10.6 26.2 9.4 27.2 7.4"],
+        roots: ["M14.8 33.8 C13 41 13.2 49.6 15.4 55.6 C16.3 58 17.6 59.4 18.8 59.2 C19.8 58.8 20.5 56.6 20.7 53.6 C20.9 56.6 21.7 58.6 22.9 58.8 C24 58.9 25.3 57.4 26.2 55 C28.4 49.2 28.6 41 27.2 33.8 Z",
+                 "M20.2 50.6 C20.7 53.8 21.3 56.2 22 57.2 C22.7 56.2 23.3 53.8 23.8 50.6 C23.2 50 22.6 49.7 22 49.7 C21.4 49.7 20.8 50 20.2 50.6 Z"],
+      },
+      molarLow: {
+        label: "Molar inferior", sub: "36 · 37 · 38 · 46 · 47 · 48 — 2 raízes", box: [10,6,34,34],
+        crown: "M12 10.6 C14.8 8 17.8 6.6 22 6.6 C26.2 6.6 29.2 8 32 10.6 C33.8 13.6 34.2 18.2 33.6 22.6 C33 28.2 31.2 32.6 28.2 33.8 C25 34 19 34 15.8 33.8 C12.8 32.6 11 28.2 10.4 22.6 C9.8 18.2 10.2 13.6 12 10.6 Z",
+        details: ["M17 7.6 C18 9.4 19.2 10.6 20.6 11 C21.4 9.4 21.7 8.4 22 7.4 C22.3 8.4 22.6 9.4 23.4 11 C24.8 10.6 26 9.4 27 7.6"],
+        roots: ["M14.4 33.8 C12.6 41.2 13 49.8 15.2 55.6 C16.1 58 17.4 59.4 18.6 59.2 C19.7 58.8 20.4 56.6 20.6 53.4 C20.8 56.6 21.6 58.8 22.8 59 C23.9 59.1 25.2 57.6 26.1 55.2 C28.4 49.4 28.7 41.2 27.1 33.8 Z"],
+      },
+    };
+    const TPL_IDS = Object.keys(TPL);
+    function tplFor(n){
+      const q = Math.floor(n/10), p = n%10;
+      const upper = q===1 || q===2;
+      if(p>=6) return upper ? "molarUp" : "molarLow";
+      if(p===4 || p===5) return upper ? (p===4 ? "pm2r" : "pm1r") : "pm1r";
+      if(p===3) return "canine";
+      if(upper) return p===1 ? "central" : "lateral";
+      return "incLower";
+    }
+
+    /* Faces canônicas: M mesial · D distal · C centro (Oclusal/Incisal) ·
+       V vestibular · B base (Lingual/Palatina). */
+    const FACES = ["M","D","C","V","B"];
+    function geom(n){
+      const q = Math.floor(n/10);
+      const upper = q===1 || q===2;
+      const mesialLeft = q===2 || q===3;
+      const labelC = (n%10)<=3 ? "I" : "O";
+      const labelB = upper ? "P" : "L";
+      return {
+        upper, labelC, labelB,
+        pos: { M: mesialLeft?"left":"right", D: mesialLeft?"right":"left", C:"center", V: upper?"top":"bottom", B: upper?"bottom":"top" },
+      };
+    }
+    function faceShort(n,f,g){ return f==="C" ? g.labelC : f==="B" ? g.labelB : f; }
+    function faceTitle(n,f,g){
+      if(f==="C") return (g.labelC==="I" ? "Incisal" : "Oclusal") + " (" + g.labelC + ")";
+      if(f==="B") return (g.labelB==="P" ? "Palatina" : "Lingual") + " (" + g.labelB + ")";
+      return { M:"Mesial", D:"Distal", V:"Vestibular" }[f] + " (" + f + ")";
+    }
+
+    /* Regiões de face derivadas da caixa da coroa — recortadas pelo
+       clipPath do contorno real, então acompanham o desenho anatômico. */
+    function makeRegions(box){
+      const x0=box[0], y0=box[1], x1=box[2], y1=box[3];
+      const w=(x1-x0)*0.27, h=(y1-y0)*0.30;
+      function P(a,b,c,d){ return a+" "+b+" "+c+" "+d; }
+      return {
+        top:    P((x0)+","+(y0), (x1)+","+(y0), (x1-w)+","+(y0+h), (x0+w)+","+(y0+h)),
+        bottom: P((x0)+","+(y1), (x1)+","+(y1), (x1-w)+","+(y1-h), (x0+w)+","+(y1-h)),
+        left:   P((x0)+","+(y0), (x0+w)+","+(y0+h), (x0+w)+","+(y1-h), (x0)+","+(y1)),
+        right:  P((x1)+","+(y0), (x1-w)+","+(y0+h), (x1-w)+","+(y1-h), (x1)+","+(y1)),
+        center: P((x0+w)+","+(y0+h), (x1-w)+","+(y0+h), (x1-w)+","+(y1-h), (x0+w)+","+(y1-h)),
+      };
+    }
+    function centroid(points){
+      const pts = points.trim().split(/\s+/).map(function(p){ return p.split(",").map(Number); });
+      let x=0,y=0;
+      pts.forEach(function(p){ x+=p[0]; y+=p[1]; });
+      return [x/pts.length, y/pts.length];
+    }
+
+    const SVGNS = "http://www.w3.org/2000/svg";
+    const UPPER_RIGHT = [18,17,16,15,14,13,12,11];
+    const UPPER_LEFT  = [21,22,23,24,25,26,27,28];
+    const LOWER_RIGHT = [48,47,46,45,44,43,42,41];
+    const LOWER_LEFT  = [31,32,33,34,35,36,37,38];
+
+    const sel = new Map();          // fdi -> Set(faces)
+    let activeTooth = null;         // dente em foco no painel lateral
+    sel.set(36, new Set(["M","C"]));
+    sel.set(37, new Set(["V"]));
+    sel.set(46, new Set(FACES));    // dente inteiro
+    sel.set(11, new Set(["C"]));
+
+    function isWhole(n){ const s = sel.get(n); return !!s && s.size === FACES.length; }
+    function faceSelected(n,f){ const s = sel.get(n); return !!s && s.has(f); }
+    function toggleFace(n,f){
+      const s = sel.get(n) || new Set();
+      s.has(f) ? s.delete(f) : s.add(f);
+      s.size ? sel.set(n,s) : sel.delete(n);
+    }
+    function toggleTooth(n){ if(isWhole(n)) sel.delete(n); else sel.set(n, new Set(FACES)); }
+    function el(name, attrs){
+      const e = document.createElementNS(SVGNS, name);
+      for(const k in attrs) e.setAttribute(k, attrs[k]);
+      return e;
+    }
+    function buildDefs(){
+      const svg = el("svg", { width:"0", height:"0", "aria-hidden":"true" });
+      svg.setAttribute("style", "position:absolute;width:0;height:0");
+      const defs = el("defs", {});
+      TPL_IDS.forEach(function(id){
+        const cp = el("clipPath", { id: "clip-" + id });
+        cp.appendChild(el("path", { d: TPL[id].crown }));
+        defs.appendChild(cp);
+      });
+      svg.appendChild(defs);
+      document.body.appendChild(svg);
+    }
+
+    /** Desenho anatômico + regiões de face recortadas pelo contorno. */
+    function buildToothSVG(n, opts){
+      const tplId = tplFor(n), t = TPL[tplId], g = geom(n);
+      const regions = makeRegions(t.box);
+      const svg = el("svg", { viewBox: "0 0 44 66", "aria-hidden":"true" });
+      t.roots.forEach(function(d){ svg.appendChild(el("path", { "class":"art-root", d:d })); });
+      svg.appendChild(el("path", { "class":"art-crown", d:t.crown }));
+      t.details.forEach(function(d){ svg.appendChild(el("path", { "class":"art-detail", d:d })); });
+      const fg = el("g", { "clip-path":"url(#clip-" + tplId + ")" });
+      FACES.forEach(function(f){
+        const poly = el("polygon", {
+          points: regions[g.pos[f]],
+          "class": "f-reg" + (faceSelected(n,f) ? " sel" : ""),
+          "data-fdi": n, "data-face": f,
+        });
+        const ttl = document.createElementNS(SVGNS, "title");
+        ttl.textContent = "Dente " + n + " — " + faceTitle(n,f,g);
+        poly.appendChild(ttl);
+        fg.appendChild(poly);
+        if(opts && opts.labels){
+          const c = centroid(regions[g.pos[f]]);
+          const txt = el("text", {
+            x: c[0], y: c[1] + 2.8, "text-anchor": "middle",
+            "class": faceSelected(n,f) ? "on" : "", "pointer-events": "none",
+          });
+          txt.textContent = faceShort(n,f,g);
+          fg.appendChild(txt);
+        }
+      });
+      svg.appendChild(fg);
+      return svg;
+    }
+
+    function buildTooth(n){
+      const g = geom(n);
+      const cell = document.createElement("div");
+      cell.className = "tooth " + (g.upper ? "upper" : "lower") + (isWhole(n) ? " whole" : "");
+      cell.appendChild(buildToothSVG(n));
+      const num = document.createElement("span");
+      num.className = "num" + (isWhole(n) ? " all" : "");
+      num.textContent = n;
+      cell.appendChild(num);
+      return cell;
+    }
+
+    function renderChart(){
+      const up = document.getElementById("row-upper");
+      const lo = document.getElementById("row-lower");
+      up.innerHTML = ""; lo.innerHTML = "";
+      function fill(row, right, left){
+        right.forEach(function(n){ row.appendChild(buildTooth(n)); });
+        const gap = document.createElement("span"); gap.className = "gap";
+        row.appendChild(gap);
+        left.forEach(function(n){ row.appendChild(buildTooth(n)); });
+      }
+      fill(up, UPPER_RIGHT, UPPER_LEFT);
+      fill(lo, LOWER_RIGHT, LOWER_LEFT);
+    }
+
+    function renderChips(){
+      const wrap = document.getElementById("chips");
+      const nums = Array.from(sel.keys()).filter(function(n){ return sel.get(n).size > 0; }).sort(function(a,b){ return a-b; });
+      if(nums.length === 0){ wrap.innerHTML = '<span class="chip-empty">Nenhum dente selecionado</span>'; return; }
+      wrap.innerHTML = nums.map(function(n){
+        const g = geom(n);
+        if(isWhole(n)) return '<span class="chip">' + n + '</span>';
+        const order = FACES.filter(function(f){ return sel.get(n).has(f); });
+        return '<span class="chip">' + n + ' <span class="fx">' + order.map(function(f){ return faceShort(n,f,g); }).join("\u00b7") + '</span></span>';
+      }).join("");
+    }
+    function renderFocus(){
+      const title = document.getElementById("focus-title");
+      const desc = document.getElementById("focus-desc");
+      const holder = document.getElementById("focus-svg");
+      const facesEl = document.getElementById("focus-faces");
+      holder.innerHTML = ""; facesEl.innerHTML = "";
+      if(activeTooth == null){
+        title.textContent = "Dente em foco";
+        desc.textContent = "Clique num dente ou numa face para vê-lo ampliado aqui, com as faces rotuladas.";
+        return;
+      }
+      const n = activeTooth, g = geom(n), t = TPL[tplFor(n)];
+      title.textContent = "Dente " + n + " — " + t.label.toLowerCase();
+      desc.textContent = t.sub + " · clique nas regiões para marcar as faces";
+      holder.appendChild(buildToothSVG(n, { labels: true }));
+      const s = sel.get(n);
+      if(!s || s.size === 0){
+        facesEl.innerHTML = '<span class="chip-empty">Nenhuma face selecionada</span>';
+      } else if(isWhole(n)){
+        facesEl.innerHTML = '<span class="chip">Dente inteiro</span>';
+      } else {
+        facesEl.innerHTML = FACES.filter(function(f){ return s.has(f); })
+          .map(function(f){ return '<span class="chip">' + faceShort(n,f,g) + '</span>'; }).join("");
+      }
+    }
+
+    function renderGallery(){
+      const wrap = document.getElementById("gallery");
+      wrap.innerHTML = "";
+      TPL_IDS.forEach(function(id){
+        const t = TPL[id];
+        const card = document.createElement("div");
+        card.className = "tpl-card";
+        const svg = el("svg", { viewBox: "0 0 44 66", "aria-hidden":"true" });
+        svg.setAttribute("style", "pointer-events:none");
+        t.roots.forEach(function(d){ svg.appendChild(el("path", { "class":"art-root", d:d })); });
+        svg.appendChild(el("path", { "class":"art-crown", d:t.crown }));
+        t.details.forEach(function(d){ svg.appendChild(el("path", { "class":"art-detail", d:d })); });
+        card.appendChild(svg);
+        const name = document.createElement("div"); name.className = "tpl-name"; name.textContent = t.label;
+        const sub = document.createElement("div"); sub.className = "tpl-sub"; sub.textContent = t.sub;
+        card.appendChild(name); card.appendChild(sub);
+        wrap.appendChild(card);
+      });
+    }
+
+    function refresh(){ renderChart(); renderChips(); renderFocus(); }
+
+    document.querySelector(".odo-card").addEventListener("click", function(ev){
+      const face = ev.target.closest(".f-reg");
+      if(face){
+        const n = Number(face.getAttribute("data-fdi"));
+        toggleFace(n, face.getAttribute("data-face"));
+        activeTooth = n;
+        refresh();
+        return;
+      }
+      const num = ev.target.closest(".num");
+      if(num){
+        const n = Number(num.textContent);
+        toggleTooth(n); activeTooth = n; refresh();
+        return;
+      }
+      const tooth = ev.target.closest(".tooth");
+      if(tooth){
+        const numEl = tooth.querySelector(".num");
+        if(numEl){ activeTooth = Number(numEl.textContent); refresh(); }
+      }
+    });
+
+    document.querySelector(".focus-card").addEventListener("click", function(ev){
+      const face = ev.target.closest(".f-reg");
+      if(!face) return;
+      toggleFace(Number(face.getAttribute("data-fdi")), face.getAttribute("data-face"));
+      refresh();
+    });
+
+    document.getElementById("clear").addEventListener("click", function(){ sel.clear(); refresh(); });
+
+    buildDefs();
+    renderGallery();
+    activeTooth = 36;
+    refresh();
+  })();
+  </script>
+</body>
+</html>

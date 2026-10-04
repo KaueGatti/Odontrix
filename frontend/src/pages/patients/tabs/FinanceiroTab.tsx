@@ -19,14 +19,16 @@ interface BillingRecord {
   paymentMethod: string | null;
   generatedBy: string;
   isConsulta: boolean;
+  /** Orçamento vinculado (null = cobrança avulsa/manual). */
+  quoteId: number | null;
   status: "paid" | "partial" | "open" | "overdue";
 }
 
 const MOCK_BILLINGS: BillingRecord[] = [
-  { id: 1, description: "Profilaxia 04/25", issueDate: "01/04/2025", dueDate: "30/04/2025", total: 180, paid: 180, balance: 0, paymentMethod: "Pix", generatedBy: "Consulta #041", isConsulta: true, status: "paid" },
-  { id: 2, description: "Canal dente 36", issueDate: "10/04/2025", dueDate: "15/05/2025", total: 750, paid: 250, balance: 500, paymentMethod: "Cartão", generatedBy: "Consulta #038", isConsulta: true, status: "partial" },
-  { id: 3, description: "Restauração 02/25", issueDate: "12/02/2025", dueDate: "28/02/2025", total: 220, paid: null, balance: 220, paymentMethod: null, generatedBy: "Dr. Marcos S.", isConsulta: false, status: "open" },
-  { id: 4, description: "Clareamento", issueDate: "05/01/2025", dueDate: "10/01/2025", total: 400, paid: null, balance: 400, paymentMethod: "Boleto", generatedBy: "Consulta #031", isConsulta: true, status: "overdue" },
+  { id: 1, description: "Profilaxia 04/25", issueDate: "01/04/2025", dueDate: "30/04/2025", total: 180, paid: 180, balance: 0, paymentMethod: "Pix", generatedBy: "Consulta #041", isConsulta: true, quoteId: 1, status: "paid" },
+  { id: 2, description: "Canal dente 36", issueDate: "10/04/2025", dueDate: "15/05/2025", total: 750, paid: 250, balance: 500, paymentMethod: "Cartão", generatedBy: "Consulta #038", isConsulta: true, quoteId: 2, status: "partial" },
+  { id: 3, description: "Restauração 02/25", issueDate: "12/02/2025", dueDate: "28/02/2025", total: 220, paid: null, balance: 220, paymentMethod: null, generatedBy: "Dr. Marcos S.", isConsulta: false, quoteId: null, status: "open" },
+  { id: 4, description: "Clareamento", issueDate: "05/01/2025", dueDate: "10/01/2025", total: 400, paid: null, balance: 400, paymentMethod: "Boleto", generatedBy: "Consulta #031", isConsulta: true, quoteId: null, status: "overdue" },
 ];
 
 function getBadgeVariant(status: BillingRecord["status"]): "neutral" | "info" | "success" | "warning" | "error" {
@@ -78,6 +80,7 @@ export function FinanceiroTab() {
       paymentMethod: data.forma,
       generatedBy: "Registro manual",
       isConsulta: false,
+      quoteId: null,
       status: total - data.entrada <= 0 ? "paid" : "open",
     };
     setBillings((prev) => [record, ...prev]);
@@ -218,6 +221,7 @@ export function FinanceiroTab() {
         quoteDescription={selectedRecord?.description ?? ""}
         quoteTotal={selectedRecord?.total ?? 0}
         patientName={PATIENT_NAME}
+        quoteId={selectedRecord?.quoteId ?? null}
       />
 
       <NovoRegistroDialog

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Odontrix — Opção B: react-advanced-odontogram (lib real)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/react-advanced-odontogram@2.4.0/dist/style.css">
+<style>
+  :root{ --blue:#4F7EF7; --text:#111827; --text-2:#6B7280; --border:#E5E7EB; --bg-2:#F8FAFC; }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Inter',sans-serif;background:#fff;color:var(--text);padding:32px 40px 48px}
+  h1{font-size:24px;font-weight:700;letter-spacing:-.3px;margin-bottom:6px}
+  .page-sub{font-size:13px;color:var(--text-2);margin-bottom:18px;max-width:1080px;line-height:1.6}
+  .page-sub b{color:var(--text)}
+  .note{display:flex;gap:10px;align-items:flex-start;border:1.5px solid var(--border);background:var(--bg-2);border-radius:12px;padding:12px 14px;font-size:12px;color:var(--text-2);line-height:1.55;max-width:1080px;margin-bottom:18px}
+  .note b{color:var(--text)}
+  .note .dotcol{display:flex;flex-direction:column;gap:6px;margin-top:2px}
+  .note .dot{width:8px;height:8px;border-radius:999px;background:var(--blue);flex-shrink:0}
+  .status{font-size:12px;color:var(--text-2);margin:10px 0 18px}
+  .status.err{color:#b91c1c}
+  .frame{border:1.5px solid var(--border);border-radius:14px;overflow:hidden;background:#fff;box-shadow:0 10px 30px rgba(15,32,80,.06)}
+  .frame-head{display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border);background:var(--bg-2);padding:8px 14px;font-size:12px;font-weight:600;color:var(--text-2)}
+  .frame-head .tag{border:1px solid rgba(79,126,247,.3);background:rgba(79,126,247,.08);color:var(--blue);border-radius:999px;padding:1px 8px;font-size:10px;font-weight:700}
+  #odo{min-height:420px}
+  .footnote{margin-top:26px;font-size:11.5px;color:var(--text-2);line-height:1.6;border-top:1px solid var(--border);padding-top:14px;max-width:1080px}
+  .footnote b{color:var(--text)}
+  .footnote ul{margin:6px 0 0 18px}
+  .footnote li{margin-bottom:3px}
+</style>
+</head>
+<body>
+  <h1>Opção B — <code>react-advanced-odontogram</code> (biblioteca real, v2.4.0)</h1>
+  <p class="page-sub">
+    Este mockup renderiza a <b>biblioteca de verdade</b> (a mesma instalada no projeto — MIT, Zoltán Dul),
+    com <b>idioma pt-BR</b> e <b>numeração FDI</b>: dentes anatômicos referenciados em literatura
+    (9 templates), seleção por dente/face, estados clínicos completos, periodontograma e exportações.
+    Clique nos dentes e explore a interface nativa dela.
+  </p>
+  <div class="note">
+    <div class="dotcol"><span class="dot"></span></div>
+    <div>
+      <b>Requer internet</b> — a lib é carregada via CDN (esm.sh + jsDelivr) pinada na v2.4.0 (versão local do projeto).
+      Se o painel abaixo não carregar, verifique a conexão. <b>O que observar:</b> fidelidade dos contornos,
+      ergonomia da seleção por face, densidade visual (sidebar clínica) e o quanto do design system do Odontrix
+      dá para preservar via temas (<code>--odon-*</code>).
+    </div>
+  </div>
+  <div class="status" id="status">Carregando biblioteca…</div>
+  <div class="frame">
+    <div class="frame-head"><span class="tag">OdontogramShell</span> language=pt-BR · numberingSystem=FDI · darkMode=false</div>
+    <div id="odo"></div>
+  </div>
+  <p class="footnote">
+    <b>Observações desta opção</b>
+    <ul>
+      <li>Engine clínico completo: o estado é orientado a <b>achados</b> (cárie, restauração, endo, periodonto…) — “selecionar faces para uma linha de orçamento” precisa ser mapeado a partir do estado exportado (JSON/FHIR).</li>
+      <li><b>Uma instância por página</b> (estado em singleton de módulo) — não permite dois odontogramas simultâneos (ex.: atendimento + dialog aberto ao mesmo tempo).</li>
+      <li>Peso: engine ~1,7 MB minificado + 56 KB de CSS (fontes de PDF são lazy-load).</li>
+      <li>Aparência própria — temas via variáveis <code>--odon-*</code> aproximam as cores do design system, mas não reproduzem o layout do Odontrix.</li>
+    </ul>
+  </p>
+  <script type="module">
+    const statusEl = document.getElementById("status");
+    (async () => {
+      try {
+        const React = await import("https://esm.sh/react@19.2.0?target=es2022");
+        const ReactDOM = await import("https://esm.sh/react-dom@19.2.0/client?target=es2022&deps=react@19.2.0");
+        const lib = await import("https://esm.sh/react-advanced-odontogram@2.4.0?target=es2022&deps=react@19.2.0,react-dom@19.2.0");
+        const OdontogramShell = lib.OdontogramShell || lib.default;
+        const e = React.default.createElement;
+        ReactDOM.createRoot(document.getElementById("odo")).render(
+          e(OdontogramShell, { language: "pt-BR", numberingSystem: "FDI", darkMode: false })
+        );
+        statusEl.textContent = "Biblioteca carregada — interaja com o odontograma abaixo.";
+      } catch (err) {
+        statusEl.classList.add("err");
+        statusEl.textContent = "Falha ao carregar a biblioteca via CDN: " + (err && err.message ? err.message : err);
+      }
+    })();
+  </script>
+</body>
+</html>

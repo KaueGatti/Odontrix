@@ -5,6 +5,22 @@ Leia todos antes de iniciar qualquer tarefa:
 
 - [WORKFLOW.md](./WORKFLOW.md) — fluxo obrigatório de git worktrees e merge
 
+## Modo Plan / Act — regra inviolável
+
+- **Nenhuma alteração pode ser feita no modo Plan** — em nenhum arquivo, em
+  nenhuma circunstância.
+- Isso inclui alterações **via comandos** (`run_commands`, scripts
+  PowerShell/Node, redirecionamentos de saída, etc.) — não apenas via
+  ferramentas de edição. No modo Plan só é permitido **ler e inspecionar**
+  (read-only).
+- O modo Plan serve **exatamente para planejar**: explorar o código, analisar
+  e apresentar o plano. Nada mais.
+- Alterações só acontecem no modo **Act**, e **somente após autorização
+  explícita do usuário** — é o usuário quem alterna o modo, nunca o agente.
+- Se uma alteração for solicitada durante o modo Plan, o agente deve
+  **recusar/executar apenas o planejamento** e aguardar o switch para o
+  modo Act.
+
 ## Stack
 
 | Camada | Tecnologia |
@@ -348,50 +364,6 @@ postgres:16-alpine (5432) → api:8080 → frontend:5173
 | `adr-agenda-calendario-custom.md` | ADR sobre construção própria da agenda |
 | `api/openapi.yaml` | Spec completa da API REST |
 | `frontend/src/styles/design-tokens.css` | Tokens CSS para mockups HTML |
-
----
-
-## Próxima Sessão — Pendencias / Mudanças (documentado 13/09/2026)
-
-> Lista de pendencias/mudanças acordadas para a próxima sessão. Apenas documentação —
-> os detalhes de implementação serão definidos no momento de implementar cada item.
-
-5. **Odontograma/Caras para procedimento do orçamento** — o `Odontograma` da finalización (`atendimento/components/Odontograma.tsx`) selecciona dentes FDI (32) mas **não faces**; `NovoOrcamentoDialog` não tem odontograma. Estender com selección por **faces** (mesial/distal/oclusal/vestibular/lingual/palatina…) e integrá-lo no orçamento (linhas de `ProcedureLine`); avaliar reuso em `ProcedimentosCard`.
-
-6. **Consultas e Procedimentos Realizados (Plano e Ficha), Procedimentos do Orçamento Aprovado, Baixa nos Procedimentos e Registrar Atendimento Avulso** — construir o fluxo clínico completo em torno de `patients/tabs/ConsultasProcedimentosTab.tsx` (hoje mock): consultas/procedimentos realizados em vistas **Plano** (por consulta) e **Ficha** (histórico do paciente); visualizar os procedimentos pendentes do orçamento aprovado; **baixa** (marcar como realizado) ao finalizar a consulta — `appointment_procedure.quote_procedure_id` (Plano item 2 já agendado); e **registrar atendimento avulso** (procedimento/servicio sem orçamento aprovado).
-
-8. **Pagamento antes do check-in. Não liberar check-in caso o paciente possua pendências em aberto** — regra de negocio: bloquear o check-in se o paciente tem pendências em aberto. Backend: `POST /appointments/{id}/check-in` → `409 problem+json` (RFC 7807); frontend: aviso em `DetalhesConsultaDialog` + derivar a "Registrar pagamento" (já disponível no modal). Definir o que conta como pendência (toda / só vencida / limiar de tolerancia).
-
-9. **Analizar e reformular Financeiro do Paciente (está muito confuso)** — revisar `patients/tabs/FinanceiroTab.tsx` + dialogs (`CobrancaDialog`, `NovoRegistroDialog`, `ParcelaDialog`) e a relação com A Receber / Boletos / Orçamentos; sessão de análise/redesign (KPIs, hierarquia, ações, nomenclatura consistente) antes de implementar.
-
-## Última Sessão — 16/09/2026
-
-### Agenda: mini-calendário por vista + grids de 15 min + Sidebar recolhível
-
-- **Mini-calendário (`agenda/components/MiniCalendar.tsx`)** — comportamento por vista: **Dia** → clique altera só o dia; **Semana** → clique altera só a semana (destaque da semana já existente); **Mês** → clique num dia muda a vista para Dia, e as **setas de mês movem o mês selecionado da agenda** (mesmo dia clampado ao último dia do mês, via `shiftMonthKeepingDay` + nova prop `onMonthChange`) mantendo a vista Mensal. Destaques na vista Mês: hoje com anel azul, dias do mês selecionado em negrito, dias de outros meses acinzentados; rótulo do mês azul quando corresponde ao mês selecionado. Wired via `AgendaPage` (`handleSelectDate` agora mantém a vista; só força "dia" quando `viewMode === "mes"`; novo `handleMonthChange`) e `AgendaFilters` (passa `onMonthChange`).
-- **`SemanalView.tsx` reestruturada em grade de tempo** — de grade de chips por dia para vista semanal estilo Google Calendar: coluna de rótulos 56px, **linhas de 15 min** (08:00–18:45, `SLOT_HEIGHT` 15px, `HOUR_HEIGHT` 60px), 7 colunas de dias, consultas posicionadas por `startTime`/`endTime` com `AppointmentCard` (cor por dentista, cancelada/no-show esmaecida, highlight por filtro); clique num slot vazio → `NovaConsultaDialog` pré-preenchido com data + hora de 15 em 15 min (`onSlotClick(date, time)`); coluna de hoje com tinta azul sutil; aplica os mesmos filtros da visão Dia (nova prop `filters`). Removidos `onDayClick`/`onAddAppointment`/chips.
-- **`DiariaView.tsx` com grid de 15 em 15 min** — grade trocada de hora-em-hora para slots de 15 min (44 slots, 60px/hora mantidos — posicionamento das consultas inalterado); rótulos a cada 15 min no gutter (hora inteira destacada, quartos em texto 9px); **clique no slot com granularidade de 15 min** (`onSlotClick(dentistId, "HH:15"...)`) e hover highlight por slot.
-- **`Sidebar.tsx` recolhível** — largura expandida 194px → **184px** (−5%); recolhida 64px (logo + ícones, tooltips via `title`, copyright oculto); toggle `PanelLeftClose`/`PanelLeftOpen` no cabeçalho; grupo **Financeiro** com **ícone $ no cabeçalho (ícone + título + chevron)** e, recolhido, vira um único ícone $ que **expande a sidebar** ao clicar; estado ativo preservado nos dois modos (`navLinkCollapsedClass`).
-- Lint: ✅ (6 arquivos alterados, sem erros) · tsc: ✅ nenhum erro nos arquivos alterados (pré-existentes em outros módulos) · Build: ✅ (~1.006 kB)
-
-### Cadastro rápido de paciente no agendamento (item 4 ✅)
-
-- **`patients/mock-data.ts` (novo)** — a lista `MOCK_PATIENTS` saiu de `agenda/mock-data.ts` para cá e ganhou um registro em runtime (`patientRegistry`) no mesmo padrão do `appointmentRegistry`: `listMockPatientNames()` (seed + cadastrados), `addMockPatient()` (id `pat-<slug>` com sufixo em colisão) e `findMockPatientByName()`. Registro criado pelo cadastro rápido fica `incomplete: true` (sem CPF/RG, nascimento, endereço, telefone fixo/emergência e origem) e deve ser completado na ficha do paciente — mapeamento futuro direto para o `PatientInput` de `POST /patients`.
-- **`patients/dialogs/NovoPacienteDialog.tsx` + `lib/validations/cadastro-paciente-rapido.schema.ts` (novos)** — cadastro rápido com **Nome + Celular** e checkbox "Paciente é menor de idade ou incapaz" que revela a seção **Responsável** (nome + ao menos CPF ou RG, mesma regra do `superRefine` do cadastro completo). Máscaras via `withMask` (`maskTelefone`, `maskCPF`, `maskRG`), banner avisando que os demais dados ficam pendentes; aberto como dialog aninhado (o agendamento continua aberto por baixo).
-- **`NovaConsultaDialog.tsx`** — o combobox de paciente passou a listar `listMockPatientNames()` (8 sugestões) e exibe **sempre em primeiro lugar** a opção **`+ Cadastrar "«nome digitado»"`** (ícone `UserPlus`, azul) quando há texto digitado; ao salvar no cadastro rápido o paciente volta **já selecionado** e passa a aparecer nas buscas seguintes. O `onSave` agora envia `patientId` (opcional), resolvido no registro.
-- **`AgendaPage.tsx` / `patients/tabs/AgendamentosTab.tsx`** — `patientId: data.patientId ?? pat-<slug do nome>` na consulta criada.
-- **Propagação do registro** — `AdvancedFiltersDialog.tsx` e `NovoOrcamentoDialog.tsx` passaram a usar `listMockPatientNames()`, então o paciente cadastrado no agendamento aparece nos filtros avançados e no select de orçamentos (e o filtro por esse nome retorna a consulta criada).
-- **Fora do escopo (pendente)** — exibir o registro em `PacientesList` (hoje placeholder "Nenhum paciente encontrado") fica para o PR da lista real de pacientes, junto com `PacienteDetalhes` recebendo `useParams`; o formulário completo (`/pacientes/register`) continua sem persistência.
-- Lint: ✅ nenhum erro nos 9 arquivos tocados/criados (repo mantém 11 erros + 2 warnings pré-existentes em outros módulos) · tsc: ✅ 0 erros (`--ignoreDeprecations 6.0`; o TS5101 do `baseUrl` deprecado no TS 6 é pré-existente no tsconfig) · Build: ✅ (~1.013 kB)
-
-## Última Sessão — 13/09/2026
-
-### Confirmação de status do agendamento + modal de detalhes permanece aberto
-
-- **`agenda/components/ConfirmarAcaoDialog.tsx`** — generalizado: novas props `requiresMotivo?: boolean` (default false), `confirmLabel?: string` (default "Confirmar") e `confirmVariant?: "default" | "destructive"` (default "default"); o textarea de Motivo (obrigatório) só aparece com `requiresMotivo`; o motivo é limpo via `useEffect` ao (re)abrir o diálogo.
-- **`agenda/components/DetalhesConsultaDialog.tsx`** — exportado `ConfirmActionOptions`; `onConfirmAction` agora recebe um objeto `{ title, description, requiresMotivo?, confirmLabel?, confirmVariant?, onConfirm(motivo?) }`; **toda** ação que muda status passa pelo diálogo de confirmação (Confirmar, Check-in, Não compareceu, Iniciar atendimento, Finalizar consulta, Reativar e Cancelar), cada uma com `confirmTitle`/`confirmDescription` próprios; após confirmar, o modal **não fecha mais** (removido `onOpenChange(false)`) — o pai atualiza o appointment selecionado e badge/ações recalculam; "Iniciar atendimento" continua navegando para `/agenda/atendimento/:id`; o `motivo` capturado no diálogo agora é repassado a `onStatusChange`; referência não-nula `appt` preserva o narrowing nos closures.
-- **Pais** (`AgendaPage`, `patients/tabs/AgendamentosTab`, `dentists/tabs/AgendamentosTab`) — `handleConfirmAction` aceita o objeto `ConfirmActionOptions` (estado único `confirmAction`) e repassa as novas props ao `ConfirmarAcaoDialog`; `handleStatusChange` também atualiza `selectedAppointment` para o modal aberto refletir o novo status; `dentists/tabs/AgendamentosTab` ganhou `setAppointments` para a tabela refletir a mudança.
-- Lint: ✅ (sem erros novos; repo mantém os pré-existentes) · tsc: ✅ para os 5 arquivos (erros de tipo restantes são pré-existentes) · Build: ✅ (~1.005 kB)
 
 ### Pendente (próximas sessões)
 

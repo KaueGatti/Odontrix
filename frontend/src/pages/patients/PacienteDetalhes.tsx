@@ -1,4 +1,6 @@
 import * as Tabs from "@radix-ui/react-tabs";
+import { useEffect, useState } from "react";
+import { useLocation } from "react-router";
 
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -58,11 +60,39 @@ function formatDate(iso: string) {
 
 export default function PacienteDetalhesPage() {
   const patient = MOCK_PATIENT;
+  const location = useLocation();
+
+  /**
+   * Tabs controladas: a tab ativa (e o orçamento a abrir) pode vir da
+   * navegação — ex. o link "Ver orçamento" do modal de cobrança navega
+   * para cá com state { tab: "orcamentos", quoteId }.
+   */
+  const [activeTab, setActiveTab] = useState<string>(() => {
+    const state = location.state as { tab?: string } | null;
+    return state?.tab ?? "dados-cadastrais";
+  });
+  const [pendingQuoteId, setPendingQuoteId] = useState<number | null>(() => {
+    const state = location.state as { quoteId?: number | null } | null;
+    return state?.quoteId ?? null;
+  });
+
+  // Sincroniza com navegações na mesma rota (location muda a cada navigate).
+  useEffect(() => {
+    const state = location.state as { tab?: string; quoteId?: number | null } | null;
+    if (state?.tab) setActiveTab(state.tab);
+    if (state?.quoteId != null) setPendingQuoteId(state.quoteId);
+  }, [location]);
+
+  // Consome o state da navegação para não reabrir o orçamento em navegações futuras.
+  useEffect(() => {
+    if (location.state) window.history.replaceState({}, "");
+  }, [location.state]);
 
   return (
     <div className="flex flex-1 flex-col overflow-hidden">
       <Tabs.Root
-        defaultValue="dados-cadastrais"
+        value={activeTab}
+        onValueChange={setActiveTab}
         className="flex flex-1 flex-col overflow-hidden"
       >
         <div className="border-b border-border bg-background px-9 py-5 shadow-[var(--shadow-topbar)]">
@@ -132,7 +162,10 @@ export default function PacienteDetalhesPage() {
             <PlanoFichaTab />
           </Tabs.Content>
           <Tabs.Content value="orcamentos">
-            <OrcamentosTab />
+            <OrcamentosTab
+              initialQuoteId={pendingQuoteId}
+              onConsumeQuote={() => setPendingQuoteId(null)}
+            />
           </Tabs.Content>
           <Tabs.Content value="financeiro">
             <FinanceiroTab />

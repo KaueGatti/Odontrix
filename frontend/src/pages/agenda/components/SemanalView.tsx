@@ -11,6 +11,8 @@ import { cn } from "@/lib/utils";
 import type { Appointment } from "@/types/appointment";
 import type { DentistAgenda, FilterState } from "../types";
 import { AppointmentCard } from "./AppointmentCard";
+import { NowIndicator } from "./NowIndicator";
+import { computeOverlapLayout, type OverlapInfo } from "../overlap";
 
 interface SemanalViewProps {
   currentDate: Date;
@@ -24,9 +26,9 @@ interface SemanalViewProps {
 
 const START_HOUR = 8;
 const END_HOUR = 19;
-const HOUR_HEIGHT = 60; // px por hora (igual à visão Dia)
+const HOUR_HEIGHT = 96; // px por hora (escala que acomoda o card de 3 linhas)
 const SLOT_MIN = 15;
-const SLOT_HEIGHT = HOUR_HEIGHT / 4; // 15px por slot de 15 min
+const SLOT_HEIGHT = HOUR_HEIGHT / 4; // 24px por slot de 15 min
 const TOTAL_HOURS = END_HOUR - START_HOUR;
 const TOTAL_SLOTS = TOTAL_HOURS * 4;
 
@@ -81,6 +83,24 @@ export function SemanalView({
     () => Array.from({ length: TOTAL_SLOTS }, (_, i) => i * SLOT_MIN),
     []
   );
+
+  // Cascata de sobreposição: colunas = dias (conflito = qualquer consulta no
+  // mesmo dia com horários cruzados, de dentistas distintos inclusive).
+  const overlapLayout = useMemo(() => {
+    const map = new Map<string, OverlapInfo>();
+    const byDay = new Map<string, typeof filteredAppointments>();
+    for (const appt of filteredAppointments) {
+      const list = byDay.get(appt.date);
+      if (list) list.push(appt);
+      else byDay.set(appt.date, [appt]);
+    }
+    for (const columnAppointments of byDay.values()) {
+      for (const [id, info] of computeOverlapLayout(columnAppointments)) {
+        map.set(id, info);
+      }
+    }
+    return map;
+  }, [filteredAppointments]);
 
   function getAppointmentStyle(appt: Appointment): React.CSSProperties {
     const clinicOpen = START_HOUR * 60;
@@ -173,7 +193,7 @@ export function SemanalView({
                       onMouseEnter={() => setHoveredSlot({ dayKey, time })}
                       onMouseLeave={() => setHoveredSlot(null)}
                       className={cn(
-                        "cursor-pointer border-b border-l border-border transition-colors",
+                        "flex-1 cursor-pointer border-b border-l border-border transition-colors",
                         isHour
                           ? "border-b-[var(--gray-200)]"
                           : "border-b-[var(--gray-100)]",
@@ -194,11 +214,11 @@ export function SemanalView({
 
           {/* Consultas posicionadas por startTime/endTime na coluna do dia */}
           {filteredAppointments.map((appt) => {
-            const dentist = dentists.find((d) => d.id === appt.dentistId);
             const dayIndex = days.findIndex(
               (d) => format(d, "yyyy-MM-dd") === appt.date
             );
             if (dayIndex === -1) return null;
+            const overlap = overlapLayout.get(appt.id);
 
             const isDimmed =
               appt.status === "cancelada" || appt.status === "nao_compareceu";
@@ -210,18 +230,26 @@ export function SemanalView({
               <AppointmentCard
                 key={appt.id}
                 appointment={appt}
-                dentistColor={dentist?.color || "#4F7EF7"}
                 dimmed={isDimmed}
                 highlighted={isHighlighted}
+                overlapIndex={overlap?.overlapIndex}
+                overlapCount={overlap?.overlapCount}
+                stackOrder={overlap?.stackOrder}
+                conflictCount={overlap?.conflictCount}
                 onClick={() => onAppointmentClick?.(appt)}
                 style={{
                   ...getAppointmentStyle(appt),
                   gridColumn: `${dayIndex + 2} / span 1`,
-                  zIndex: 10,
                 }}
               />
             );
           })}
+
+          {/* Marcador "AGORA" na posição do horário atual */}
+          <NowIndicator
+            hourHeight={HOUR_HEIGHT}
+            visible={days.some((day) => isToday(day))}
+          />
         </div>
       </div>
     </div>
