@@ -168,7 +168,7 @@ src/
 ## Backend
 
 ### Estado atual
-- **Java:** scaffold (2 classes: `TemplateApplication` + `Test` controller hello-world)
+- **Java:** scaffold renomeado para `OdontrixApplication` (pacote `com.odontrix`); pom com security, validation, springdoc, jjwt e Testcontainers
 - **Schema:** completo (Flyway V1 — 30+ tabelas, enums, triggers, exclusion constraints GIST, índices)
 - **Seed data:** dev/local (Flyway V2 — usuários, pacientes, consultas, cobranças)
 - **Config:** `application.yaml` com PostgreSQL via Docker, `ddl-auto: validate`

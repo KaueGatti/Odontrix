@@ -16,12 +16,17 @@ spring:
       hibernate:
         format_sql: true
 
-  sql:
-    init:
-      mode: always
-
 server:
   port: 8080
   servlet:
     context-path: /api
+
+odontrix:
+  security:
+    # Secret HMAC para assinar os JWTs. Em produção SEMPRE via variável de
+    # ambiente (JWT_SECRET) — o default abaixo existe apenas para o dev local.
+    jwt-secret: ${JWT_SECRET:odontrix-dev-secret-nao-usar-em-producao}
+  cors:
+    # Origem permitida para o SPA em dev (Vite :5173). Em produção, FRONTEND_ORIGIN.
+    allowed-origins: ${FRONTEND_ORIGIN:http://localhost:5173}
 

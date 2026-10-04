@@ -1,8 +1,3 @@
-FROM ubuntu:latest
-LABEL authors="kaueg"
-
-ENTRYPOINT ["top", "-b"]
-
 # Etapa 1
 FROM eclipse-temurin:25-jdk-alpine AS builder
 WORKDIR /app
