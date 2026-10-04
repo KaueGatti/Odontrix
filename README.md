@@ -62,7 +62,7 @@ O sistema modela explicitamente os fluxos de:
 | Camada | Situação |
 |---|---|
 | Frontend | Telas de listagem/cadastro/detalhes de pacientes implementadas; dados mockados (`MOCK_*`); sem autenticação real ainda |
-| Backend | Schema de banco completo via Flyway (30+ tabelas, enums, triggers, exclusion constraints); camada de aplicação (entities, services, controllers) em desenvolvimento |
+| Backend | Autenticação JWT implementada e testada (`/auth/*`, `/users/*`); todas as entities (~40) + repositories mapeiam o schema (`ddl-auto: validate` ✅); services/controllers dos demais domínios pendentes |
 | Infra | Docker Compose configurado (PostgreSQL + API + Frontend) |
 
 ## Rodando localmente

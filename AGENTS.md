@@ -168,7 +168,7 @@ src/
 ## Backend
 
 ### Estado atual
-- **Java:** scaffold renomeado para `OdontrixApplication` (pacote `com.odontrix`); pom com security, validation, springdoc, jjwt e Testcontainers
+- **Java:** autenticação JWT completa (`/auth/*` + `/users/*` com `@PreAuthorize` espelhando `x-required-roles`, erros RFC 7807, envelope `{ data, meta }`, JWT expira conforme `clinic_settings.session_timeout_minutes`) e **todas as entities (~40) + repositories** mapeando o schema Flyway — enums PG nativos via `@JdbcTypeCode(NAMED_ENUM)` com **constantes minúsculas** (casam com banco e JSON), JSONB via `SqlTypes.JSON`, PKs compostas via `@EmbeddedId` + `@MapsId`; `Boleto.isOverdue()` computa "vencido" (decisão fechada); `appointment.time_range` deliberadamente não mapeado (trigger do banco); 20 testes de integração Testcontainers, todos verdes
 - **Schema:** completo (Flyway V1 — 30+ tabelas, enums, triggers, exclusion constraints GIST, índices)
 - **Seed data:** dev/local (Flyway V2 — usuários, pacientes, consultas, cobranças)
 - **Config:** `application.yaml` com PostgreSQL via Docker, `ddl-auto: validate`
@@ -367,9 +367,9 @@ postgres:16-alpine (5432) → api:8080 → frontend:5173
 
 ### Pendente (próximas sessões)
 
-- Backend: entities, repositories, services, controllers, security (orçamentos: `quote_status` expirado computado + validação de bloqueio no serviço)
+- Backend: services e controllers dos demais domínios (pacientes, dentistas, recepcionistas, agenda, financeiro, boletos, orçamentos, contratos, auditoria, configurações da clínica) + jobs agendados (no_show automático, vencidos); orçamentos: `quote_status` expirado computado + validação de bloqueio no serviço
 - API Client no frontend (orçamentos)
-- Autenticação real
+- Integrar o login do frontend com `POST /auth/login` real (JWT + perfis na sidebar)
 - Listas (Pacientes, Dentistas, Recepcionistas) com dados reais
 - Planos odontológicos e Contratos
 - Upload de documentos
