@@ -1,7 +1,7 @@
 openapi: 3.0.3
 
 info:
-  title: MINI-WORLD API
+  title: Odontrix API
   version: 1.0.0
   description: >
     API do template de sistema para clínicas odontológicas.
@@ -16,7 +16,7 @@ info:
         (único recurso com DELETE físico) e o próprio Audit Log (somente leitura)
 
 servers:
-  - url: https://api.miniworld.com/v1
+  - url: http://localhost:8080/api
 
 security:
   - bearerAuth: []

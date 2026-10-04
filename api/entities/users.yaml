@@ -365,6 +365,18 @@ components:
 
     LoginResult:
       type: object
+      required: [token, user, forcePasswordChange]
+      properties:
+        token:
+          type: string
+          description: >
+            JWT (Bearer) — enviar em Authorization: Bearer <token>. Expira
+            conforme clinic_settings.session_timeout_minutes (15 min no seed).
+        user:
+          $ref: '#/components/schemas/User'
+        forcePasswordChange:
+          type: boolean
+          description: true quando a senha é provisória (reset administrativo) — o frontend deve exigir a troca
       properties:
         token:
           type: string
