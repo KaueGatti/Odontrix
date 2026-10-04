@@ -105,6 +105,7 @@ stateDiagram-v2
 
 **Regras gerais:**
 - `Pago` e `Cancelado` são estados finais.
+- `Vencido` **não é um valor persistido no banco** — é computado em runtime (`registered` + `due_date` vencida, sem `paid_at`) e exposto no contrato da API como campo derivado `isOverdue` (ver `api/entities/boletos.yaml`). Mesmo padrão adotado para `expired` em orçamentos.
 - Toda transição automática (registro bancário, vencimento, webhook de pagamento) precisa ser refletida no `audit_log` mesmo sem ação manual de um usuário — registrar como "sistema" no campo de usuário responsável.
 - A confirmação manual de pagamento (fallback) deve ficar visualmente marcada como diferente da confirmação automática, para rastreabilidade em caso de divergência com o banco depois.
 

@@ -112,9 +112,8 @@ SELECT setval('dental_plan_id_seq', 3);
 -- USERS
 -- Senha para todos: dev12345 (bcrypt, custo 10)
 -- id 6 é uma conta reservada para ações automáticas do sistema
--- (job de no_show, futura confirmação de webhook de boleto).
--- OBS: user_profile não tem valor "system" — reaproveitando "manager"
--- com login desabilitado na prática (ver nota ao final do arquivo).
+-- (job de no_show, futura confirmação de webhook de boleto), usando o
+-- valor dedicado 'system' do enum user_profile (decisão fechada).
 -- ------------------------------------------------------------
 INSERT INTO users (id, username, email, password_hash, profile, active) VALUES
     (1, 'gerente.ana',      'ana.gerente@sorrisopleno.com.br',      '$2b$10$MENMeCLRP4/Vz.CvDk0P/utVIXnaFiUMbXpzVDb5./fPBP3tzjV6K', 'manager',      TRUE),
@@ -122,7 +121,7 @@ INSERT INTO users (id, username, email, password_hash, profile, active) VALUES
     (3, 'recepcao.carla',   'carla.recepcao@sorrisopleno.com.br',   '$2b$10$MENMeCLRP4/Vz.CvDk0P/utVIXnaFiUMbXpzVDb5./fPBP3tzjV6K', 'receptionist', TRUE),
     (4, 'dr.eduardo',       'eduardo.dentista@sorrisopleno.com.br', '$2b$10$MENMeCLRP4/Vz.CvDk0P/utVIXnaFiUMbXpzVDb5./fPBP3tzjV6K', 'dentist',      TRUE),
     (5, 'dra.fernanda',     'fernanda.dentista@sorrisopleno.com.br','$2b$10$MENMeCLRP4/Vz.CvDk0P/utVIXnaFiUMbXpzVDb5./fPBP3tzjV6K', 'dentist',      TRUE),
-    (6, 'sistema',          'sistema@sorrisopleno.internal',        '$2b$10$MENMeCLRP4/Vz.CvDk0P/utVIXnaFiUMbXpzVDb5./fPBP3tzjV6K', 'manager',      FALSE);
+    (6, 'sistema',          'sistema@sorrisopleno.internal',        '$2b$10$MENMeCLRP4/Vz.CvDk0P/utVIXnaFiUMbXpzVDb5./fPBP3tzjV6K', 'system',       FALSE);
 SELECT setval('users_id_seq', 6);
 
 INSERT INTO receptionist (id, user_id, full_name, cpf, rg, phone, email, birth_date, hire_date, active) VALUES
@@ -341,21 +340,18 @@ INSERT INTO audit_log (id, user_id, table_name, record_id, action, previous_data
 SELECT setval('audit_log_id_seq', 3);
 
 -- ============================================================
--- NOTAS IMPORTANTES — decisões que precisam de confirmação
+-- NOTAS — decisões de banco já fechadas
 -- ============================================================
--- 1) "sistema" (users.id=6): user_profile não tem valor dedicado para
---    ações automáticas (job de no_show, futuro webhook de boleto).
---    Reaproveitei o profile 'manager' com active=FALSE (impede login,
---    mas mantém FK válida para user_id em audit_log/appointment). Se
---    preferir um profile "system" de verdade, precisa de uma migration
---    alterando o enum user_profile — combinem isso antes de ir pra prod.
+-- 1) "sistema" (users.id=6): user_profile TEM o valor dedicado 'system'
+--    para ações automáticas (job de no_show, futuro webhook de boleto).
+--    Login sempre bloqueado (active=FALSE; UserDetailsService também
+--    rejeita o profile 'system'); FKs de audit_log/appointment seguem
+--    válidas.
 --
--- 2) boleto_status não tem valor "overdue"/"vencido" — a máquina de
---    estados documentada em maquinas-de-estado.md trata Vencido como
---    estado próprio, mas o schema atual computa isso implicitamente
---    (status='registered' AND due_date < CURRENT_DATE AND paid_at IS NULL).
---    O boleto id=1 acima demonstra esse caso. Se a aplicação/frontend
---    precisar expor "vencido" como valor literal de status (ex. no filtro
---    da API), essa é uma decisão pendente: computar sempre em query/view,
---    ou adicionar 'overdue' ao enum e um job que faz a transição.
+-- 2) boleto_status NÃO tem valor "overdue"/"vencido" — decisão fechada:
+--    "vencido" é SEMPRE computado em runtime (status='registered' E
+--    due_date < hoje E paid_at IS NULL), exposto no contrato da API como
+--    campo derivado isOverdue (api/entities/boletos.yaml) — mesmo padrão
+--    adotado para quote_status 'expired'. O boleto id=1 acima demonstra
+--    o caso.
 -- ============================================================

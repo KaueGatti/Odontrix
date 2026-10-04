@@ -8,7 +8,8 @@ CREATE
 EXTENSION IF NOT EXISTS btree_gist;
 
 -- Enums
-CREATE TYPE user_profile AS ENUM ('manager', 'receptionist', 'dentist');
+-- 'system' = conta de ações automáticas (job de no_show, webhook de boleto) — nunca faz login
+CREATE TYPE user_profile AS ENUM ('manager', 'receptionist', 'dentist', 'system');
 CREATE TYPE appointment_status AS ENUM ('scheduled', 'confirmed', 'checked_in', 'in_progress', 'completed', 'cancelled', 'no_show');
 CREATE TYPE day_of_week AS ENUM ('monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday');
 -- credit = pagamento recebido como crédito do paciente (unearned): dinheiro
@@ -144,6 +145,8 @@ CREATE TABLE users
     username      VARCHAR(150) UNIQUE NOT NULL,
     email         VARCHAR(150) UNIQUE NOT NULL,
     password_hash TEXT                NOT NULL,
+    -- TRUE = senha provisória (reset administrativo): troca obrigatória no próximo login
+    force_password_change BOOLEAN     NOT NULL DEFAULT FALSE,
     profile       user_profile        NOT NULL,
     active        BOOLEAN             NOT NULL DEFAULT TRUE,
     created_at    TIMESTAMPTZ         NOT NULL DEFAULT NOW()
