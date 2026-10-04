@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -59,6 +60,13 @@ public class GlobalExceptionHandler {
 	public ResponseEntity<ProblemDetail> handleAccessDenied(AccessDeniedException ex) {
 		return build(HttpStatus.FORBIDDEN,
 				problem(HttpStatus.FORBIDDEN, "Sem permissão para esta ação"));
+	}
+
+	/** Corpo JSON malformado → 400. */
+	@ExceptionHandler(HttpMessageNotReadableException.class)
+	public ResponseEntity<ProblemDetail> handleUnreadable(HttpMessageNotReadableException ex) {
+		return build(HttpStatus.BAD_REQUEST,
+				problem(HttpStatus.BAD_REQUEST, "Corpo da requisição inválido"));
 	}
 
 	@ExceptionHandler(DataIntegrityViolationException.class)
