@@ -184,7 +184,7 @@ paths:
   /auth/login:
     post:
       tags: [Auth]
-      summary: Autentica com e-mail e senha
+      summary: Autentica com nome de usuário ou e-mail e senha
       x-required-roles: public
       description: Endpoint público — não requer autenticação prévia.
       requestBody:
@@ -301,6 +301,10 @@ components:
           description: Imutável após a criação
         active:
           type: boolean
+        forcePasswordChange:
+          type: boolean
+          readOnly: true
+          description: true quando a senha é provisória (reset administrativo) — troca obrigatória no próximo acesso
         createdAt:
           type: string
           format: date-time
@@ -354,11 +358,11 @@ components:
 
     LoginInput:
       type: object
-      required: [email, password]
+      required: [login, password]
       properties:
-        email:
+        login:
           type: string
-          format: email
+          description: Nome de usuário OU e-mail — ambos são únicos no sistema
         password:
           type: string
           format: password

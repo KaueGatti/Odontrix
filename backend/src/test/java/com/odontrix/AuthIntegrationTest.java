@@ -55,7 +55,7 @@ class AuthIntegrationTest {
 		mockMvc.perform(post("/auth/login")
 						.contentType(MediaType.APPLICATION_JSON)
 						.content("""
-								{"email": "ana.gerente@sorrisopleno.com.br", "password": "dev12345"}"""))
+								{"login": "ana.gerente@sorrisopleno.com.br", "password": "dev12345"}"""))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.data.token").isNotEmpty())
 				.andExpect(jsonPath("$.data.user.username").value("gerente.ana"))
@@ -65,11 +65,23 @@ class AuthIntegrationTest {
 	}
 
 	@Test
+	void loginPorUsernameRetornaTokenEUsuario() throws Exception {
+		mockMvc.perform(post("/auth/login")
+						.contentType(MediaType.APPLICATION_JSON)
+						.content("""
+								{"login": "gerente.ana", "password": "dev12345"}"""))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.data.token").isNotEmpty())
+				.andExpect(jsonPath("$.data.user.username").value("gerente.ana"))
+				.andExpect(jsonPath("$.data.user.email").value("ana.gerente@sorrisopleno.com.br"));
+	}
+
+	@Test
 	void loginComSenhaErraRetorna401ProblemJson() throws Exception {
 		mockMvc.perform(post("/auth/login")
 						.contentType(MediaType.APPLICATION_JSON)
 						.content("""
-								{"email": "ana.gerente@sorrisopleno.com.br", "password": "senha-errada"}"""))
+								{"login": "ana.gerente@sorrisopleno.com.br", "password": "senha-errada"}"""))
 				.andExpect(status().isUnauthorized())
 				.andExpect(content().contentTypeCompatibleWith("application/problem+json"))
 				.andExpect(jsonPath("$.title").value("E-mail ou senha inválidos"));
@@ -80,7 +92,7 @@ class AuthIntegrationTest {
 		mockMvc.perform(post("/auth/login")
 						.contentType(MediaType.APPLICATION_JSON)
 						.content("""
-								{"email": "ninguem@sorrisopleno.com.br", "password": "dev12345"}"""))
+								{"login": "ninguem@sorrisopleno.com.br", "password": "dev12345"}"""))
 				.andExpect(status().isUnauthorized());
 	}
 
@@ -90,7 +102,7 @@ class AuthIntegrationTest {
 		mockMvc.perform(post("/auth/login")
 						.contentType(MediaType.APPLICATION_JSON)
 						.content("""
-								{"email": "sistema@sorrisopleno.internal", "password": "dev12345"}"""))
+								{"login": "sistema@sorrisopleno.internal", "password": "dev12345"}"""))
 				.andExpect(status().isForbidden())
 				.andExpect(content().contentTypeCompatibleWith("application/problem+json"));
 	}
@@ -100,9 +112,9 @@ class AuthIntegrationTest {
 		mockMvc.perform(post("/auth/login")
 						.contentType(MediaType.APPLICATION_JSON)
 						.content("""
-								{"email": "nao-e-email", "password": ""}"""))
+								{"login": "", "password": ""}"""))
 				.andExpect(status().isUnprocessableEntity())
-				.andExpect(jsonPath("$.fields.email").exists())
+				.andExpect(jsonPath("$.fields.login").exists())
 				.andExpect(jsonPath("$.fields.password").exists());
 	}
 
@@ -124,7 +136,8 @@ class AuthIntegrationTest {
 		mockMvc.perform(get("/auth/me").header("Authorization", "Bearer " + token))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.data.email").value("ana.gerente@sorrisopleno.com.br"))
-				.andExpect(jsonPath("$.data.profile").value("manager"));
+				.andExpect(jsonPath("$.data.profile").value("manager"))
+				.andExpect(jsonPath("$.data.forcePasswordChange").value(false));
 	}
 
 	@Test
@@ -234,7 +247,7 @@ class AuthIntegrationTest {
 		mockMvc.perform(post("/auth/login")
 						.contentType(MediaType.APPLICATION_JSON)
 						.content("""
-								{"email": "carla.recepcao@sorrisopleno.com.br", "password": "dev12345"}"""))
+								{"login": "carla.recepcao@sorrisopleno.com.br", "password": "dev12345"}"""))
 				.andExpect(status().isUnauthorized());
 
 		// a nova senha autentica
@@ -258,7 +271,7 @@ class AuthIntegrationTest {
 		mockMvc.perform(post("/auth/login")
 						.contentType(MediaType.APPLICATION_JSON)
 						.content("""
-								{"email": "fernanda.dentista@sorrisopleno.com.br", "password": "senha-provisoria-9"}"""))
+								{"login": "fernanda.dentista@sorrisopleno.com.br", "password": "senha-provisoria-9"}"""))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.data.forcePasswordChange").value(true));
 	}
@@ -271,7 +284,7 @@ class AuthIntegrationTest {
 		MvcResult result = mockMvc.perform(post("/auth/login")
 						.contentType(MediaType.APPLICATION_JSON)
 						.content("""
-								{"email": "%s", "password": "%s"}""".formatted(email, password)))
+								{"login": "%s", "password": "%s"}""".formatted(email, password)))
 				.andExpect(status().isOk())
 				.andReturn();
 		return JsonPath.read(result.getResponse().getContentAsString(), "$.data.token");

@@ -38,12 +38,14 @@ public class AuthService {
 	}
 
 	/**
-	 * Login por e-mail + senha. Diferencia deliberadamente 401 (credenciais
-	 * inválidas) de 403 (conta inativa), conforme o contrato de /auth/login.
+	 * Login por nome de usuário OU e-mail (ambos únicos) + senha.
+	 * Diferencia deliberadamente 401 (credenciais inválidas) de 403
+	 * (conta inativa), conforme o contrato de /auth/login.
 	 */
 	@Transactional(readOnly = true)
 	public LoginResult login(LoginInput input) {
-		User user = userRepository.findByEmailIgnoreCase(input.email())
+		User user = userRepository.findByEmailIgnoreCase(input.login())
+				.or(() -> userRepository.findByUsernameIgnoreCase(input.login()))
 				.orElseThrow(() -> ApiException.unauthorized("E-mail ou senha inválidos"));
 
 		if (!passwordEncoder.matches(input.password(), user.getPasswordHash())) {
