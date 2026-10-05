@@ -150,9 +150,9 @@ src/
 - Custom properties para sombras: `shadow-[var(--shadow-card)]`
 
 ### Navegação
-- `createBrowserRouter` no `main.tsx`
+- `createBrowserRouter` no `main.tsx`; `AuthProvider` envolve o `RouterProvider`
 - Rotas públicas: `/login`, `/recover-password`, `/reset-password`
-- Layout autenticado: `AppLayout` com `<Outlet/>` + `Sidebar`
+- Layout autenticado: `AppLayout` com `<Outlet/>` + `Sidebar`, sob `RequireAuth`; perfis por rota em `lib/permissions.ts`
 - `NavLink` com callback `isActive` para estilo ativo na sidebar
 - Sidebar: gradiente azul escuro, grupo Financeiro colapsável
 
@@ -160,10 +160,11 @@ src/
 **Lucide React** exclusivamente. Nunca misturar com Tabler.
 
 ### Estado atual (frontend)
-- Sem API client — dados mockados com `MOCK_*` + `useState`
-- Sem estado global — todo estado é local
-- Sem autenticação — login faz apenas `console.log`
-- Sem roles/permissões — sidebar mostra todos os itens
+- API client real (`lib/api.ts`): envelope `{ data, meta }`, erros problem+json (RFC 7807) como `ApiError`, Bearer JWT — por enquanto só o domínio `/auth`; dados das telas seguem mockados (`MOCK_*` + `useState`)
+- Sessão via `auth/AuthContext` (vive fora do `RouterProvider`): login por **username ou e-mail**, boot via `GET /auth/me`, logout, troca de senha; 401 com sessão carregada → banner "sessão expirada" no login (JWT vence em `clinic_settings.session_timeout_minutes`, 15 min no seed)
+- Rotas protegidas: `RequireAuth` na raiz `/` (redirect ao login com `state.from`) + guarda de perfil por rota no `AppLayout` via `lib/permissions.ts` (URL direta proibida → página 403)
+- Sidebar filtrada por perfil + usuário logado/botão Sair no rodapé; dashboard fixo pelo perfil logado (seletor manual removido); troca de senha obrigatória (`forcePasswordChange`) em dialog bloqueante
+- Env: `frontend/.env` com `VITE_API_BASE_URL=http://localhost:8080/api` (local/gitignored — o código tem fallback para o mesmo valor)
 
 ## Backend
 
@@ -369,7 +370,6 @@ postgres:16-alpine (5432) → api:8080 → frontend:5173
 
 - Backend: services e controllers dos demais domínios (pacientes, dentistas, recepcionistas, agenda, financeiro, boletos, orçamentos, contratos, auditoria, configurações da clínica) + jobs agendados (no_show automático, vencidos); orçamentos: `quote_status` expirado computado + validação de bloqueio no serviço
 - API Client no frontend (orçamentos)
-- Integrar o login do frontend com `POST /auth/login` real (JWT + perfis na sidebar)
 - Listas (Pacientes, Dentistas, Recepcionistas) com dados reais
 - Planos odontológicos e Contratos
 - Upload de documentos
