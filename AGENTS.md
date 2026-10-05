@@ -234,7 +234,7 @@ controller/  →  service/  →  repository/  →  entity/
 
 ### Enums do banco
 ```
-user_profile: manager | receptionist | dentist
+user_profile: manager | receptionist | dentist | system
 appointment_status: scheduled | confirmed | checked_in | in_progress | completed | cancelled | no_show
 boleto_status: issued | registered | paid | cancelled
 quote_status: draft | sent | approved | rejected | expired
