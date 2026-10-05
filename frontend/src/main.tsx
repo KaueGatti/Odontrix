@@ -7,6 +7,8 @@ import LoginPage from "@/pages/Login.tsx";
 import RecuperarSenhaPage from "@/pages/RecuperarSenha.tsx";
 import RedefinirSenhaPage from "@/pages/RedefinirSenha.tsx";
 import {AppLayout} from "@/pages/AppLayout.tsx";
+import {AuthProvider} from "@/auth/AuthContext";
+import {RequireAuth} from "@/auth/RequireAuth";
 import {ConfiguracoesPage} from "@/pages/Configuracoes.tsx";
 import {AuxiliaresPage} from "@/pages/Auxiliares.tsx";
 import PacientesListPage from "@/pages/patients/PacientesList.tsx";
@@ -42,7 +44,11 @@ const router = createBrowserRouter([
     },
     {
         path: "/",
-        element: <AppLayout/>,
+        element: (
+            <RequireAuth>
+                <AppLayout/>
+            </RequireAuth>
+        ),
         children: [
             {
                 path: "dashboard",
@@ -140,6 +146,8 @@ if (!rootElement) {
 
 createRoot(rootElement).render(
     <StrictMode>
+        <AuthProvider>
             <RouterProvider router={router}/>
+        </AuthProvider>
     </StrictMode>
 )

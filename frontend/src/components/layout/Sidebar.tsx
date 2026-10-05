@@ -7,10 +7,13 @@ import {
     Settings,
     type LucideIcon, Stethoscope, User, SlidersVertical, CircleDollarSign, TrendingUp,
     TrendingDown,
-    ChevronRight, Receipt, PanelLeftClose, PanelLeftOpen,
+    ChevronRight, Receipt, PanelLeftClose, PanelLeftOpen, LogOut,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils.ts";
+import { useAuth } from "@/auth/AuthContext";
+import { PROFILE_LABELS } from "@/types/auth";
+import { hasRole, navItemRoles } from "@/lib/permissions";
 
 interface NavItem {
     to: string;
@@ -135,8 +138,33 @@ function CollapsibleNavGroup({ label, items, defaultOpen = false }: NavGroupConf
     );
 }
 
+/** Iniciais do avatar: primeiras letras do username ("gerente.ana" → "GA"). */
+function iniciais(username: string): string {
+    const parts = username.split(/[._\s-]/).filter(Boolean);
+    if (parts.length >= 2) {
+        return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    return username.slice(0, 2).toUpperCase();
+}
+
 export function Sidebar() {
     const [collapsed, setCollapsed] = useState(false);
+    const { user, logout } = useAuth();
+
+    // Itens visíveis para o perfil logado (fonte: lib/permissions.ts)
+    const visibleTopItems = TOP_NAV_ITEMS.filter((item) =>
+        hasRole(user, navItemRoles(item.to)),
+    );
+    const visibleGroups = NAV_GROUPS
+        .map((group) => ({
+            ...group,
+            items: group.items.filter((item) => hasRole(user, navItemRoles(item.to))),
+        }))
+        .filter((group) => group.items.length > 0);
+    const visibleBottomItems = BOTTOM_NAV_ITEMS.filter((item) =>
+        hasRole(user, navItemRoles(item.to)),
+    );
+    const canSeeConfiguracoes = hasRole(user, navItemRoles("configuracoes"));
 
     return (
         <aside
@@ -183,42 +211,80 @@ export function Sidebar() {
             </div>
 
             <nav className={cn("flex flex-col gap-0.5", collapsed && "w-full items-center")}>
-                {TOP_NAV_ITEMS.map((item) => (
+                {visibleTopItems.map((item) => (
                     <NavItemLink key={item.to} {...item} collapsed={collapsed} />
                 ))}
 
                 {collapsed ? (
                     /* Recolhido: o grupo Financeiro vira um único ícone ($).
                        Clicar expande a sidebar com o grupo aberto. */
-                    <button
-                        type="button"
-                        onClick={() => setCollapsed(false)}
-                        title="Financeiro"
-                        className="flex items-center justify-center rounded-sm p-2 text-white/55 transition-colors hover:bg-white/[0.06] hover:text-white/85"
-                    >
-                        <CircleDollarSign className="h-4 w-4 flex-shrink-0" />
-                    </button>
+                    visibleGroups.length > 0 && (
+                        <button
+                            type="button"
+                            onClick={() => setCollapsed(false)}
+                            title="Financeiro"
+                            className="flex items-center justify-center rounded-sm p-2 text-white/55 transition-colors hover:bg-white/[0.06] hover:text-white/85"
+                        >
+                            <CircleDollarSign className="h-4 w-4 flex-shrink-0" />
+                        </button>
+                    )
                 ) : (
-                    NAV_GROUPS.map((group) => (
+                    visibleGroups.map((group) => (
                         <CollapsibleNavGroup key={group.label} {...group} />
                     ))
                 )}
 
-                {BOTTOM_NAV_ITEMS.map((item) => (
+                {visibleBottomItems.map((item) => (
                     <NavItemLink key={item.to} {...item} collapsed={collapsed} />
                 ))}
             </nav>
 
             <div className="flex-1" />
 
-            <NavLink
-                to="configuracoes"
-                title={collapsed ? "Configurações" : undefined}
-                className={collapsed ? navLinkCollapsedClass : navLinkClass}
+            {canSeeConfiguracoes && (
+                <NavLink
+                    to="configuracoes"
+                    title={collapsed ? "Configurações" : undefined}
+                    className={collapsed ? navLinkCollapsedClass : navLinkClass}
+                >
+                    <Settings className="h-4 w-4 flex-shrink-0" />
+                    {!collapsed && "Configurações"}
+                </NavLink>
+            )}
+
+            {/* Usuário logado + sair */}
+            <div
+                className={cn(
+                    "mt-2.5 flex items-center gap-2.5 rounded-sm px-1.5 py-2",
+                    collapsed && "flex-col gap-2 px-0",
+                )}
             >
-                <Settings className="h-4 w-4 flex-shrink-0" />
-                {!collapsed && "Configurações"}
-            </NavLink>
+                <div
+                    title={user?.username}
+                    className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-primary/90 text-[10.5px] font-bold uppercase text-white"
+                >
+                    {iniciais(user?.username ?? "")}
+                </div>
+                {!collapsed && (
+                    <div className="min-w-0 flex-1">
+                        <div className="truncate text-[12px] font-medium text-white/85">
+                            {user?.username}
+                        </div>
+                        <div className="text-[10px] text-white/40">
+                            {user ? PROFILE_LABELS[user.profile] : ""}
+                        </div>
+                    </div>
+                )}
+                <button
+                    type="button"
+                    onClick={() => void logout()}
+                    title="Sair"
+                    aria-label="Sair"
+                    className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-sm text-white/40 transition-colors hover:bg-white/[0.06] hover:text-white/85"
+                >
+                    <LogOut className="h-4 w-4"/>
+                </button>
+            </div>
 
             {!collapsed && (
                 <div className="px-1.5 pt-2.5 text-[10.5px] text-white/25">

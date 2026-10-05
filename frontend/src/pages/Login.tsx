@@ -1,7 +1,7 @@
 import {useState, type ReactNode} from "react";
 import {useForm} from "react-hook-form";
 import {zodResolver} from "@hookform/resolvers/zod";
-import {Link} from "react-router";
+import {Link, useLocation, useNavigate} from "react-router";
 import {
     User,
     Lock,
@@ -19,20 +19,38 @@ import {Input} from "@/components/ui/input";
 import {Label} from "@/components/ui/label";
 import {cn} from "@/lib/utils";
 import {loginSchema, type LoginFormValues} from "@/lib/validations/login.schema.ts";
+import {useAuth, consumeSessionExpired} from "@/auth/AuthContext";
+import {ApiError} from "@/lib/api";
 
 export default function LoginPage() {
     const [showPassword, setShowPassword] = useState(false);
     const {
         register,
         handleSubmit,
+        setError,
         formState: {errors, isSubmitting},
     } = useForm<LoginFormValues>({
         resolver: zodResolver(loginSchema),
     });
 
+    const {login} = useAuth();
+    const navigate = useNavigate();
+    const location = useLocation();
+    const [sessionExpired] = useState(() => consumeSessionExpired());
+
     const onSubmit = async (data: LoginFormValues) => {
-        // TODO: integrar com o endpoint real de autenticação
-        console.log(data);
+        try {
+            await login({login: data.login, password: data.senha});
+            // volta ao destino original (state.from) ou ao dashboard
+            const from = (location.state as {from?: string} | null)?.from;
+            navigate(from && from !== "/login" ? from : "/dashboard", {replace: true});
+        } catch (err) {
+            const message =
+                err instanceof ApiError
+                    ? err.message
+                    : "Não foi possível conectar ao servidor. Tente novamente.";
+            setError("root", {message});
+        }
     };
 
     return (
@@ -61,6 +79,24 @@ export default function LoginPage() {
                         Informe suas credenciais para acessar o painel da clínica.
                     </p>
 
+                    {sessionExpired && (
+                        <div
+                            role="alert"
+                            className="mb-4 rounded-lg border border-[#F59E0B]/50 bg-[#F59E0B]/10 px-3 py-2.5 text-xs font-medium text-foreground"
+                        >
+                            Sua sessão expirou. Entre novamente para continuar.
+                        </div>
+                    )}
+
+                    {errors.root && (
+                        <div
+                            role="alert"
+                            className="mb-4 rounded-lg border border-destructive/50 bg-destructive/10 px-3 py-2.5 text-xs font-medium text-destructive"
+                        >
+                            {errors.root.message}
+                        </div>
+                    )}
+
                     <form
                         onSubmit={handleSubmit(onSubmit)}
                         noValidate
@@ -76,7 +112,7 @@ export default function LoginPage() {
                                 <Input
                                     id="login"
                                     type="text"
-                                    placeholder="seu.login"
+                                    placeholder="gerente.ana ou seu e-mail"
                                     autoComplete="username"
                                     className="pl-10"
                                     aria-invalid={!!errors.login}

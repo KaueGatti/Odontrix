@@ -1,4 +1,7 @@
-export type UserProfile = "manager" | "dentist" | "receptionist";
+import type { UserProfile } from "@/types/auth";
+
+export type { UserProfile };
+
 export type UserStatus = "active" | "inactive";
 
 export interface SystemUser {
