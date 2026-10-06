@@ -167,14 +167,15 @@ export function Sidebar() {
     const canSeeConfiguracoes = hasRole(user, navItemRoles("configuracoes"));
 
     return (
+        <div className="relative flex-shrink-0">
         <aside
             className={cn(
-                "flex flex-shrink-0 flex-col overflow-hidden bg-[linear-gradient(180deg,var(--blue-dark)_0%,var(--blue-mid)_100%)] transition-[width] duration-200 ease-in-out",
+                "flex h-full flex-col overflow-hidden bg-[linear-gradient(180deg,var(--blue-dark)_0%,var(--blue-mid)_100%)] transition-[width] duration-200 ease-in-out",
                 collapsed ? SIDEBAR_COLLAPSED_W : SIDEBAR_EXPANDED_W,
                 collapsed ? "items-center px-2 py-6.5" : "px-4 py-6.5",
             )}
         >
-            {/* Cabeçalho: logo + toggle de recolhimento */}
+            {/* Cabeçalho: logo (o toggle é o botão flutuante na borda direita) */}
             <div
                 className={cn(
                     "mb-10 flex w-full items-center",
@@ -192,22 +193,6 @@ export function Sidebar() {
                         </div>
                     </div>
                 )}
-                <button
-                    type="button"
-                    onClick={() => setCollapsed((prev) => !prev)}
-                    aria-label={collapsed ? "Expandir sidebar" : "Recolher sidebar"}
-                    title={collapsed ? "Expandir sidebar" : "Recolher sidebar"}
-                    className={cn(
-                        "flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-sm text-white/40 transition-colors hover:bg-white/[0.06] hover:text-white/85",
-                        collapsed && "order-first",
-                    )}
-                >
-                    {collapsed ? (
-                        <PanelLeftOpen className="h-4 w-4" />
-                    ) : (
-                        <PanelLeftClose className="h-4 w-4" />
-                    )}
-                </button>
             </div>
 
             <nav className={cn("flex flex-col gap-0.5", collapsed && "w-full items-center")}>
@@ -292,5 +277,25 @@ export function Sidebar() {
                 </div>
             )}
         </aside>
+
+        {/* Botão flutuante na borda direita da sidebar — colapsar/expandir.
+            Metade sobre o gradiente, metade sobre o conteúdo da página;
+            z-10 mantém acima do main. Fora do aside para não ser cortado
+            pelo overflow-hidden; o wrapper relative acompanha a borda
+            durante a transição de largura. */}
+        <button
+            type="button"
+            onClick={() => setCollapsed((prev) => !prev)}
+            aria-label={collapsed ? "Expandir sidebar" : "Recolher sidebar"}
+            title={collapsed ? "Expandir sidebar" : "Recolher sidebar"}
+            className="absolute -right-3.5 top-[28px] z-10 flex h-7 w-7 items-center justify-center rounded-full border border-border bg-background text-muted-foreground shadow-[0_2px_8px_rgba(15,32,80,0.16)] transition-colors hover:text-foreground"
+        >
+            {collapsed ? (
+                <PanelLeftOpen className="h-4 w-4" />
+            ) : (
+                <PanelLeftClose className="h-4 w-4" />
+            )}
+        </button>
+        </div>
     );
 }
