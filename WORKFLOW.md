@@ -28,17 +28,17 @@ Este documento define o fluxo de trabalho obrigatório para qualquer agente (hum
 
 ## 2. Antes de qualquer alteração de código
 
-1. **NUNCA** trabalhe diretamente na branch/worktree principal (`main`/`master`).
+1. **PERGUNTE** como deve ser feitas as alterações, se vão ser na main ou em um worktree/branch separada
 
-2. Antes de começar uma tarefa, crie um worktree novo e uma branch dedicada:
-   ```bash
-   git worktree add -b <tipo>/<descricao-curta> ../worktrees/<descricao-curta>
-   ```
-   Exemplos de nome de branch: `feature/ajuste-form`, `fix/bug-login`, `chore/refactor-api`
-
-3. Faça **todas** as alterações dentro desse worktree isolado.
-
-4. Comite e faça push normalmente na branch criada.
+2. Caso de trabalhar em uma worktree/branch separada:
+   - Antes de começar uma tarefa, crie um worktree novo e uma branch 
+      dedicada:
+      ```bash
+      git worktree add -b <tipo>/<descricao-curta> ../worktrees/<descricao-curta>
+      ```
+      Exemplos de nome de branch: `feature/ajuste-form`, `fix/bug-login`, `chore/refactor-api`
+   - Faça **todas** as alterações dentro desse worktree isolado. 
+   - Comite e faça push normalmente na branch criada.
 
 ---
 
@@ -46,7 +46,7 @@ Este documento define o fluxo de trabalho obrigatório para qualquer agente (hum
 
 5. **NUNCA** faça merge para `main`/`master` automaticamente.
 
-6. Ao concluir a tarefa, abra um Pull Request (ou avise o usuário) e **AGUARDE autorização explícita** antes de fazer merge.
+6. Ao concluir a tarefa, avise o usuário e **AGUARDE autorização explícita** antes de fazer merge.
 
 7. Só execute `git merge` ou `git worktree remove` depois de receber confirmação direta do usuário.
 
@@ -65,7 +65,6 @@ Este documento define o fluxo de trabalho obrigatório para qualquer agente (hum
 
 1. Pedido do usuário → checar ambiguidades → perguntar tudo que não estiver 100% claro
 2. Confirmação do usuário → criar worktree + branch dedicada
-3. Alterações e commits dentro do worktree
-4. Push da branch → abrir PR / avisar usuário
-5. Aguardar autorização explícita
-6. Merge autorizado → remover worktree
+3. Push da branch → abrir PR / avisar usuário
+4. Aguardar autorização explícita
+5. Merge autorizado → remover worktree

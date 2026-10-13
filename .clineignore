@@ -1,0 +1,77 @@
+# Dependências e builds
+node_modules/
+frontend/node_modules/
+target/
+build/
+dist/
+frontend/dist/
+frontend/build/
+out/
+.gradle/
+.mvn/wrapper/
+
+# Controle de versão e IDE
+.git/
+.idea/
+.vscode/
+*.iml
+*.class
+*.jar
+*.war
+
+# Logs e temporários
+*.log
+logs/
+tmp/
+.cache/
+.next/
+coverage/
+.nyc_output/
+*.tsbuildinfo
+
+# Lockfiles (enormes e inúteis para o modelo)
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Banco de dados, dumps e dados locais
+*.sql.gz
+*.dump
+*.sqlite
+*.sqlite3
+*.db
+pgdata/
+postgres-data/
+docker/postgres-data/
+
+# Variáveis de ambiente e segredos
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.jks
+application-local.yml
+application-local.properties
+
+# Arquivos binários, mídia e documentos pesados
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
+*.ico
+*.webp
+*.pdf
+*.zip
+*.tar.gz
+*.woff
+*.woff2
+*.ttf
+uploads/
+
+# Arquivos gerados
+*.min.js
+*.min.css
+*.map
+src/main/generated/
