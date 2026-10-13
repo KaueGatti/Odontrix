@@ -4,4 +4,8 @@ import com.odontrix.entity.CancellationReason;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface CancellationReasonRepository extends JpaRepository<CancellationReason, Integer> {
+
+	boolean existsByDescriptionIgnoreCase(String description);
+
+	boolean existsByDescriptionIgnoreCaseAndIdNot(String description, Integer id);
 }

@@ -8,4 +8,8 @@ import java.util.List;
 public interface SpecialtyRepository extends JpaRepository<Specialty, Integer> {
 
 	List<Specialty> findByActiveTrueOrderByNameAsc();
+
+	boolean existsByNameIgnoreCase(String name);
+
+	boolean existsByNameIgnoreCaseAndIdNot(String name, Integer id);
 }
